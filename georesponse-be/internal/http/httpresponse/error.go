@@ -1,6 +1,6 @@
 /*
 Author       : Mahardika Pratama
-Version      : 1.0.0
+Version      : 1.1.0
 Created Date : 2026-09-19
 Description  : Implements WriteError, the single place a Go error is
 
@@ -12,6 +12,8 @@ Description  : Implements WriteError, the single place a Go error is
 
 Changelog:
   - 1.0.0 (2026-09-19): Initial creation.
+  - 1.1.0 (2026-09-19): Added hotspot.ErrUpstreamUnavailable -> 502
+    HOTSPOT_UPSTREAM_UNAVAILABLE for the BMKG GeoHotspot integration.
 */
 package httpresponse
 
@@ -21,6 +23,7 @@ import (
 
 	"github.com/mahardika-pratama/georesponse-be/internal/auth"
 	"github.com/mahardika-pratama/georesponse-be/internal/authorization"
+	"github.com/mahardika-pratama/georesponse-be/internal/hotspot"
 	"github.com/mahardika-pratama/georesponse-be/internal/platform/logging"
 	"github.com/mahardika-pratama/georesponse-be/internal/resource"
 )
@@ -79,6 +82,9 @@ func WriteError(w http.ResponseWriter, r *http.Request, err error) {
 
 	case errors.Is(err, authorization.ErrPermissionDenied):
 		writeError(w, http.StatusForbidden, "AUTHORIZATION_DENIED", "You do not have permission to perform this operation", nil)
+
+	case errors.Is(err, hotspot.ErrUpstreamUnavailable):
+		writeError(w, http.StatusBadGateway, "HOTSPOT_UPSTREAM_UNAVAILABLE", "BMKG hotspot data is temporarily unavailable", nil)
 
 	default:
 		logging.FromContext(r.Context()).Error("unhandled error", "error", err)

@@ -16,15 +16,32 @@
  *                        instead of one fixed color for every marker, so
  *                        status is visible on the map per
  *                        FRONTEND_UI_UX.md section 7.
+ * - 1.2.0 (2026-09-19): Added the BMKG hotspot layer: a second, independent
+ *                        GeoJSON source/layer pair (setHotspots/
+ *                        toggleHotspotLayer), styled distinctly from
+ *                        resource markers, with its own click -> Popup
+ *                        (not routed through onMarkerClick/selection —
+ *                        hotspots stay separate from application-managed
+ *                        resources).
  */
-import maplibregl, { GeoJSONSource, Map as MapLibreMap } from "maplibre-gl";
+import maplibregl, { GeoJSONSource, Map as MapLibreMap, Popup } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 
-import { MapAdapter, MapAdapterOptions, MapMarker } from "./MapAdapter.types";
+import { HOTSPOT_MARKER_COLOR, HOTSPOT_MARKER_STROKE_COLOR } from "@constants/hotspot.constants";
+
+import {
+	HotspotMarker,
+	MapAdapter,
+	MapAdapterOptions,
+	MapMarker
+} from "./MapAdapter.types";
 
 const SOURCE_ID = "resources";
 const MARKER_LAYER_ID = "resources-markers";
 const SELECTED_LAYER_ID = "resources-selected";
+
+const HOTSPOT_SOURCE_ID = "hotspots";
+const HOTSPOT_LAYER_ID = "hotspots-markers";
 
 function toFeatureCollection(
 	markers: MapMarker[]
@@ -44,11 +61,35 @@ function toFeatureCollection(
 	};
 }
 
+function toHotspotFeatureCollection(
+	hotspots: HotspotMarker[]
+): GeoJSON.FeatureCollection {
+	return {
+		type: "FeatureCollection",
+		features: hotspots.map((hotspot) => ({
+			type: "Feature",
+			geometry: {
+				type: "Point",
+				coordinates: [hotspot.longitude, hotspot.latitude]
+			},
+			properties: {
+				id: hotspot.id,
+				province: hotspot.province,
+				regency: hotspot.regency,
+				observedDate: hotspot.observedDate,
+				observedTime: hotspot.observedTime
+			}
+		}))
+	};
+}
+
 /** Constructs a MapAdapter backed by a real MapLibre GL JS map instance. */
 export function createMapLibreAdapter(): MapAdapter {
 	let map: MapLibreMap | null = null;
 	let selectedId: string | null = null;
 	let pendingMarkers: MapMarker[] = [];
+	let pendingHotspots: HotspotMarker[] = [];
+	let hotspotPopup: Popup | null = null;
 
 	function applySelection() {
 		if (!map?.getLayer(SELECTED_LAYER_ID)) return;
@@ -121,6 +162,48 @@ export function createMapLibreAdapter(): MapAdapter {
 				map.on("mouseleave", MARKER_LAYER_ID, () => {
 					if (map) map.getCanvas().style.cursor = "";
 				});
+
+				map.addSource(HOTSPOT_SOURCE_ID, {
+					type: "geojson",
+					data: toHotspotFeatureCollection(pendingHotspots)
+				});
+				map.addLayer({
+					id: HOTSPOT_LAYER_ID,
+					type: "circle",
+					source: HOTSPOT_SOURCE_ID,
+					paint: {
+						"circle-radius": 5,
+						"circle-color": HOTSPOT_MARKER_COLOR,
+						"circle-stroke-width": 1.5,
+						"circle-stroke-color": HOTSPOT_MARKER_STROKE_COLOR
+					}
+				});
+
+				// Deliberately not wired through options.onMarkerClick/
+				// selectMarker: a hotspot is never an application-managed
+				// resource, so it gets its own self-contained popup instead
+				// of joining the resource selection flow.
+				map.on("click", HOTSPOT_LAYER_ID, (event) => {
+					const feature = event.features?.[0];
+					if (!map || !feature || feature.geometry.type !== "Point") return;
+
+					const props = feature.properties ?? {};
+					hotspotPopup?.remove();
+					hotspotPopup = new maplibregl.Popup({ closeButton: true })
+						.setLngLat(feature.geometry.coordinates as [number, number])
+						.setHTML(
+							`<strong>${props.province ?? "Unknown province"}</strong><br />` +
+								`${props.regency ?? ""}<br />` +
+								`${props.observedDate ?? ""} ${props.observedTime ?? ""}`
+						)
+						.addTo(map);
+				});
+				map.on("mouseenter", HOTSPOT_LAYER_ID, () => {
+					if (map) map.getCanvas().style.cursor = "pointer";
+				});
+				map.on("mouseleave", HOTSPOT_LAYER_ID, () => {
+					if (map) map.getCanvas().style.cursor = "";
+				});
 			});
 		},
 
@@ -137,7 +220,26 @@ export function createMapLibreAdapter(): MapAdapter {
 			applySelection();
 		},
 
+		setHotspots(hotspots: HotspotMarker[]) {
+			pendingHotspots = hotspots;
+			const source = map?.getSource(HOTSPOT_SOURCE_ID) as
+				| GeoJSONSource
+				| undefined;
+			source?.setData(toHotspotFeatureCollection(hotspots));
+		},
+
+		toggleHotspotLayer(visible: boolean) {
+			if (!map?.getLayer(HOTSPOT_LAYER_ID)) return;
+			map.setLayoutProperty(
+				HOTSPOT_LAYER_ID,
+				"visibility",
+				visible ? "visible" : "none"
+			);
+		},
+
 		destroy() {
+			hotspotPopup?.remove();
+			hotspotPopup = null;
 			map?.remove();
 			map = null;
 		}

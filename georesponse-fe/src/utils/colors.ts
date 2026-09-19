@@ -17,6 +17,16 @@
  * - 1.2.0 (2026-09-19): Added indicator.info (Resource.status IN_USE is
  *                        informational/blue per FRONTEND_UI_UX.md section 7,
  *                        a role the adapted indicator palette didn't have).
+ * - 1.3.0 (2026-09-19): Removed the CommonJS `module.exports` assignment —
+ *                        mixing it with `export default` in the same file
+ *                        is invalid once a bundler treats the file as an
+ *                        ES module, which crashed every importer at
+ *                        runtime. tailwind.config.js now unwraps the ESM
+ *                        interop shape instead.
+ * - 1.4.0 (2026-09-19): Added hotspot.marker — a magenta distinct from
+ *                        every resource-status hue (active/error/warning/
+ *                        info), so the BMKG hotspot map layer is never
+ *                        confused with resource status at a glance.
  */
 
 /**
@@ -119,10 +129,12 @@ const colors = {
 		inactive: "#6E6F6E",
 		info: "#3575F3"
 	},
+	/** BMKG hotspot map layer — deliberately distinct from every resource
+	 * status hue above, so it's never mistaken for resource status. */
+	hotspot: {
+		marker: "#FF3EA5",
+		stroke: "#FFFFFF"
+	},
 };
 
-// tailwind.config.js requires this file directly under Node, which needs
-// the CommonJS form; anything importing it from within the app/tests
-// (e.g. utils/utils.test.ts) uses the ES export below instead.
-module.exports = colors;
 export default colors;

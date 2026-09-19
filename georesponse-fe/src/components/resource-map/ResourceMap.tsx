@@ -12,6 +12,8 @@
  *                        selectedResourceId (Phase 6 section 9.1); syncs
  *                        selectedResourceId to the adapter's selectMarker
  *                        so a list-driven selection highlights the marker.
+ * - 1.2.0 (2026-09-19): Added hotspots/hotspotLayerVisible, synced to the
+ *                        adapter's setHotspots/toggleHotspotLayer.
  */
 import React, { useEffect, useRef } from "react";
 
@@ -21,7 +23,9 @@ import { ResourceMapProps } from "./ResourceMap.types";
 function ResourceMap({
 	markers = [],
 	selectedResourceId = null,
-	onResourceSelect
+	onResourceSelect,
+	hotspots = [],
+	hotspotLayerVisible = true
 }: ResourceMapProps) {
 	const containerRef = useRef<HTMLDivElement | null>(null);
 	const adapterRef = useRef(createMapLibreAdapter());
@@ -54,6 +58,14 @@ function ResourceMap({
 	useEffect(() => {
 		adapterRef.current.selectMarker(selectedResourceId);
 	}, [selectedResourceId]);
+
+	useEffect(() => {
+		adapterRef.current.setHotspots(hotspots);
+	}, [hotspots]);
+
+	useEffect(() => {
+		adapterRef.current.toggleHotspotLayer(hotspotLayerVisible);
+	}, [hotspotLayerVisible]);
 
 	return (
 		<div

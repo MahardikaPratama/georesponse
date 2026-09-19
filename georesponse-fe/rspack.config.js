@@ -1,6 +1,6 @@
 /*
  * Author       : Mahardika Pratama
- * Version      : 1.0.0
+ * Version      : 1.1.0
  * Created Date : 2026-09-19
  * Description  : Rspack build configuration for the GeoResponse frontend.
  *                Wires TSX/JSX support via the built-in SWC loader, Tailwind
@@ -10,8 +10,18 @@
  *
  * Changelog:
  * - 1.0.0 (2026-09-19): Initial creation.
+ * - 1.1.0 (2026-09-19): Loads georesponse-fe/.env via dotenv before reading
+ *                        process.env below — ENVIRONMENT_MANAGEMENT.md
+ *                        section 6 documents .env as what `npm run dev`
+ *                        reads directly, but nothing previously loaded it
+ *                        into process.env, so every value silently fell
+ *                        back to its DefinePlugin default (e.g. MAP_TILE_URL
+ *                        always rendered with no basemap, whatever .env
+ *                        said).
  */
 const path = require("path");
+
+require("dotenv").config({ path: path.resolve(__dirname, ".env") });
 
 const rspack = require("@rspack/core");
 const ReactRefreshPlugin = require("@rspack/plugin-react-refresh");
