@@ -317,6 +317,8 @@ setSelectedResource(resource);
 
 Do not use comments as a substitute for clear naming or structure.
 
+**Do not cite a `docs/*.md` file, its filename, or a section number inside a source-code comment** (e.g. `// per docs/07_backend/BACKEND_ARCHITECTURE.md section 4` or `-- DATA_CONTRACT.md section 3`). Explain the reasoning itself, in the comment's own words, as a self-contained statement a reader can act on without leaving the file. This keeps the code readable independent of the documentation tree, and reads as a normal engineering comment rather than scaffolding generated against a spec. The reverse direction is fine and expected: `docs/*.md` files may reference source files and other docs freely, and `README.md` files may link to `docs/*.md` for further reading — this rule is about comments inside source code specifically.
+
 ---
 
 ## 12. TypeScript Rules

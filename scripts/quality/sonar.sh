@@ -4,13 +4,12 @@
 # Version      : 1.0.0
 # Created Date : 2026-09-19
 # Description  : Optional aggregate static-analysis pass via the
-#                sonar-scanner CLI, per CODE_QUALITY.md section 4.3 and
-#                QUALITY_GATES.md section 2. Not required to pass the
-#                merge gate (scripts/quality/check.sh is authoritative).
-#                Fails with a clear, actionable message rather than a
-#                stack trace when sonar-scanner, SONAR_TOKEN, or
-#                SONAR_HOST_URL are missing, since no SonarQube server is
-#                provisioned by default for this take-home.
+#                sonar-scanner CLI. Not required to pass the merge gate
+#                (scripts/quality/check.sh is authoritative). Fails with a
+#                clear, actionable message rather than a stack trace when
+#                sonar-scanner, SONAR_TOKEN, or SONAR_HOST_URL are missing,
+#                since no SonarQube server is provisioned by default for
+#                this take-home.
 #
 # Changelog:
 # - 1.0.0 (2026-09-19): Initial creation.
@@ -25,10 +24,10 @@ if ! command -v sonar-scanner >/dev/null 2>&1; then
 SonarQube analysis was skipped: the 'sonar-scanner' CLI is not on PATH.
 
 This project's SonarQube analysis (sonar-project.properties at the repo
-root) is optional, aspirational extra assurance per CODE_QUALITY.md
-section 4.3 — it is NOT required to pass the local quality gate
-(scripts/quality/check.sh) or the merge gate (QUALITY_GATES.md). No
-SonarQube server is provisioned for this take-home submission by default.
+root) is optional, aspirational extra assurance — it is NOT required to
+pass the local quality gate (scripts/quality/check.sh) or the merge gate.
+No SonarQube server is provisioned for this take-home submission by
+default.
 
 To actually run it, you need one of:
   1. The sonar-scanner CLI, installed locally:
@@ -60,7 +59,7 @@ SonarQube/SonarCloud server without both of:
   SONAR_TOKEN     - a project or user analysis token
 
 Set both environment variables and re-run this script. This is an
-optional step (CODE_QUALITY.md section 4.3), not a required gate.
+optional step, not a required gate.
 
 Exiting without error: this is an optional step, not a required gate.
 EOF

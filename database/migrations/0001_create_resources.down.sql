@@ -13,5 +13,4 @@ Changelog:
 DROP TABLE IF EXISTS resources;
 -- The postgis extension is intentionally not dropped here: other
 -- migrations/tables may depend on it, and dropping an extension is a
--- database-wide, not migration-scoped, decision (DATABASE_MIGRATIONS.md
--- section 3).
+-- database-wide, not migration-scoped, decision.

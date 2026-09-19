@@ -7,7 +7,7 @@
  * Changelog:
  * - 1.0.0 (2026-09-19): Adapted from a prior personal project for
  *                        GeoResponse; converted from Jest-style mocks to
- *                        Vitest per TECHNOLOGY_SELECTION.md section 14.1.
+ *                        Vitest.
  */
 import { beforeEach, describe, expect, it, vi } from "vitest";
 

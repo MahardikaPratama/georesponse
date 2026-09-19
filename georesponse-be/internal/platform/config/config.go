@@ -4,10 +4,8 @@ Version      : 1.0.0
 Created Date : 2026-09-19
 Description  : Package config loads and validates process configuration
 
-	from environment variables, per
-	docs/11_devops/ENVIRONMENT_MANAGEMENT.md section 5.2. It is
-	the only package allowed to read these environment
-	variables directly (BACKEND_ARCHITECTURE.md section 4).
+	from environment variables. It is the only package
+	allowed to read these environment variables directly.
 
 Changelog:
 - 1.0.0 (2026-09-19): Initial creation.
@@ -55,8 +53,7 @@ func (c Config) Addr() string {
 // Load reads configuration from environment variables and validates it.
 // It fails with a descriptive error when a required variable is missing
 // for the current environment, so the process can fail fast at start-up
-// (docs/11_devops/ENVIRONMENT_MANAGEMENT.md section 8) rather than failing
-// unpredictably on the first request.
+// rather than failing unpredictably on the first request.
 func Load() (*Config, error) {
 	cfg := &Config{
 		AppEnv:      getEnvOrDefault("APP_ENV", "development"),
