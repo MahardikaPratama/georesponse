@@ -36,11 +36,15 @@ services:
       - ./database/migrations:/georesponse/migrations:ro
       - ./database/seeds:/georesponse/seeds:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-georesponse} -d ${POSTGRES_DB:-georesponse}"]
+      # Over TCP on purpose: during first-run initialisation the image runs
+      # a temporary server that only listens on the unix socket, so a
+      # socket-based pg_isready would report "healthy" before the init
+      # scripts (migrations + seeds) have finished and the real server is up.
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U ${POSTGRES_USER:-georesponse} -d ${POSTGRES_DB:-georesponse}"]
       interval: 5s
       timeout: 5s
-      retries: 10
-      start_period: 10s
+      retries: 20
+      start_period: 30s
 
   georesponse-be:
     build:
