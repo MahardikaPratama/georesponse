@@ -1,23 +1,28 @@
 /*
  * Author       : Mahardika Pratama
- * Version      : 1.0.0
+ * Version      : 1.1.0
  * Created Date : 2026-09-19
  * Description  : Renders resources on a map. Never imports maplibre-gl or
  *                calls a MapLibre API directly — everything map-related
- *                goes through map-adapter/MapAdapter.ts. Feeding it real
- *                resource data (from useResources) is Phase 6 work; this
- *                component only proves the adapter boundary mounts,
- *                updates, and tears down correctly.
+ *                goes through map-adapter/MapAdapter.ts.
  *
  * Changelog:
  * - 1.0.0 (2026-09-19): Initial creation.
+ * - 1.1.0 (2026-09-19): Feeds it real resource data via markers/
+ *                        selectedResourceId (Phase 6 section 9.1); syncs
+ *                        selectedResourceId to the adapter's selectMarker
+ *                        so a list-driven selection highlights the marker.
  */
 import React, { useEffect, useRef } from "react";
 
 import { createMapLibreAdapter } from "./map-adapter/MapAdapter";
 import { ResourceMapProps } from "./ResourceMap.types";
 
-function ResourceMap({ markers = [], onResourceSelect }: ResourceMapProps) {
+function ResourceMap({
+	markers = [],
+	selectedResourceId = null,
+	onResourceSelect
+}: ResourceMapProps) {
 	const containerRef = useRef<HTMLDivElement | null>(null);
 	const adapterRef = useRef(createMapLibreAdapter());
 
@@ -45,6 +50,10 @@ function ResourceMap({ markers = [], onResourceSelect }: ResourceMapProps) {
 	useEffect(() => {
 		adapterRef.current.setMarkers(markers);
 	}, [markers]);
+
+	useEffect(() => {
+		adapterRef.current.selectMarker(selectedResourceId);
+	}, [selectedResourceId]);
 
 	return (
 		<div
