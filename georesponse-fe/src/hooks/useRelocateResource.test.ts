@@ -56,7 +56,7 @@ function wrapperFor(queryClient: QueryClient) {
 
 describe("useRelocateResource", () => {
 	it("optimistically moves the cached detail and list location before the backend responds", async () => {
-		let resolveRelocate: (value: unknown) => void = () => {};
+		let resolveRelocate!: (value: { data: typeof RESOURCE }) => void;
 		vi.mocked(resourceApi.relocate).mockReturnValueOnce(
 			new Promise((resolve) => {
 				resolveRelocate = resolve;
