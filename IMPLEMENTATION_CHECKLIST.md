@@ -126,15 +126,23 @@ merged to `main`, since later phases depend on earlier ones (section 1).
       `typecheck`) referenced by `georesponse-fe/README.md`. (Also added
       `lint:fix`, `format`, `format:check` for Prettier.)
 - [x] Add MapLibre GL JS, TanStack Query, Vitest, and React Testing Library
-      as dependencies. (Declared in `package.json`; not yet installed —
-      see below.)
-- [ ] Confirm the Rspack config builds `src/main.tsx`/`src/App.tsx` (already
-      present) without errors. **Not verified — Node.js/npm are not
-      installed in this environment.** Run `npm install && npm run build`
-      once Node.js is available.
-- [ ] Verify `npm run build` succeeds. **Not verified**, same reason.
-- [ ] Verify `npm run lint` and `npm run typecheck` report no issues.
-      **Not verified**, same reason.
+      as dependencies.
+- [x] Confirm the Rspack config builds `src/main.tsx`/`src/App.tsx` (already
+      present) without errors. **Verified via CI** (`.github/workflows/ci.yml`
+      run on PR #2, after fixing three real bugs only CI could catch — see
+      below).
+- [x] Verify `npm run build` succeeds. **Verified via CI.**
+- [x] Verify `npm run lint` and `npm run typecheck` report no issues.
+      **Verified via CI**, after fixing:
+      1. `eslint.config.js` flagged `require`/`module`/`process`/
+         `__dirname` as undefined in the root `*.config.js` files (no Node
+         globals were configured for them) — added a scoped override.
+      2. `tsconfig.json` used `ignoreDeprecations: "6.0"`, which the
+         installed TypeScript rejected (`TS5103`) — removed it and used
+         `"./"`-prefixed `paths` instead of relying on `baseUrl`.
+      3. `rspack.config.js`'s CSS rule needed `postcss-loader`, which was
+         never added to `package.json` — added it.
+      `npm test` also passed, including `logger.test.ts`.
 
 ### 3.3 Database Bootstrap
 
@@ -198,13 +206,17 @@ merged to `main`, since later phases depend on earlier ones (section 1).
       explanation and exit non-fatally (no Sonar server is provisioned for
       this take-home by default, consistent with `CODE_QUALITY.md`).
 - [ ] Run `scripts/dev/setup.sh` end to end on a clean checkout and confirm
-      it succeeds. **Not verified — requires Node.js, a live database, and
-      the `migrate`/`psql` CLIs, none of which are available in this
-      environment.**
-- [ ] Push, open a PR, confirm CI passes, merge into `main`, delete the
-      branch (workflow: section 2.1). **Not done — this is a manual git
-      action for the person running this checklist, not something
-      performed automatically.**
+      it succeeds. **Not verified as a single script run** — CI now
+      independently verifies the FE (`npm install`/lint/typecheck/build/
+      test) and BE (`go build`/`vet`/`gofmt`/`test`) halves of what this
+      script does; the database/migration half still requires a live
+      PostgreSQL+PostGIS instance, unavailable in this environment.
+- [x] Push, open a PR, confirm CI passes, merge into `main`, delete the
+      branch (workflow: section 2.1). Branch `chore/phase-0-project-setup`,
+      PR #2. CI failed twice on real, previously-undetectable bugs (ESLint
+      Node-globals config, an invalid `tsconfig.json` compiler flag, a
+      missing `postcss-loader` dependency) — each was fixed and pushed
+      until both the frontend and backend CI jobs passed, then merged.
 
 ---
 
@@ -614,17 +626,28 @@ individually as each feature completes (see section 2.1).
 
 **Branch:** `chore/phase-9-ci-quality` (see section 2.1)
 
-- [ ] Add the GitHub Actions workflow described in `CI_CD.md` (lint,
+- [x] Add the GitHub Actions workflow described in `CI_CD.md` (lint,
       type-check, build, test for both apps, triggered on push/PR to
-      `main`).
-- [ ] Implement `scripts/quality/sonar.sh`/`sonar.ps1` if static-analysis
+      `main`). (Done early, in `chore/phase-0-project-setup`, so that
+      phase's own PR could actually have a "confirm CI passes" step. The
+      Docker-build-verify job from `CI_CD.md` section 4.4 is deliberately
+      **not** included yet — both Dockerfiles are still empty placeholders
+      [Phase 8]; add that job when Phase 8 lands.)
+- [x] Implement `scripts/quality/sonar.sh`/`sonar.ps1` if static-analysis
       tooling is configured (optional per `CODE_QUALITY.md`'s
-      proportionate-scope framing).
+      proportionate-scope framing). (Done early, in Phase 0, per explicit
+      request for real SonarQube tooling — `sonar-project.properties` +
+      both scripts exist and check for `sonar-scanner`/`SONAR_TOKEN`
+      before running.)
 - [ ] Run `scripts/quality/check.sh` locally and confirm every gate in
-      `QUALITY_GATES.md` passes.
+      `QUALITY_GATES.md` passes. **Not verified** — requires Node.js and a
+      live database, neither available in this environment.
 - [ ] Push, open a PR, and confirm the CI pipeline itself runs correctly on
       it (this is also the first real end-to-end proof the pipeline works),
       then merge into `main` and delete the branch (workflow: section 2.1).
+      (The CI workflow file itself was already exercised by the Phase 0
+      PR; this item is about the remaining Phase 9 work — coverage
+      reporting, branch protection, etc. — once that's scoped.)
 
 ---
 

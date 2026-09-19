@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+#
+# Author       : Mahardika Pratama
+# Version      : 1.0.0
+# Created Date : 2026-09-19
+# Description  : Applies all pending golang-migrate "up" migrations in
+#                database/migrations/ against the database identified by
+#                DATABASE_URL, per DATABASE_MIGRATIONS.md section 4.
+#
+# Changelog:
+# - 1.0.0 (2026-09-19): Initial creation.
+
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+MIGRATIONS_DIR="${SCRIPT_DIR}/../../database/migrations"
+
+if ! command -v migrate >/dev/null 2>&1; then
+    echo "ERROR: the 'migrate' CLI (golang-migrate) is not on PATH." >&2
+    echo "Install it with:" >&2
+    echo "  go install github.com/golang-migrate/migrate/v4/cmd/migrate@latest" >&2
+    echo "and ensure \$(go env GOPATH)/bin is on your PATH." >&2
+    exit 1
+fi
+
+if [ -z "${DATABASE_URL:-}" ]; then
+    echo "ERROR: DATABASE_URL is not set." >&2
+    echo "Set it to a PostgreSQL connection string, e.g.:" >&2
+    echo '  export DATABASE_URL="postgres://georesponse:georesponse_dev_password@localhost:5432/georesponse?sslmode=disable"' >&2
+    exit 1
+fi
+
+echo "Applying pending migrations from ${MIGRATIONS_DIR} ..."
+migrate -path "${MIGRATIONS_DIR}" -database "${DATABASE_URL}" up
+
+echo "Migrations applied successfully."

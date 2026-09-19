@@ -1,0 +1,61 @@
+# Author       : Mahardika Pratama
+# Version      : 1.0.0
+# Created Date : 2026-09-19
+# Description  : CI pipeline per docs/11_devops/CI_CD.md sections 3-4.
+#                Frontend and backend jobs run independently. The
+#                Docker-build-verification job from CI_CD.md section 4.4
+#                is deliberately NOT included yet: both Dockerfiles are
+#                still empty placeholders (IMPLEMENTATION_CHECKLIST.md
+#                Phase 8, not done), so that job would fail through no
+#                fault of the code it's meant to verify. Add it back once
+#                Phase 8 lands.
+#
+# Changelog:
+# - 1.0.0 (2026-09-19): Initial creation, added ahead of the Phase 0 PR so
+#                        that PR's "confirm CI passes" checklist item can
+#                        actually be satisfied.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  frontend:
+    name: Frontend (lint, type-check, build, test)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: georesponse-fe
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      # No package-lock.json is committed yet (npm has never been run
+      # against this package.json outside CI), so `npm ci` would fail.
+      # Switch to `npm ci` + npm cache once a lockfile is committed.
+      - run: npm install
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm run build
+      - run: npm run test
+
+  backend:
+    name: Backend (fmt, vet, build, test)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: georesponse-be
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.23"
+          cache-dependency-path: georesponse-be/go.sum
+      - run: gofmt -l . | tee /tmp/fmt.out && test ! -s /tmp/fmt.out
+      - run: go vet ./...
+      - run: go build ./...
+      - run: go test ./... -cover
