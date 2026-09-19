@@ -1,16 +1,18 @@
-// Author       : Mahardika Pratama
-// Version      : 1.0.0
-// Created Date : 2026-09-19
-// Description  : Package logging provides the structured logger setup used
-//
-//	across the backend, wrapping the standard library's
-//	log/slog so every layer logs through one consistent,
-//	leveled, JSON-structured sink (docs/05_engineering/
-//	OBSERVABILITY.md). Secrets and credentials must never be
-//	passed as log attributes.
-//
-// Changelog:
-// - 1.0.0 (2026-09-19): Initial creation.
+/*
+Author       : Mahardika Pratama
+Version      : 1.0.0
+Created Date : 2026-09-19
+Description  : Package logging provides the structured logger setup used
+
+	across the backend, wrapping the standard library's
+	log/slog so every layer logs through one consistent,
+	leveled, JSON-structured sink (docs/05_engineering/
+	OBSERVABILITY.md). Secrets and credentials must never be
+	passed as log attributes.
+
+Changelog:
+- 1.0.0 (2026-09-19): Initial creation.
+*/
 package logging
 
 import (

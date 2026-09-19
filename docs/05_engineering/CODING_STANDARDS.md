@@ -26,7 +26,9 @@ These rules are intentionally focused on code quality and consistency. Architect
 
 Every source file must contain a file-level header with five fields: `Author`, `Version`, `Created Date`, `Description`, and `Changelog`.
 
-### TypeScript / TSX
+**A multi-line comment must use the language's block-comment form (`/** */`-style), never a repeated single-line comment marker (`//`) stacked line after line.** This applies to every language that has a real block-comment syntax. The exact delimiters differ per language, but the shape is the same everywhere: one opening delimiter, the content, one closing delimiter — not the same marker repeated on every line.
+
+### TypeScript / TSX / JavaScript
 
 ```ts
 /*
@@ -43,19 +45,73 @@ Every source file must contain a file-level header with five fields: `Author`, `
 
 ### Go
 
+Go supports `/* */` block comments in addition to `//` line comments; use the block form for this header (exported-identifier GoDoc comments elsewhere in the file still use the normal `//` GoDoc convention — this rule is about the file header specifically):
+
 ```go
-// Author       : Mahardika Pratama
-// Version      : 1.0.0
-// Created Date : 2026-09-19
-// Description  : Package resource contains resource management
-//                functionality.
-//
-// Changelog:
-// - 1.0.0 (2026-09-19): Initial creation.
+/*
+Author       : Mahardika Pratama
+Version      : 1.0.0
+Created Date : 2026-09-19
+Description  : Package resource contains resource management
+                functionality.
+
+Changelog:
+  - 1.0.0 (2026-09-19): Initial creation.
+*/
 package resource
 ```
 
-For non-package Go source files, use the same five-field comment header.
+For non-package Go source files, use the same five-field block-comment header.
+
+### SQL
+
+```sql
+/*
+ * Author       : Mahardika Pratama
+ * Version      : 1.0.0
+ * Created Date : 2026-09-19
+ * Description  : Enables PostGIS and creates the resources table.
+ *
+ * Changelog:
+ * - 1.0.0 (2026-09-19): Initial creation.
+ */
+```
+
+### PowerShell (`.ps1`)
+
+PowerShell's block-comment form is `<# ... #>`, not `#` repeated per line:
+
+```powershell
+<#
+Author       : Mahardika Pratama
+Version      : 1.0.0
+Created Date : 2026-09-19
+Description  : PowerShell equivalent of the corresponding .sh script.
+
+Changelog:
+  - 1.0.0 (2026-09-19): Initial creation.
+#>
+```
+
+### Bash (`.sh`)
+
+Bash has no block-comment syntax — `#` per line is the only mechanism the language provides, so it remains the correct form here (this is a language limitation, not an exception to the rule above). The shebang stays on line 1, above the header:
+
+```bash
+#!/usr/bin/env bash
+#
+# Author       : Mahardika Pratama
+# Version      : 1.0.0
+# Created Date : 2026-09-19
+# Description  : Bash equivalent of the corresponding .ps1 script.
+#
+# Changelog:
+# - 1.0.0 (2026-09-19): Initial creation.
+```
+
+### Pure configuration files — no header
+
+**`.gitignore`, `.prettierignore`, `.prettierrc.json`, `.golangci.yml`, `sonar-project.properties`, `tsconfig.json`, `package.json`, GitHub Actions workflow YAML, and similar declarative configuration files do not get a file header at all.** They hold data/settings, not logic, and a header adds noise without adding information a `git log`/`git blame` on the file doesn't already give more precisely. This is different from executable configuration-as-code files that contain real logic (`rspack.config.js`, `tailwind.config.js`, `postcss.config.js`, `vitest.config.ts`, `eslint.config.js`) — those are source files and do get the standard header in their language's block-comment form.
 
 The `Description` should state **what the file is responsible for**, not repeat its implementation. Every subsequent change to the file adds one line to `Changelog` (new version, date, one-line summary) rather than rewriting history.
 

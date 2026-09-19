@@ -1,19 +1,21 @@
-// Author       : Mahardika Pratama
-// Version      : 1.0.0
-// Created Date : 2026-09-19
-// Description  : Package middleware holds the cross-cutting HTTP concerns
-//
-//	that make up the Decorator-pattern middleware chain
-//	described in docs/07_backend/BACKEND_ARCHITECTURE.md
-//	section 6: request ID, logging, and panic recovery.
-//	Request ID and panic recovery reuse Chi's well-tested
-//	built-ins (go-chi/chi/v5/middleware) rather than
-//	reimplementing them; Logging is a thin local wrapper
-//	around internal/platform/logging so log lines are
-//	structured and consistent with the rest of the backend.
-//
-// Changelog:
-// - 1.0.0 (2026-09-19): Initial creation.
+/*
+Author       : Mahardika Pratama
+Version      : 1.0.0
+Created Date : 2026-09-19
+Description  : Package middleware holds the cross-cutting HTTP concerns
+
+	that make up the Decorator-pattern middleware chain
+	described in docs/07_backend/BACKEND_ARCHITECTURE.md
+	section 6: request ID, logging, and panic recovery.
+	Request ID and panic recovery reuse Chi's well-tested
+	built-ins (go-chi/chi/v5/middleware) rather than
+	reimplementing them; Logging is a thin local wrapper
+	around internal/platform/logging so log lines are
+	structured and consistent with the rest of the backend.
+
+Changelog:
+- 1.0.0 (2026-09-19): Initial creation.
+*/
 package middleware
 
 import (
