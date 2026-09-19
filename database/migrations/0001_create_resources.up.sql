@@ -1,13 +1,15 @@
--- Author       : Mahardika Pratama
--- Version      : 1.0.0
--- Created Date : 2026-09-19
--- Description  : Enables PostGIS and creates the resources table, backing
---                the Resource entity (DATA_CONTRACT.md section 3,
---                DOMAIN_MODEL.md section 3), plus its type/status/spatial
---                indexes.
---
--- Changelog:
--- - 1.0.0 (2026-09-19): Initial creation.
+/*
+Author       : Mahardika Pratama
+Version      : 1.0.0
+Created Date : 2026-09-19
+Description  : Enables PostGIS and creates the resources table, backing
+               the Resource entity (DATA_CONTRACT.md section 3,
+               DOMAIN_MODEL.md section 3), plus its type/status/spatial
+               indexes.
+
+Changelog:
+- 1.0.0 (2026-09-19): Initial creation.
+*/
 
 CREATE EXTENSION IF NOT EXISTS postgis;
 

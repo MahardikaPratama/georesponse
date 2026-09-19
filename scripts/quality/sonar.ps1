@@ -1,18 +1,20 @@
-# Author       : Mahardika Pratama
-# Version      : 1.0.0
-# Created Date : 2026-09-19
-# Description  : Optional aggregate static-analysis pass via the
-#                sonar-scanner CLI, per CODE_QUALITY.md section 4.3 and
-#                QUALITY_GATES.md section 2. Windows PowerShell equivalent
-#                of sonar.sh. Not required to pass the merge gate
-#                (scripts/quality/check.ps1 is authoritative). Fails with
-#                a clear, actionable message rather than a stack trace
-#                when sonar-scanner, SONAR_TOKEN, or SONAR_HOST_URL are
-#                missing, since no SonarQube server is provisioned by
-#                default for this take-home.
-#
-# Changelog:
-# - 1.0.0 (2026-09-19): Initial creation.
+<#
+Author       : Mahardika Pratama
+Version      : 1.0.0
+Created Date : 2026-09-19
+Description  : Optional aggregate static-analysis pass via the
+               sonar-scanner CLI, per CODE_QUALITY.md section 4.3 and
+               QUALITY_GATES.md section 2. Windows PowerShell equivalent
+               of sonar.sh. Not required to pass the merge gate
+               (scripts/quality/check.ps1 is authoritative). Fails with
+               a clear, actionable message rather than a stack trace
+               when sonar-scanner, SONAR_TOKEN, or SONAR_HOST_URL are
+               missing, since no SonarQube server is provisioned by
+               default for this take-home.
+
+Changelog:
+- 1.0.0 (2026-09-19): Initial creation.
+#>
 
 $ErrorActionPreference = "Stop"
 

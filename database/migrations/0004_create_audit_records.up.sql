@@ -1,13 +1,15 @@
--- Author       : Mahardika Pratama
--- Version      : 1.0.0
--- Created Date : 2026-09-19
--- Description  : Creates the audit_records table, the system-wide durable
---                audit trail backing AuditRecord (DATA_CONTRACT.md
---                section 9, BUSINESS_RULES.md BR-035 to BR-039), plus its
---                lookup indexes.
---
--- Changelog:
--- - 1.0.0 (2026-09-19): Initial creation.
+/*
+Author       : Mahardika Pratama
+Version      : 1.0.0
+Created Date : 2026-09-19
+Description  : Creates the audit_records table, the system-wide durable
+               audit trail backing AuditRecord (DATA_CONTRACT.md
+               section 9, BUSINESS_RULES.md BR-035 to BR-039), plus its
+               lookup indexes.
+
+Changelog:
+- 1.0.0 (2026-09-19): Initial creation.
+*/
 
 CREATE TABLE IF NOT EXISTS audit_records (
     id            text PRIMARY KEY,

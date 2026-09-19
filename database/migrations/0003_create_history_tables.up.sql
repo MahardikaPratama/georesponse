@@ -1,14 +1,16 @@
--- Author       : Mahardika Pratama
--- Version      : 1.0.0
--- Created Date : 2026-09-19
--- Description  : Creates the resource history tables (resource_status_
---                history, resource_location_history,
---                resource_change_history) backing Resource History
---                (DATA_CONTRACT.md section 8), plus their resource_id
---                lookup indexes.
---
--- Changelog:
--- - 1.0.0 (2026-09-19): Initial creation.
+/*
+Author       : Mahardika Pratama
+Version      : 1.0.0
+Created Date : 2026-09-19
+Description  : Creates the resource history tables (resource_status_
+               history, resource_location_history,
+               resource_change_history) backing Resource History
+               (DATA_CONTRACT.md section 8), plus their resource_id
+               lookup indexes.
+
+Changelog:
+- 1.0.0 (2026-09-19): Initial creation.
+*/
 
 CREATE TABLE IF NOT EXISTS resource_status_history (
     id               text PRIMARY KEY,

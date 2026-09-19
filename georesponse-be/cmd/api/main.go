@@ -1,19 +1,21 @@
-// Author       : Mahardika Pratama
-// Version      : 1.0.0
-// Created Date : 2026-09-19
-// Description  : Process entry point for the georesponse-be API server.
-//
-//	Loads configuration, builds the structured logger, wires
-//	the router, and starts the HTTP server with graceful
-//	shutdown on SIGINT/SIGTERM
-//	(docs/07_backend/BACKEND_ARCHITECTURE.md section 4).
-//	Phase 0: no database connection or feature handlers are
-//	wired yet; those are added here as later phases implement
-//	them.
-//
-// Changelog:
-//   - 1.0.0 (2026-09-19): Initial creation. Phase 0 bootstrap: config,
-//     logging, router with /health only.
+/*
+Author       : Mahardika Pratama
+Version      : 1.0.0
+Created Date : 2026-09-19
+Description  : Process entry point for the georesponse-be API server.
+
+	Loads configuration, builds the structured logger, wires
+	the router, and starts the HTTP server with graceful
+	shutdown on SIGINT/SIGTERM
+	(docs/07_backend/BACKEND_ARCHITECTURE.md section 4).
+	Phase 0: no database connection or feature handlers are
+	wired yet; those are added here as later phases implement
+	them.
+
+Changelog:
+  - 1.0.0 (2026-09-19): Initial creation. Phase 0 bootstrap: config,
+    logging, router with /health only.
+*/
 package main
 
 import (

@@ -1,15 +1,17 @@
-# Author       : Mahardika Pratama
-# Version      : 1.0.0
-# Created Date : 2026-09-19
-# Description  : Rolls back the most recently applied migration(s) using
-#                golang-migrate's "down" mechanics, per
-#                DATABASE_MIGRATIONS.md section 4. Accepts an optional
-#                numeric argument for the number of migrations to roll
-#                back (default: 1). Windows PowerShell equivalent of
-#                rollback.sh.
-#
-# Changelog:
-# - 1.0.0 (2026-09-19): Initial creation.
+<#
+Author       : Mahardika Pratama
+Version      : 1.0.0
+Created Date : 2026-09-19
+Description  : Rolls back the most recently applied migration(s) using
+               golang-migrate's "down" mechanics, per
+               DATABASE_MIGRATIONS.md section 4. Accepts an optional
+               numeric argument for the number of migrations to roll
+               back (default: 1). Windows PowerShell equivalent of
+               rollback.sh.
+
+Changelog:
+- 1.0.0 (2026-09-19): Initial creation.
+#>
 
 param(
     [Parameter(Position = 0)]

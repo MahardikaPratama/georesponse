@@ -1,21 +1,23 @@
--- Author       : Mahardika Pratama
--- Version      : 1.0.0
--- Created Date : 2026-09-19
--- Description  : Reserved slot for the "add remaining indexes" step
---                planned in DATABASE_MIGRATIONS.md section 6. As of this
---                migration, every index listed in DATABASE_OPERATIONS.md
---                section 5 (resources.type/status/location, the three
---                resource_*_history.resource_id indexes, the two
---                audit_records lookup indexes plus occurred_at, and the
---                role_permissions/user_roles join indexes) was already
---                created inline with its owning table in migrations 0001-
---                0004, so there is nothing left to add here. This
---                migration is an intentional no-op that reserves the
---                sequence number called out in DATABASE_MIGRATIONS.md
---                section 6, rather than duplicating an index CREATE
---                statement across two migrations.
---
--- Changelog:
--- - 1.0.0 (2026-09-19): Initial creation (no-op; see Description).
+/*
+Author       : Mahardika Pratama
+Version      : 1.0.0
+Created Date : 2026-09-19
+Description  : Reserved slot for the "add remaining indexes" step
+               planned in DATABASE_MIGRATIONS.md section 6. As of this
+               migration, every index listed in DATABASE_OPERATIONS.md
+               section 5 (resources.type/status/location, the three
+               resource_*_history.resource_id indexes, the two
+               audit_records lookup indexes plus occurred_at, and the
+               role_permissions/user_roles join indexes) was already
+               created inline with its owning table in migrations 0001-
+               0004, so there is nothing left to add here. This
+               migration is an intentional no-op that reserves the
+               sequence number called out in DATABASE_MIGRATIONS.md
+               section 6, rather than duplicating an index CREATE
+               statement across two migrations.
+
+Changelog:
+- 1.0.0 (2026-09-19): Initial creation (no-op; see Description).
+*/
 
 -- Intentionally empty: see Description above.

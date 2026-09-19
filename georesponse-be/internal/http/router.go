@@ -1,18 +1,20 @@
-// Author       : Mahardika Pratama
-// Version      : 1.0.0
-// Created Date : 2026-09-19
-// Description  : Chi router assembly. Wires the global middleware chain and
-//
-//	the health check route, structured so the versioned
-//	/api/v1 route groups (resources, auth, roles, audit-logs,
-//	...) can be added in later phases inside the r.Route
-//	block without restructuring this file
-//	(docs/07_backend/BACKEND_ARCHITECTURE.md section 5). No
-//	handler registers its own sub-router outside this file.
-//
-// Changelog:
-//   - 1.0.0 (2026-09-19): Initial creation. Phase 0: health check only, no
-//     feature handlers wired yet.
+/*
+Author       : Mahardika Pratama
+Version      : 1.0.0
+Created Date : 2026-09-19
+Description  : Chi router assembly. Wires the global middleware chain and
+
+	the health check route, structured so the versioned
+	/api/v1 route groups (resources, auth, roles, audit-logs,
+	...) can be added in later phases inside the r.Route
+	block without restructuring this file
+	(docs/07_backend/BACKEND_ARCHITECTURE.md section 5). No
+	handler registers its own sub-router outside this file.
+
+Changelog:
+  - 1.0.0 (2026-09-19): Initial creation. Phase 0: health check only, no
+    feature handlers wired yet.
+*/
 package http
 
 import (
