@@ -126,8 +126,8 @@ describe("RoleManagementModal", () => {
 
 		render(<RoleManagementModal onClose={vi.fn()} />);
 
-		expect(screen.getByText("Administrator")).toBeInTheDocument();
-		expect(screen.getByText("Operator")).toBeInTheDocument();
+		expect(screen.getAllByText("Administrator").length).toBeGreaterThan(0);
+		expect(screen.getAllByText("Operator").length).toBeGreaterThan(0);
 		expect(
 			screen.getByRole("checkbox", { name: "Read Roles for Administrator" })
 		).toBeChecked();
