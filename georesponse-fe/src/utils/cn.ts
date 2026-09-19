@@ -2,8 +2,8 @@
  * Author       : Mahardika Pratama
  * Version      : 1.0.0
  * Created Date : 2026-09-19
- * Description  : Utility to merge Tailwind CSS class names safely using
- *                clsx and tailwind-merge.
+ * Description  : Utility to merge Tailwind CSS class names safely using clsx and
+ *                tailwind-merge.
  *
  * Changelog:
  * - 1.0.0 (2026-09-19): Adapted from a prior personal project for

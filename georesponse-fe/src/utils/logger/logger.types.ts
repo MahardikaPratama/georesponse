@@ -2,7 +2,7 @@
  * Author       : Mahardika Pratama
  * Version      : 1.0.0
  * Created Date : 2026-09-19
- * Description  : Logging types shared by logger.ts.
+ * Description  : Logging types.
  *
  * Changelog:
  * - 1.0.0 (2026-09-19): Adapted from a prior personal project for

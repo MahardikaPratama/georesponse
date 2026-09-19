@@ -2,28 +2,25 @@
  * Author       : Mahardika Pratama
  * Version      : 1.0.0
  * Created Date : 2026-09-19
- * Description  : Unit tests for the logger utility.
+ * Description  : Unit test for logger utility using Jest.
  *
  * Changelog:
  * - 1.0.0 (2026-09-19): Adapted from a prior personal project for
- *                        GeoResponse; converted from Jest-style mocks to
- *                        Vitest.
+ *                        GeoResponse.
  */
-import { beforeEach, describe, expect, it, vi } from "vitest";
-
 import { logger } from "./logger";
 
 describe("logger", () => {
-	const consoleDebugSpy = vi
+	const consoleDebugSpy = jest
 		.spyOn(console, "debug")
 		.mockImplementation(() => {});
-	const consoleInfoSpy = vi
+	const consoleInfoSpy = jest
 		.spyOn(console, "info")
 		.mockImplementation(() => {});
-	const consoleWarnSpy = vi
+	const consoleWarnSpy = jest
 		.spyOn(console, "warn")
 		.mockImplementation(() => {});
-	const consoleErrorSpy = vi
+	const consoleErrorSpy = jest
 		.spyOn(console, "error")
 		.mockImplementation(() => {});
 

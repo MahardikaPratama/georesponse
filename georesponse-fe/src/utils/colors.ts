@@ -1,30 +1,49 @@
 /*
  * Author       : Mahardika Pratama
- * Version      : 1.0.0
+ * Version      : 1.1.0
  * Created Date : 2026-09-19
- * Description  : Shared color palette consumed by the Tailwind config,
- *                carried over from a prior personal project to keep
- *                GeoResponse's visual style/theme consistent.
+ * Description  : Color palette constants for the application theme system. Contains
+ *                all color definitions used throughout the application including
+ *                neutral colors, primary theme colors, status colors, and
+ *                component-specific color schemes.
  *
  * Changelog:
  * - 1.0.0 (2026-09-19): Adapted from a prior personal project for
  *                        GeoResponse.
+ * - 1.1.0 (2026-09-19): Added the "primary" scale — referenced by Button's
+ *                        default color but missing from the adapted
+ *                        palette, which would have rendered "primary"
+ *                        buttons with no background at all.
+ */
+
+/**
+ * Application color palette containing all theme colors.
+ * Organized by color categories for consistent theming across components.
  */
 
 const colors = {
+	/** Neutral colors for backgrounds, text, and borders */
 	neutral: {
 		"1": "#FFFFFF",
 		"2": "#E1EAF5",
 		"3": "#6E6F6E",
 		"4": "#494D49",
-		"5": "#242A26"
+		"5": "#242A26",
+		"6": "#BBC3CA"
 	},
+	/** Primary brand color (used by Button's default "primary" color) */
+	primary: {
+		"20": "#4F9669",
+		"50": "#81AC91"
+	},
+	/** Primary green theme colors */
 	"primary-green": {
 		"1": "#294734",
 		"2": "#6B9479",
 		"3": "#4F9669",
 		"4": "#81AC91"
 	},
+	/** Error and danger state colors */
 	error: {
 		"1": "#C13B3B",
 		"2": "#872A2A",
@@ -89,7 +108,13 @@ const colors = {
 		"success-hover": "#81AC91",
 		"error-hover": "#872A2A",
 		secondary: "#171E1A"
-	}
+	},
+	indicator: {
+		active: "#00A000",
+		error: "#C80000",
+		warning: "#FFBF00",
+		inactive: "#6E6F6E"
+	},
 };
 
 module.exports = colors;

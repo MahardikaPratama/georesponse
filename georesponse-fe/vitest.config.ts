@@ -9,6 +9,10 @@
  *
  * Changelog:
  * - 1.0.0 (2026-09-19): Initial creation.
+ * - 1.1.0 (2026-09-19): Enabled `test.globals` so `describe`/`it`/`expect`/
+ *                        `vi` are available without a per-file import —
+ *                        several colocated tests adapted from a prior
+ *                        project rely on that convention.
  */
 import path from "path";
 
@@ -30,6 +34,7 @@ export default defineConfig({
 	},
 	test: {
 		environment: "jsdom",
+		globals: true,
 		setupFiles: ["./vitest.setup.ts"],
 		include: ["src/**/*.test.{ts,tsx}"],
 		css: false
