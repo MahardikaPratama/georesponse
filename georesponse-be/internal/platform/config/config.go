@@ -8,11 +8,11 @@ Description  : Package config loads and validates process configuration
 	allowed to read these environment variables directly.
 
 Changelog:
-- 1.0.0 (2026-09-19): Initial creation.
-- 1.1.0 (2026-09-19): Phase 4 wires a real database connection and
-  authentication token signing into cmd/api/main.go, so DATABASE_URL and
-  TOKEN_SECRET are now required in every environment, not only
-  production. Added TokenSecret and TokenTTL.
+  - 1.0.0 (2026-09-19): Initial creation.
+  - 1.1.0 (2026-09-19): Phase 4 wires a real database connection and
+    authentication token signing into cmd/api/main.go, so DATABASE_URL and
+    TOKEN_SECRET are now required in every environment, not only
+    production. Added TokenSecret and TokenTTL.
 */
 package config
 
