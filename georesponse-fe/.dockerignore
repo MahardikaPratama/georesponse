@@ -1,0 +1,17 @@
+# georesponse-fe/.dockerignore
+#
+# Keeps local-only and build-irrelevant files out of the image build
+# context: node_modules is reinstalled with `npm ci` inside the build
+# stage, dist is rebuilt there, and .env must never reach an image layer.
+node_modules
+dist
+build
+coverage
+.env
+.env.*
+*.log
+.git
+.gitignore
+README.md
+Dockerfile
+.dockerignore

@@ -1,16 +1,21 @@
 # docker-compose.yml
 #
-# Local orchestration for GeoResponse, per docs/11_devops/DOCKER_COMPOSE.md.
+# Local orchestration for GeoResponse: frontend (nginx), backend (Go), and
+# PostgreSQL + PostGIS, per docs/11_devops/DOCKER_COMPOSE.md.
 #
-# Only georesponse-db is defined here for now: georesponse-be/Dockerfile and
-# georesponse-fe/Dockerfile are still empty placeholders (Phase 8 —
-# Containerization — has not started per IMPLEMENTATION_CHECKLIST.md section
-# 11), so those two services cannot be built yet. This file exists early,
-# ahead of its normal phase order, to give Phase 0's database bootstrap a
-# real PostgreSQL+PostGIS instance to migrate/seed against locally. The
-# georesponse-be and georesponse-fe services should be added here, matching
-# DOCKER_COMPOSE.md section 5 in full, when Phase 8 actually implements the
-# two Dockerfiles.
+# Reads ./.env automatically (docker compose's default behaviour for a file
+# named ".env" next to this file). No credential is hardcoded below; the
+# ${VAR:-default} fallbacks exist only so the stack still starts with an
+# obviously-fake local value if .env is missing — ./run.sh / .\run.ps1
+# always create it from .env.example first.
+#
+# Start-up order: georesponse-db must be healthy (pg_isready) before
+# georesponse-be starts; georesponse-be must be healthy (GET /health, which
+# pings the database) before georesponse-fe starts. On a brand-new database
+# volume, docker/postgres/init applies every migration and seed file once;
+# on every backend start in APP_ENV=development the backend applies any
+# migration newer than the database's recorded version itself, so the
+# schema is always current without a manual step.
 name: georesponse
 
 services:
@@ -26,14 +31,64 @@ services:
       - "5432:5432"
     volumes:
       - georesponse-db-data:/var/lib/postgresql/data
-      - ./database/migrations:/docker-entrypoint-initdb.d/migrations:ro
-      - ./database/seeds:/docker-entrypoint-initdb.d/seeds:ro
+      # Runs once, on first initialisation of an empty data volume only.
+      - ./docker/postgres/init:/docker-entrypoint-initdb.d:ro
+      - ./database/migrations:/georesponse/migrations:ro
+      - ./database/seeds:/georesponse/seeds:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-georesponse} -d ${POSTGRES_DB:-georesponse}"]
       interval: 5s
       timeout: 5s
       retries: 10
       start_period: 10s
+
+  georesponse-be:
+    build:
+      context: ./georesponse-be
+      dockerfile: Dockerfile
+    image: georesponse-be:${IMAGE_TAG:-latest}
+    container_name: georesponse-be
+    restart: unless-stopped
+    environment:
+      APP_ENV: ${APP_ENV:-development}
+      HTTP_PORT: ${HTTP_PORT:-8080}
+      DATABASE_URL: postgres://${POSTGRES_USER:-georesponse}:${POSTGRES_PASSWORD:-georesponse_dev_password}@georesponse-db:5432/${POSTGRES_DB:-georesponse}?sslmode=disable
+      LOG_LEVEL: ${LOG_LEVEL:-debug}
+      TOKEN_SECRET: ${TOKEN_SECRET:-dev-only-secret-do-not-use-in-production}
+      TOKEN_TTL: ${TOKEN_TTL:-24h}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:5173}
+      MIGRATIONS_DIR: /migrations
+    ports:
+      - "${HTTP_PORT:-8080}:${HTTP_PORT:-8080}"
+    volumes:
+      - ./database/migrations:/migrations:ro
+    depends_on:
+      georesponse-db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:${HTTP_PORT:-8080}/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+
+  georesponse-fe:
+    build:
+      context: ./georesponse-fe
+      dockerfile: Dockerfile
+      args:
+        # Inlined into the static bundle at build time (rspack DefinePlugin).
+        API_BASE_URL: ${API_BASE_URL:-http://localhost:8080/api/v1}
+        MAP_TILE_URL: ${MAP_TILE_URL:-}
+        LOG_LEVEL: ${LOG_LEVEL:-debug}
+    image: georesponse-fe:${IMAGE_TAG:-latest}
+    container_name: georesponse-fe
+    restart: unless-stopped
+    ports:
+      - "5173:80"
+    depends_on:
+      georesponse-be:
+        condition: service_healthy
 
 volumes:
   georesponse-db-data:

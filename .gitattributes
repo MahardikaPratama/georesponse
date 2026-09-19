@@ -1,0 +1,14 @@
+# .gitattributes
+#
+# Shell scripts and container assets must keep LF line endings in the
+# working copy even on Windows (core.autocrlf=true would otherwise check
+# them out as CRLF), because they are executed inside Linux containers —
+# docker/postgres/init/*.sh is bind-mounted straight into georesponse-db,
+# and a CRLF shebang line fails with "bash\r: not found".
+*.sh          text eol=lf
+Dockerfile    text eol=lf
+.dockerignore text eol=lf
+*.conf        text eol=lf
+
+# PowerShell scripts are consumed on Windows; let git normalise them.
+*.ps1         text

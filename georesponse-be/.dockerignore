@@ -1,0 +1,17 @@
+# georesponse-be/.dockerignore
+#
+# Keeps local-only and build-irrelevant files out of the image build
+# context, so a .env file or a stray binary can never end up in a layer.
+.env
+.env.*
+*.log
+*.test
+*.out
+coverage/
+georesponse-be
+api
+.git
+.gitignore
+README.md
+Dockerfile
+.dockerignore
