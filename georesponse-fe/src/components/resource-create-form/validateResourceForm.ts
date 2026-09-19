@@ -12,8 +12,12 @@
  *
  * Changelog:
  * - 1.0.0 (2026-09-19): Initial creation.
+ * - 1.1.0 (2026-09-19): Extracted the attribute-field checks into
+ *                        utils/validateResourceAttributes.ts, shared with
+ *                        the update form's own validator (Phase 6 section
+ *                        9.5), which needed the identical logic.
  */
-import { RESOURCE_ATTRIBUTE_SCHEMA } from "@constants/resourceAttributeSchema.constants";
+import { validateResourceAttributes } from "@utils/validateResourceAttributes";
 
 import { ResourceFormErrors, ResourceFormState } from "./ResourceCreateForm.types";
 
@@ -41,19 +45,5 @@ export function validateResourceForm(state: ResourceFormState): ResourceFormErro
 		errors.longitude = "Longitude must be between -180 and 180.";
 	}
 
-	for (const field of RESOURCE_ATTRIBUTE_SCHEMA[state.type]) {
-		const raw = state.attributes[field.key] ?? "";
-		if (field.kind === "text") {
-			if (isBlank(raw)) errors[`attributes.${field.key}`] = `${field.label} is required.`;
-			continue;
-		}
-		const numericValue = Number(raw);
-		if (isBlank(raw) || Number.isNaN(numericValue)) {
-			errors[`attributes.${field.key}`] = `${field.label} is required.`;
-		} else if (numericValue < 0) {
-			errors[`attributes.${field.key}`] = `${field.label} must not be negative.`;
-		}
-	}
-
-	return errors;
+	return { ...errors, ...validateResourceAttributes(state.type, state.attributes) };
 }

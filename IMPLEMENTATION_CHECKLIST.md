@@ -995,19 +995,44 @@ individually as each feature completes (see section 2.1).
       markers are derived from) shares its TanStack Query cache entry with
       `useCreateResource`'s `resourceKeys.lists()` invalidation, so a
       successful create refetches that same cache entry automatically.
+- [x] Push, open a PR, confirm CI passes, merge into `main`, delete the
+      branch (workflow: section 2.1). PR #14 (`feature/phase-6-create-resource`)
+      merged into `main` (squash commit `6e1a77f`); branch deleted (remote
+      and local). CI passed on the first push.
+
+### 9.5 Update Resource (FR-004, UC-07)
+
+- [x] Implement the update-resource form, pre-filled from
+      `GET /api/v1/resources/{id}`. (`src/components/resource-update-form/`
+      — `ResourceUpdateForm.tsx` (presentation) + `useResourceUpdateForm.ts`
+      (state via a reducer, pre-filled from the resource by
+      `createResourceUpdateFormState`) + `UpdateResourceModal.tsx` (fetches
+      via `useResource(id)`, handles its loading/error states, and only
+      mounts the form once the resource is available). Opened via a new
+      "Edit" button in `ResourceDetail` (the edit action
+      `FRONTEND_UI_UX.md` section 5 describes). Extracted the attribute-field
+      validation shared with the create form into
+      `src/utils/validateResourceAttributes.ts` rather than duplicating it.
+      **Scope note, matching the create form's own boundary**: this form
+      covers name/type/attributes only — status has its own dedicated
+      control (section 9.6) and location its own dedicated relocate flow
+      (section 9.7, per `API_CONTRACT.md` section 6.4's own boundary
+      between a general update and a relocation), so this form doesn't
+      duplicate either.)
+- [x] Implement the `useUpdateResource` mutation, invalidating the
+      resource-detail and list queries. (`src/hooks/useUpdateResource.ts`,
+      covered by `useUpdateResource.test.ts`.)
+- [x] Verify identity is preserved in the UI after update (BR-015). `id`
+      isn't a field `ResourceUpdateFormState` even has — it's shown
+      read-only, never submitted — so there's no code path that could
+      change it; covered by `UpdateResourceModal.test.tsx`'s pre-fill test
+      (asserts the id renders as text, not as any input's value) and its
+      submit test (asserts the id is absent from the update payload).
 - [ ] Push, open a PR, confirm CI passes, merge into `main`, delete the
       branch (workflow: section 2.1). **Not yet verified**: this
       environment has no Node.js/npm available, so typecheck/lint/build/test
       could not be run locally before this push — CI is the first real
       verification.
-
-### 9.5 Update Resource (FR-004, UC-07)
-
-- [ ] Implement the update-resource form, pre-filled from
-      `GET /api/v1/resources/{id}`.
-- [ ] Implement the `useUpdateResource` mutation, invalidating the
-      resource-detail and list queries.
-- [ ] Verify identity is preserved in the UI after update (BR-015).
 
 ### 9.6 Change Status (FR-010–012, UC-08)
 
