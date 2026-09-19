@@ -8,12 +8,14 @@ For the product and architecture background, see `../docs`. This README covers o
 
 ## Implementation Status
 
-This package does not yet have a `package.json`, build configuration, or a
-runnable application — only a handful of scaffolding files exist under
-`src/`. The commands below describe the intended setup once implementation
-is complete; they will not run against the repository in its current state.
-See the root [`README.md`](../README.md#implementation-status) for the
-overall project status.
+This package has a working `package.json`, Rspack/TypeScript/ESLint/
+Prettier/Tailwind CSS v4/Vitest configuration, and a runnable application
+under `src/` — resource list/map/detail, create/update/delete/relocate,
+status and location/change history, role management, an audit trail view,
+and the BMKG GeoHotspot situational-awareness overlay are all implemented.
+The commands below work as documented. See the root
+[`README.md`](../README.md#implementation-status) for the overall project
+status across all packages.
 
 ---
 
@@ -65,8 +67,10 @@ npm run lint
 | Variable | Purpose |
 |---|---|
 | `API_BASE_URL` | Base URL of the GeoResponse backend, e.g. `http://localhost:8080/api/v1` |
+| `MAP_TILE_URL` | Raster tile URL template for the map, e.g. `https://tile.example.org/{z}/{x}/{y}.png`. Left empty, the map renders with no base tiles, only resource markers. |
+| `LOG_LEVEL` | Frontend log level (default `debug`) |
 
-Set these in a local `.env` file (not committed) or through your shell before running `npm run dev` / `npm run build`.
+Copy `.env.example` to `.env` (not committed) and adjust, or set these through your shell before running `npm run dev` / `npm run build`. No `VITE_` prefix — the build tool is Rspack, not Vite. See `../docs/11_devops/ENVIRONMENT_MANAGEMENT.md` section 5.1/6.
 
 ---
 
@@ -78,7 +82,7 @@ Set these in a local `.env` file (not committed) or through your shell before ru
 | Build tool | Rspack |
 | Map | MapLibre GL JS |
 | Server state | TanStack Query |
-| Client state | React `useState` / `useReducer`, plus a small Zustand-style store for cross-cutting UI state |
+| Client state | React `useState` / `useReducer` only — no Redux/Zustand or other global state library |
 | Styling | Plain CSS |
 | Testing | Vitest + React Testing Library |
 
@@ -92,9 +96,9 @@ Each decision, and why it was made, is documented in `../docs/05_engineering/TEC
 src/
 ├── App.tsx, main.tsx, index.css
 ├── common/       # Shared presentational primitives (Card, StatusIndicator, Tabs, ...)
-├── components/   # Feature components (resource map, resource list, dashboard, ...)
+├── components/   # Feature components (resource map, list, detail/CRUD forms, role management, audit log, ...)
 ├── hooks/        # Shared, reusable hooks
-├── store/        # Cross-cutting client UI state (e.g. useAlertStore)
+├── store/        # Reserved, currently empty — no cross-cutting store exists yet
 ├── api/          # Data-access layer — the only place that talks to the backend
 ├── types/        # Shared domain/application types
 ├── constants/    # Shared application constants
