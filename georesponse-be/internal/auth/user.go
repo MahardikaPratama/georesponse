@@ -15,8 +15,16 @@ package auth
 
 import "errors"
 
-// ErrNotFound reports that no user exists with the given identifier.
-var ErrNotFound = errors.New("auth: not found")
+// Domain errors for authentication.
+var (
+	// ErrNotFound reports that no user exists with the given identifier.
+	ErrNotFound = errors.New("auth: not found")
+	// ErrInvalidCredentials reports that the submitted identifier/password
+	// pair does not match any user (BR-024). It intentionally does not
+	// distinguish "no such user" from "wrong password", so a caller
+	// cannot use response differences to enumerate valid identifiers.
+	ErrInvalidCredentials = errors.New("auth: invalid credentials")
+)
 
 // User is an account that can authenticate with GeoResponse and be
 // assigned roles. RoleNames holds the names of the roles currently

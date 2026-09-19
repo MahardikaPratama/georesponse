@@ -65,6 +65,35 @@ func TestUserRepository_GetByIDAndSetRoles(t *testing.T) {
 	}
 }
 
+func TestUserRepository_FindCredentialsByIdentifier(t *testing.T) {
+	tx := testTx(t)
+	users := NewUserRepository(tx)
+	ctx := context.Background()
+
+	userID := "test-user-creds"
+	if _, err := tx.Exec(ctx, "INSERT INTO users (id, name, password_hash) VALUES ($1, $2, $3)",
+		userID, "Test User", "a-bcrypt-hash"); err != nil {
+		t.Fatalf("seed user: %v", err)
+	}
+
+	creds, err := users.FindCredentialsByIdentifier(ctx, userID)
+	if err != nil {
+		t.Fatalf("FindCredentialsByIdentifier() = %v, want nil", err)
+	}
+	if creds.UserID != userID || creds.PasswordHash != "a-bcrypt-hash" {
+		t.Fatalf("FindCredentialsByIdentifier() = %+v, want UserID=%q PasswordHash=a-bcrypt-hash", creds, userID)
+	}
+}
+
+func TestUserRepository_FindCredentialsByIdentifier_NotFound(t *testing.T) {
+	users := NewUserRepository(testTx(t))
+
+	_, err := users.FindCredentialsByIdentifier(context.Background(), "does-not-exist")
+	if !errors.Is(err, auth.ErrNotFound) {
+		t.Fatalf("FindCredentialsByIdentifier() = %v, want ErrNotFound", err)
+	}
+}
+
 func TestUserRepository_SetRoles_UnknownRole(t *testing.T) {
 	tx := testTx(t)
 	users := NewUserRepository(tx)

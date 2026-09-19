@@ -43,7 +43,7 @@ func (r *UserRepository) GetByID(ctx context.Context, id string) (*auth.User, er
 		GROUP BY u.id, u.name
 	`
 	var user auth.User
-	err := r.db.QueryRow(ctx, query, id).Scan(&user.ID, &user.Name, &user.RoleNames)
+	err := activeConn(ctx, r.db).QueryRow(ctx, query, id).Scan(&user.ID, &user.Name, &user.RoleNames)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, fmt.Errorf("get user %q: %w", id, auth.ErrNotFound)
 	}
@@ -53,10 +53,26 @@ func (r *UserRepository) GetByID(ctx context.Context, id string) (*auth.User, er
 	return &user, nil
 }
 
+// FindCredentialsByIdentifier returns the credentials for the user
+// identified by identifier (their id).
+func (r *UserRepository) FindCredentialsByIdentifier(ctx context.Context, identifier string) (*auth.Credentials, error) {
+	const query = `SELECT id, password_hash FROM users WHERE id = $1`
+
+	var creds auth.Credentials
+	err := activeConn(ctx, r.db).QueryRow(ctx, query, identifier).Scan(&creds.UserID, &creds.PasswordHash)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, fmt.Errorf("find credentials for %q: %w", identifier, auth.ErrNotFound)
+	}
+	if err != nil {
+		return nil, fmt.Errorf("find credentials for %q: %w", identifier, err)
+	}
+	return &creds, nil
+}
+
 // SetRoles replaces the full set of roles held by the user identified by
 // userID with roleNames.
 func (r *UserRepository) SetRoles(ctx context.Context, userID string, roleNames []string) error {
-	return replaceJoinTable(ctx, r.db, joinTableSpec{
+	return replaceJoinTable(ctx, activeConn(ctx, r.db), joinTableSpec{
 		JoinTable:    "user_roles",
 		OwnerColumn:  "user_id",
 		OwnerID:      userID,

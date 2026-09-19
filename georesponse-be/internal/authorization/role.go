@@ -21,6 +21,9 @@ var (
 	// ErrNameConflict reports that a role already exists with the given
 	// name (roles.name is unique).
 	ErrNameConflict = errors.New("authorization: role name already in use")
+	// ErrPermissionDenied reports that an authenticated user does not
+	// hold a permission required for an operation (BR-026, BR-027).
+	ErrPermissionDenied = errors.New("authorization: permission denied")
 )
 
 // Permission is a single grantable capability, identified by a dotted
