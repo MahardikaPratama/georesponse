@@ -1,0 +1,2642 @@
+{
+  "meta": {
+    "capturedAt": "2026-09-19T07:05:17.300Z",
+    "browserVersion": "153.0.8010.48",
+    "platform": "win32 10.0.19045",
+    "cpuModel": "Intel(R) Core(TM) i7-6500U CPU @ 2.50GHz",
+    "cpuCount": 4,
+    "totalMemoryGb": 7.88
+  },
+  "results": [
+    {
+      "scenarioId": "S01",
+      "libraryId": "leaflet",
+      "featureCount": 1000,
+      "warmupRuns": 3,
+      "measuredRuns": 10,
+      "raw": [
+        {
+          "runIndex": 0,
+          "durationMs": 8,
+          "fps": 60.987605744639026,
+          "memoryUsedMb": 4.98288631439209
+        },
+        {
+          "runIndex": 1,
+          "durationMs": 7.699999988079071,
+          "fps": 61,
+          "memoryUsedMb": 4.486395835876465
+        },
+        {
+          "runIndex": 2,
+          "durationMs": 3.5,
+          "fps": 61,
+          "memoryUsedMb": 3.8798131942749023
+        },
+        {
+          "runIndex": 3,
+          "durationMs": 5.299999982118607,
+          "fps": 61,
+          "memoryUsedMb": 4.794344902038574
+        },
+        {
+          "runIndex": 4,
+          "durationMs": 4.699999988079071,
+          "fps": 60.98760574463908,
+          "memoryUsedMb": 4.053896903991699
+        },
+        {
+          "runIndex": 5,
+          "durationMs": 4.0999999940395355,
+          "fps": 61,
+          "memoryUsedMb": 5.047213554382324
+        },
+        {
+          "runIndex": 6,
+          "durationMs": 4.0999999940395355,
+          "fps": 61,
+          "memoryUsedMb": 4.311591148376465
+        },
+        {
+          "runIndex": 7,
+          "durationMs": 4.5999999940395355,
+          "fps": 61,
+          "memoryUsedMb": 5.22629451751709
+        },
+        {
+          "runIndex": 8,
+          "durationMs": 3.2999999821186066,
+          "fps": 61,
+          "memoryUsedMb": 4.485751152038574
+        },
+        {
+          "runIndex": 9,
+          "durationMs": 3.300000011920929,
+          "fps": 61,
+          "memoryUsedMb": 5.417513847351074
+        }
+      ],
+      "duration": {
+        "mean": 4.859999993443489,
+        "median": 4.3499999940395355,
+        "min": 3.2999999821186066,
+        "max": 8,
+        "stdDev": 1.6150541774251443,
+        "sampleCount": 10
+      },
+      "startedAt": "2026-09-19T06:51:53.013Z",
+      "finishedAt": "2026-09-19T06:52:07.176Z",
+      "failed": false,
+      "fps": {
+        "mean": 60.99752114892781,
+        "median": 61,
+        "min": 60.987605744639026,
+        "max": 61,
+        "stdDev": 0.0049577021443781176,
+        "sampleCount": 10
+      },
+      "memoryUsedMb": {
+        "mean": 4.668570137023925,
+        "median": 4.6403703689575195,
+        "min": 3.8798131942749023,
+        "max": 5.417513847351074,
+        "stdDev": 0.4820749846196368,
+        "sampleCount": 10
+      },
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ]
+    },
+    {
+      "scenarioId": "S02",
+      "libraryId": "leaflet",
+      "featureCount": 1000,
+      "warmupRuns": 3,
+      "measuredRuns": 10,
+      "raw": [
+        {
+          "runIndex": 0,
+          "durationMs": 16.599999994039536,
+          "fps": 60.98760574463897,
+          "memoryUsedMb": 6.607177734375
+        },
+        {
+          "runIndex": 1,
+          "durationMs": 13.100000023841858,
+          "fps": 61,
+          "memoryUsedMb": 7.376262664794922
+        },
+        {
+          "runIndex": 2,
+          "durationMs": 13.5,
+          "fps": 60.987605744639026,
+          "memoryUsedMb": 7.346214294433594
+        },
+        {
+          "runIndex": 3,
+          "durationMs": 14.400000005960464,
+          "fps": 60.98760574463897,
+          "memoryUsedMb": 7.052055358886719
+        },
+        {
+          "runIndex": 4,
+          "durationMs": 14.400000005960464,
+          "fps": 60.99999999999994,
+          "memoryUsedMb": 10.057319641113281
+        },
+        {
+          "runIndex": 5,
+          "durationMs": 14.5,
+          "fps": 61,
+          "memoryUsedMb": 13.007171630859375
+        },
+        {
+          "runIndex": 6,
+          "durationMs": 13,
+          "fps": 60.98760574463897,
+          "memoryUsedMb": 9.37667465209961
+        },
+        {
+          "runIndex": 7,
+          "durationMs": 14.400000005960464,
+          "fps": 60.98760574463897,
+          "memoryUsedMb": 12.231887817382812
+        },
+        {
+          "runIndex": 8,
+          "durationMs": 19.299999982118607,
+          "fps": 61,
+          "memoryUsedMb": 9.722122192382812
+        },
+        {
+          "runIndex": 9,
+          "durationMs": 15.5,
+          "fps": 60.98760574463897,
+          "memoryUsedMb": 12.582748413085938
+        }
+      ],
+      "duration": {
+        "mean": 14.870000001788139,
+        "median": 14.400000005960464,
+        "min": 13,
+        "max": 19.299999982118607,
+        "stdDev": 1.7978042084648418,
+        "sampleCount": 10
+      },
+      "startedAt": "2026-09-19T06:52:07.564Z",
+      "finishedAt": "2026-09-19T06:52:21.012Z",
+      "failed": false,
+      "fps": {
+        "mean": 60.99256344678338,
+        "median": 60.987605744639,
+        "min": 60.98760574463897,
+        "max": 61,
+        "stdDev": 0.006071920275244351,
+        "sampleCount": 10
+      },
+      "memoryUsedMb": {
+        "mean": 9.535963439941407,
+        "median": 9.549398422241211,
+        "min": 6.607177734375,
+        "max": 13.007171630859375,
+        "stdDev": 2.3051882208700567,
+        "sampleCount": 10
+      },
+      "consoleErrors": []
+    },
+    {
+      "scenarioId": "S03",
+      "libraryId": "leaflet",
+      "featureCount": 1000,
+      "warmupRuns": 3,
+      "measuredRuns": 10,
+      "raw": [
+        {
+          "runIndex": 0,
+          "durationMs": 15.700000017881393,
+          "fps": 60.987605744639,
+          "memoryUsedMb": 7.619220733642578
+        },
+        {
+          "runIndex": 1,
+          "durationMs": 14.5,
+          "fps": 60.98760574463897,
+          "memoryUsedMb": 10.130390167236328
+        },
+        {
+          "runIndex": 2,
+          "durationMs": 14.299999982118607,
+          "fps": 61,
+          "memoryUsedMb": 11.539939880371094
+        },
+        {
+          "runIndex": 3,
+          "durationMs": 20.5,
+          "fps": 60.987605744639026,
+          "memoryUsedMb": 8.011451721191406
+        },
+        {
+          "runIndex": 4,
+          "durationMs": 14,
+          "fps": 61,
+          "memoryUsedMb": 11.32955551147461
+        },
+        {
+          "runIndex": 5,
+          "durationMs": 24.700000017881393,
+          "fps": 61,
+          "memoryUsedMb": 14.693740844726562
+        },
+        {
+          "runIndex": 6,
+          "durationMs": 13.5,
+          "fps": 60.98760574463897,
+          "memoryUsedMb": 11.310230255126953
+        },
+        {
+          "runIndex": 7,
+          "durationMs": 19.599999994039536,
+          "fps": 60.99360550909985,
+          "memoryUsedMb": 14.558643341064453
+        },
+        {
+          "runIndex": 8,
+          "durationMs": 15.299999982118607,
+          "fps": 61,
+          "memoryUsedMb": 11.253799438476562
+        },
+        {
+          "runIndex": 9,
+          "durationMs": 14.099999994039536,
+          "fps": 60.98760574463897,
+          "memoryUsedMb": 14.505008697509766
+        }
+      ],
+      "duration": {
+        "mean": 16.619999998807906,
+        "median": 14.899999991059303,
+        "min": 13.5,
+        "max": 24.700000017881393,
+        "stdDev": 3.530382420939047,
+        "sampleCount": 10
+      },
+      "startedAt": "2026-09-19T06:52:21.449Z",
+      "finishedAt": "2026-09-19T06:52:34.947Z",
+      "failed": false,
+      "fps": {
+        "mean": 60.993163423229475,
+        "median": 60.99060562686944,
+        "min": 60.98760574463897,
+        "max": 61,
+        "stdDev": 0.005844566059595747,
+        "sampleCount": 10
+      },
+      "memoryUsedMb": {
+        "mean": 11.495198059082032,
+        "median": 11.319892883300781,
+        "min": 7.619220733642578,
+        "max": 14.693740844726562,
+        "stdDev": 2.4045508530472706,
+        "sampleCount": 10
+      },
+      "consoleErrors": []
+    },
+    {
+      "scenarioId": "S04",
+      "libraryId": "leaflet",
+      "featureCount": 1000,
+      "warmupRuns": 3,
+      "measuredRuns": 10,
+      "raw": [
+        {
+          "runIndex": 0,
+          "durationMs": 24.400000005960464,
+          "fps": 60.987605744639,
+          "memoryUsedMb": 15.804058074951172
+        },
+        {
+          "runIndex": 1,
+          "durationMs": 20.30000001192093,
+          "fps": 60.98760574463897,
+          "memoryUsedMb": 16.720417022705078
+        },
+        {
+          "runIndex": 2,
+          "durationMs": 20.400000005960464,
+          "fps": 60.987605744639026,
+          "memoryUsedMb": 16.965667724609375
+        },
+        {
+          "runIndex": 3,
+          "durationMs": 20.69999998807907,
+          "fps": 60.987605744639026,
+          "memoryUsedMb": 17.14316177368164
+        },
+        {
+          "runIndex": 4,
+          "durationMs": 20,
+          "fps": 60.99999999999994,
+          "memoryUsedMb": 22.376476287841797
+        },
+        {
+          "runIndex": 5,
+          "durationMs": 19.599999994039536,
+          "fps": 60.98760574463897,
+          "memoryUsedMb": 27.599647521972656
+        },
+        {
+          "runIndex": 6,
+          "durationMs": 18.099999994039536,
+          "fps": 60.98760574463897,
+          "memoryUsedMb": 19.08312225341797
+        },
+        {
+          "runIndex": 7,
+          "durationMs": 21.30000001192093,
+          "fps": 60.98760574463897,
+          "memoryUsedMb": 24.215744018554688
+        },
+        {
+          "runIndex": 8,
+          "durationMs": 22,
+          "fps": 60.98160716042093,
+          "memoryUsedMb": 15.749420166015625
+        },
+        {
+          "runIndex": 9,
+          "durationMs": 15.299999982118607,
+          "fps": 60.981607160421035,
+          "memoryUsedMb": 20.873340606689453
+        }
+      ],
+      "duration": {
+        "mean": 20.209999999403955,
+        "median": 20.350000008940697,
+        "min": 15.299999982118607,
+        "max": 24.400000005960464,
+        "stdDev": 2.2629405709537482,
+        "sampleCount": 10
+      },
+      "startedAt": "2026-09-19T06:52:35.303Z",
+      "finishedAt": "2026-09-19T06:52:48.913Z",
+      "failed": false,
+      "fps": {
+        "mean": 60.987645453331496,
+        "median": 60.98760574463897,
+        "min": 60.98160716042093,
+        "max": 60.99999999999994,
+        "stdDev": 0.004749398102823098,
+        "sampleCount": 10
+      },
+      "memoryUsedMb": {
+        "mean": 19.653105545043946,
+        "median": 18.113142013549805,
+        "min": 15.749420166015625,
+        "max": 27.599647521972656,
+        "stdDev": 3.812774969766867,
+        "sampleCount": 10
+      },
+      "consoleErrors": []
+    },
+    {
+      "scenarioId": "S05",
+      "libraryId": "leaflet",
+      "featureCount": 1000,
+      "warmupRuns": 3,
+      "measuredRuns": 10,
+      "raw": [
+        {
+          "runIndex": 0,
+          "durationMs": 34.900000005960464,
+          "fps": 61,
+          "memoryUsedMb": 14.273597717285156
+        },
+        {
+          "runIndex": 1,
+          "durationMs": 45,
+          "fps": 60.987605744639026,
+          "memoryUsedMb": 12.907691955566406
+        },
+        {
+          "runIndex": 2,
+          "durationMs": 38.20000001788139,
+          "fps": 61,
+          "memoryUsedMb": 10.671379089355469
+        },
+        {
+          "runIndex": 3,
+          "durationMs": 26.30000001192093,
+          "fps": 60.987605744639026,
+          "memoryUsedMb": 15.282020568847656
+        },
+        {
+          "runIndex": 4,
+          "durationMs": 33.099999994039536,
+          "fps": 60.98760574463897,
+          "memoryUsedMb": 13.587608337402344
+        },
+        {
+          "runIndex": 5,
+          "durationMs": 30.599999994039536,
+          "fps": 61,
+          "memoryUsedMb": 11.570987701416016
+        },
+        {
+          "runIndex": 6,
+          "durationMs": 35.900000005960464,
+          "fps": 60.98760574463897,
+          "memoryUsedMb": 16.23129653930664
+        },
+        {
+          "runIndex": 7,
+          "durationMs": 24.600000023841858,
+          "fps": 60.98760574463897,
+          "memoryUsedMb": 14.757610321044922
+        },
+        {
+          "runIndex": 8,
+          "durationMs": 29.099999994039536,
+          "fps": 61,
+          "memoryUsedMb": 12.626968383789062
+        },
+        {
+          "runIndex": 9,
+          "durationMs": 42.900000005960464,
+          "fps": 61,
+          "memoryUsedMb": 17.199634552001953
+        }
+      ],
+      "duration": {
+        "mean": 34.060000005364415,
+        "median": 34,
+        "min": 24.600000023841858,
+        "max": 45,
+        "stdDev": 6.3738842142064716,
+        "sampleCount": 10
+      },
+      "startedAt": "2026-09-19T06:52:49.298Z",
+      "finishedAt": "2026-09-19T06:53:03.045Z",
+      "failed": false,
+      "fps": {
+        "mean": 60.9938028723195,
+        "median": 60.99380287231951,
+        "min": 60.98760574463897,
+        "max": 61,
+        "stdDev": 0.006197127680503911,
+        "sampleCount": 10
+      },
+      "memoryUsedMb": {
+        "mean": 13.910879516601563,
+        "median": 13.93060302734375,
+        "min": 10.671379089355469,
+        "max": 17.199634552001953,
+        "stdDev": 1.9405556996737359,
+        "sampleCount": 10
+      },
+      "consoleErrors": []
+    },
+    {
+      "scenarioId": "S07",
+      "libraryId": "leaflet",
+      "featureCount": 1000,
+      "warmupRuns": 3,
+      "measuredRuns": 10,
+      "raw": [
+        {
+          "runIndex": 0,
+          "durationMs": 1029.5,
+          "fps": 61,
+          "memoryUsedMb": 7.742860794067383
+        },
+        {
+          "runIndex": 1,
+          "durationMs": 1047.7000000178814,
+          "fps": 60.987605744639026,
+          "memoryUsedMb": 8.918920516967773
+        },
+        {
+          "runIndex": 2,
+          "durationMs": 1029.7999999821186,
+          "fps": 61,
+          "memoryUsedMb": 9.197160720825195
+        },
+        {
+          "runIndex": 3,
+          "durationMs": 1028.7999999821186,
+          "fps": 61,
+          "memoryUsedMb": 9.21442985534668
+        },
+        {
+          "runIndex": 4,
+          "durationMs": 1047.1000000238419,
+          "fps": 60.99360550909985,
+          "memoryUsedMb": 14.94127082824707
+        },
+        {
+          "runIndex": 5,
+          "durationMs": 1012.3000000119209,
+          "fps": 61,
+          "memoryUsedMb": 13.62095832824707
+        },
+        {
+          "runIndex": 6,
+          "durationMs": 1030.7999999821186,
+          "fps": 61,
+          "memoryUsedMb": 12.189619064331055
+        },
+        {
+          "runIndex": 7,
+          "durationMs": 1015.4000000059605,
+          "fps": 61,
+          "memoryUsedMb": 10.69428825378418
+        },
+        {
+          "runIndex": 8,
+          "durationMs": 1025.2000000178814,
+          "fps": 61,
+          "memoryUsedMb": 16.183156967163086
+        },
+        {
+          "runIndex": 9,
+          "durationMs": 1030.699999988079,
+          "fps": 60.98760574463897,
+          "memoryUsedMb": 14.644353866577148
+        }
+      ],
+      "duration": {
+        "mean": 1029.7300000011921,
+        "median": 1029.6499999910593,
+        "min": 1012.3000000119209,
+        "max": 1047.7000000178814,
+        "stdDev": 10.757885483178796,
+        "sampleCount": 10
+      },
+      "startedAt": "2026-09-19T06:53:03.397Z",
+      "finishedAt": "2026-09-19T06:53:17.078Z",
+      "failed": false,
+      "fps": {
+        "mean": 60.99688169983777,
+        "median": 61,
+        "min": 60.98760574463897,
+        "max": 61,
+        "stdDev": 0.005008859019405805,
+        "sampleCount": 10
+      },
+      "memoryUsedMb": {
+        "mean": 11.734701919555665,
+        "median": 11.441953659057617,
+        "min": 7.742860794067383,
+        "max": 16.183156967163086,
+        "stdDev": 2.829109249651317,
+        "sampleCount": 10
+      },
+      "consoleErrors": []
+    },
+    {
+      "scenarioId": "S06",
+      "libraryId": "leaflet",
+      "featureCount": 100,
+      "warmupRuns": 3,
+      "measuredRuns": 10,
+      "raw": [
+        {
+          "runIndex": 0,
+          "durationMs": 2.9000000059604645,
+          "fps": 60.99390060993898,
+          "memoryUsedMb": 4.988860130310059
+        },
+        {
+          "runIndex": 1,
+          "durationMs": 3.5,
+          "fps": 60.987605744639026,
+          "memoryUsedMb": 5.730605125427246
+        },
+        {
+          "runIndex": 2,
+          "durationMs": 3.5,
+          "fps": 61,
+          "memoryUsedMb": 5.74124813079834
+        },
+        {
+          "runIndex": 3,
+          "durationMs": 1.5999999940395355,
+          "fps": 61,
+          "memoryUsedMb": 5.764330863952637
+        },
+        {
+          "runIndex": 4,
+          "durationMs": 1.5,
+          "fps": 60.99999999999994,
+          "memoryUsedMb": 5.117491722106934
+        },
+        {
+          "runIndex": 5,
+          "durationMs": 1.9000000059604645,
+          "fps": 61,
+          "memoryUsedMb": 4.848189353942871
+        },
+        {
+          "runIndex": 6,
+          "durationMs": 2.2999999821186066,
+          "fps": 60.99360550909985,
+          "memoryUsedMb": 6.006255149841309
+        },
+        {
+          "runIndex": 7,
+          "durationMs": 1.4000000059604645,
+          "fps": 61,
+          "memoryUsedMb": 5.334334373474121
+        },
+        {
+          "runIndex": 8,
+          "durationMs": 2.2999999821186066,
+          "fps": 61,
+          "memoryUsedMb": 6.444235801696777
+        },
+        {
+          "runIndex": 9,
+          "durationMs": 1.699999988079071,
+          "fps": 60.99390060993898,
+          "memoryUsedMb": 5.796866416931152
+        }
+      ],
+      "duration": {
+        "mean": 2.2599999964237214,
+        "median": 2.0999999940395355,
+        "min": 1.4000000059604645,
+        "max": 3.5,
+        "stdDev": 0.7539230737578001,
+        "sampleCount": 10
+      },
+      "startedAt": "2026-09-19T06:53:17.408Z",
+      "finishedAt": "2026-09-19T06:53:30.708Z",
+      "failed": false,
+      "datasetSize": "small",
+      "fps": {
+        "mean": 60.99690124736168,
+        "median": 60.99999999999997,
+        "min": 60.987605744639026,
+        "max": 61,
+        "stdDev": 0.004157998544046729,
+        "sampleCount": 10
+      },
+      "memoryUsedMb": {
+        "mean": 5.577241706848144,
+        "median": 5.735926628112793,
+        "min": 4.848189353942871,
+        "max": 6.444235801696777,
+        "stdDev": 0.4709003440192145,
+        "sampleCount": 10
+      },
+      "consoleErrors": []
+    },
+    {
+      "scenarioId": "S06",
+      "libraryId": "leaflet",
+      "featureCount": 1000,
+      "warmupRuns": 3,
+      "measuredRuns": 10,
+      "raw": [
+        {
+          "runIndex": 0,
+          "durationMs": 14.900000005960464,
+          "fps": 60.987605744639,
+          "memoryUsedMb": 6.630505561828613
+        },
+        {
+          "runIndex": 1,
+          "durationMs": 17.19999998807907,
+          "fps": 60.99390060993904,
+          "memoryUsedMb": 7.103436470031738
+        },
+        {
+          "runIndex": 2,
+          "durationMs": 20.5,
+          "fps": 61,
+          "memoryUsedMb": 7.193875312805176
+        },
+        {
+          "runIndex": 3,
+          "durationMs": 15,
+          "fps": 60.987605744639026,
+          "memoryUsedMb": 6.996335029602051
+        },
+        {
+          "runIndex": 4,
+          "durationMs": 13.400000005960464,
+          "fps": 61,
+          "memoryUsedMb": 10.017071723937988
+        },
+        {
+          "runIndex": 5,
+          "durationMs": 12.599999994039536,
+          "fps": 61,
+          "memoryUsedMb": 12.996663093566895
+        },
+        {
+          "runIndex": 6,
+          "durationMs": 10.599999994039536,
+          "fps": 61,
+          "memoryUsedMb": 9.365254402160645
+        },
+        {
+          "runIndex": 7,
+          "durationMs": 12.099999994039536,
+          "fps": 61,
+          "memoryUsedMb": 12.220330238342285
+        },
+        {
+          "runIndex": 8,
+          "durationMs": 11.599999994039536,
+          "fps": 60.98760574463897,
+          "memoryUsedMb": 9.709576606750488
+        },
+        {
+          "runIndex": 9,
+          "durationMs": 11.299999982118607,
+          "fps": 61,
+          "memoryUsedMb": 12.568055152893066
+        }
+      ],
+      "duration": {
+        "mean": 13.919999995827675,
+        "median": 13,
+        "min": 10.599999994039536,
+        "max": 20.5,
+        "stdDev": 2.911631847017177,
+        "sampleCount": 10
+      },
+      "startedAt": "2026-09-19T06:53:31.044Z",
+      "finishedAt": "2026-09-19T06:53:44.477Z",
+      "failed": false,
+      "datasetSize": "medium",
+      "fps": {
+        "mean": 60.99567178438561,
+        "median": 61,
+        "min": 60.98760574463897,
+        "max": 61,
+        "stdDev": 0.005574233157393584,
+        "sampleCount": 10
+      },
+      "memoryUsedMb": {
+        "mean": 9.480110359191894,
+        "median": 9.537415504455566,
+        "min": 6.630505561828613,
+        "max": 12.996663093566895,
+        "stdDev": 2.3437013926121035,
+        "sampleCount": 10
+      },
+      "consoleErrors": []
+    },
+    {
+      "scenarioId": "S06",
+      "libraryId": "leaflet",
+      "featureCount": 10000,
+      "warmupRuns": 3,
+      "measuredRuns": 10,
+      "raw": [
+        {
+          "runIndex": 0,
+          "durationMs": 107.90000000596046,
+          "fps": 61,
+          "memoryUsedMb": 40.751723289489746
+        },
+        {
+          "runIndex": 1,
+          "durationMs": 161.59999999403954,
+          "fps": 60,
+          "memoryUsedMb": 12.760927200317383
+        },
+        {
+          "runIndex": 2,
+          "durationMs": 108.2999999821186,
+          "fps": 60.00983767830792,
+          "memoryUsedMb": 34.43446159362793
+        },
+        {
+          "runIndex": 3,
+          "durationMs": 204,
+          "fps": 60.99999999999994,
+          "memoryUsedMb": 27.250837326049805
+        },
+        {
+          "runIndex": 4,
+          "durationMs": 97.5,
+          "fps": 60,
+          "memoryUsedMb": 47.76767921447754
+        },
+        {
+          "runIndex": 5,
+          "durationMs": 117.30000001192093,
+          "fps": 61,
+          "memoryUsedMb": 31.20781421661377
+        },
+        {
+          "runIndex": 6,
+          "durationMs": 111,
+          "fps": 61,
+          "memoryUsedMb": 24.63963794708252
+        },
+        {
+          "runIndex": 7,
+          "durationMs": 97.40000000596046,
+          "fps": 60,
+          "memoryUsedMb": 44.96058368682861
+        },
+        {
+          "runIndex": 8,
+          "durationMs": 104.60000002384186,
+          "fps": 60,
+          "memoryUsedMb": 49.151156425476074
+        },
+        {
+          "runIndex": 9,
+          "durationMs": 117,
+          "fps": 60,
+          "memoryUsedMb": 45.00247859954834
+        }
+      ],
+      "duration": {
+        "mean": 122.66000000238418,
+        "median": 109.6499999910593,
+        "min": 97.40000000596046,
+        "max": 204,
+        "stdDev": 32.17229242466772,
+        "sampleCount": 10
+      },
+      "startedAt": "2026-09-19T06:53:44.806Z",
+      "finishedAt": "2026-09-19T06:54:00.628Z",
+      "failed": false,
+      "datasetSize": "large",
+      "fps": {
+        "mean": 60.40098376783078,
+        "median": 60.00491883915396,
+        "min": 60,
+        "max": 61,
+        "stdDev": 0.48910295023406253,
+        "sampleCount": 10
+      },
+      "memoryUsedMb": {
+        "mean": 35.79272994995117,
+        "median": 37.59309244155884,
+        "min": 12.760927200317383,
+        "max": 49.151156425476074,
+        "stdDev": 11.251636632025821,
+        "sampleCount": 10
+      },
+      "consoleErrors": []
+    },
+    {
+      "scenarioId": "S01",
+      "libraryId": "openlayers",
+      "featureCount": 1000,
+      "warmupRuns": 3,
+      "measuredRuns": 10,
+      "raw": [
+        {
+          "runIndex": 0,
+          "durationMs": 282.90000000596046,
+          "fps": 61,
+          "memoryUsedMb": 4.1906633377075195
+        },
+        {
+          "runIndex": 1,
+          "durationMs": 301.59999999403954,
+          "fps": 61,
+          "memoryUsedMb": 4.2560625076293945
+        },
+        {
+          "runIndex": 2,
+          "durationMs": 299.5,
+          "fps": 61,
+          "memoryUsedMb": 4.312504768371582
+        },
+        {
+          "runIndex": 3,
+          "durationMs": 300.59999999403954,
+          "fps": 60.99360550909985,
+          "memoryUsedMb": 4.402348518371582
+        },
+        {
+          "runIndex": 4,
+          "durationMs": 300.59999999403954,
+          "fps": 61,
+          "memoryUsedMb": 4.516579627990723
+        },
+        {
+          "runIndex": 5,
+          "durationMs": 301.40000000596046,
+          "fps": 61,
+          "memoryUsedMb": 5.062748908996582
+        },
+        {
+          "runIndex": 6,
+          "durationMs": 293,
+          "fps": 61,
+          "memoryUsedMb": 4.817746162414551
+        },
+        {
+          "runIndex": 7,
+          "durationMs": 415.69999998807907,
+          "fps": 61,
+          "memoryUsedMb": 5.248970985412598
+        },
+        {
+          "runIndex": 8,
+          "durationMs": 300.90000000596046,
+          "fps": 60.98760574463897,
+          "memoryUsedMb": 5.438611030578613
+        },
+        {
+          "runIndex": 9,
+          "durationMs": 300.40000000596046,
+          "fps": 61,
+          "memoryUsedMb": 5.463857650756836
+        }
+      ],
+      "duration": {
+        "mean": 309.65999999940396,
+        "median": 300.59999999403954,
+        "min": 282.90000000596046,
+        "max": 415.69999998807907,
+        "stdDev": 35.77877023760265,
+        "sampleCount": 10
+      },
+      "startedAt": "2026-09-19T06:54:00.995Z",
+      "finishedAt": "2026-09-19T06:54:18.622Z",
+      "failed": false,
+      "fps": {
+        "mean": 60.998121125373885,
+        "median": 61,
+        "min": 60.98760574463897,
+        "max": 61,
+        "stdDev": 0.003990054902126362,
+        "sampleCount": 10
+      },
+      "memoryUsedMb": {
+        "mean": 4.771009349822998,
+        "median": 4.667162895202637,
+        "min": 4.1906633377075195,
+        "max": 5.463857650756836,
+        "stdDev": 0.4747965758787302,
+        "sampleCount": 10
+      },
+      "consoleErrors": []
+    },
+    {
+      "scenarioId": "S02",
+      "libraryId": "openlayers",
+      "featureCount": 1000,
+      "warmupRuns": 3,
+      "measuredRuns": 10,
+      "raw": [
+        {
+          "runIndex": 0,
+          "durationMs": 6.9000000059604645,
+          "fps": 60.99390060993898,
+          "memoryUsedMb": 14.428638458251953
+        },
+        {
+          "runIndex": 1,
+          "durationMs": 11.200000017881393,
+          "fps": 61,
+          "memoryUsedMb": 16.22917938232422
+        },
+        {
+          "runIndex": 2,
+          "durationMs": 6,
+          "fps": 60.99360550909985,
+          "memoryUsedMb": 17.814796447753906
+        },
+        {
+          "runIndex": 3,
+          "durationMs": 5.199999988079071,
+          "fps": 61,
+          "memoryUsedMb": 19.059921264648438
+        },
+        {
+          "runIndex": 4,
+          "durationMs": 5.5,
+          "fps": 60.98760574463897,
+          "memoryUsedMb": 19.194886207580566
+        },
+        {
+          "runIndex": 5,
+          "durationMs": 7,
+          "fps": 61,
+          "memoryUsedMb": 23.617328643798828
+        },
+        {
+          "runIndex": 6,
+          "durationMs": 5.199999988079071,
+          "fps": 61,
+          "memoryUsedMb": 22.71812152862549
+        },
+        {
+          "runIndex": 7,
+          "durationMs": 6.100000023841858,
+          "fps": 60.99360550909985,
+          "memoryUsedMb": 26.979904174804688
+        },
+        {
+          "runIndex": 8,
+          "durationMs": 8.800000011920929,
+          "fps": 61,
+          "memoryUsedMb": 26.20365619659424
+        },
+        {
+          "runIndex": 9,
+          "durationMs": 7.199999988079071,
+          "fps": 61,
+          "memoryUsedMb": 30.582584381103516
+        }
+      ],
+      "duration": {
+        "mean": 6.910000002384185,
+        "median": 6.500000014901161,
+        "min": 5.199999988079071,
+        "max": 11.200000017881393,
+        "stdDev": 1.771694111136724,
+        "sampleCount": 10
+      },
+      "startedAt": "2026-09-19T06:54:19.820Z",
+      "finishedAt": "2026-09-19T06:54:37.373Z",
+      "failed": false,
+      "fps": {
+        "mean": 60.996871737277765,
+        "median": 61,
+        "min": 60.98760574463897,
+        "max": 61,
+        "stdDev": 0.004180177941449674,
+        "sampleCount": 10
+      },
+      "memoryUsedMb": {
+        "mean": 21.682901668548585,
+        "median": 20.956503868103027,
+        "min": 14.428638458251953,
+        "max": 30.582584381103516,
+        "stdDev": 4.928624594666081,
+        "sampleCount": 10
+      },
+      "consoleErrors": []
+    },
+    {
+      "scenarioId": "S03",
+      "libraryId": "openlayers",
+      "featureCount": 1000,
+      "warmupRuns": 3,
+      "measuredRuns": 10,
+      "raw": [
+        {
+          "runIndex": 0,
+          "durationMs": 7.0999999940395355,
+          "fps": 60.98760574463897,
+          "memoryUsedMb": 15.524723052978516
+        },
+        {
+          "runIndex": 1,
+          "durationMs": 11.600000023841858,
+          "fps": 60.98160716042093,
+          "memoryUsedMb": 13.42147445678711
+        },
+        {
+          "runIndex": 2,
+          "durationMs": 5.5,
+          "fps": 60.981607160420985,
+          "memoryUsedMb": 18.067474365234375
+        },
+        {
+          "runIndex": 3,
+          "durationMs": 7,
+          "fps": 60.98760574463897,
+          "memoryUsedMb": 22.31723403930664
+        },
+        {
+          "runIndex": 4,
+          "durationMs": 8.699999988079071,
+          "fps": 61,
+          "memoryUsedMb": 19.186806678771973
+        },
+        {
+          "runIndex": 5,
+          "durationMs": 26.900000005960464,
+          "fps": 60,
+          "memoryUsedMb": 23.548023223876953
+        },
+        {
+          "runIndex": 6,
+          "durationMs": 5.5,
+          "fps": 61,
+          "memoryUsedMb": 22.710076332092285
+        },
+        {
+          "runIndex": 7,
+          "durationMs": 7.9000000059604645,
+          "fps": 60.98760574463897,
+          "memoryUsedMb": 27.012115478515625
+        },
+        {
+          "runIndex": 8,
+          "durationMs": 8.099999994039536,
+          "fps": 60.981607160421035,
+          "memoryUsedMb": 31.21001434326172
+        },
+        {
+          "runIndex": 9,
+          "durationMs": 7.699999988079071,
+          "fps": 61,
+          "memoryUsedMb": 35.4058952331543
+        }
+      ],
+      "duration": {
+        "mean": 9.6,
+        "median": 7.799999997019768,
+        "min": 5.5,
+        "max": 26.900000005960464,
+        "stdDev": 5.995665104021194,
+        "sampleCount": 10
+      },
+      "startedAt": "2026-09-19T06:54:38.043Z",
+      "finishedAt": "2026-09-19T06:54:55.772Z",
+      "failed": false,
+      "fps": {
+        "mean": 60.89076387151798,
+        "median": 60.98760574463897,
+        "min": 60,
+        "max": 61,
+        "stdDev": 0.2970101723314894,
+        "sampleCount": 10
+      },
+      "memoryUsedMb": {
+        "mean": 22.84038372039795,
+        "median": 22.513655185699463,
+        "min": 13.42147445678711,
+        "max": 35.4058952331543,
+        "stdDev": 6.515378677420847,
+        "sampleCount": 10
+      },
+      "consoleErrors": []
+    },
+    {
+      "scenarioId": "S04",
+      "libraryId": "openlayers",
+      "featureCount": 1000,
+      "warmupRuns": 3,
+      "measuredRuns": 10,
+      "raw": [
+        {
+          "runIndex": 0,
+          "durationMs": 10.599999994039536,
+          "fps": 61,
+          "memoryUsedMb": 15.84305477142334
+        },
+        {
+          "runIndex": 1,
+          "durationMs": 8.100000023841858,
+          "fps": 60.98760574463897,
+          "memoryUsedMb": 18.744776725769043
+        },
+        {
+          "runIndex": 2,
+          "durationMs": 7,
+          "fps": 60.98760574463897,
+          "memoryUsedMb": 20.540839195251465
+        },
+        {
+          "runIndex": 3,
+          "durationMs": 7.0999999940395355,
+          "fps": 60.98760574463897,
+          "memoryUsedMb": 25.486395835876465
+        },
+        {
+          "runIndex": 4,
+          "durationMs": 9.699999988079071,
+          "fps": 61,
+          "memoryUsedMb": 21.191192626953125
+        },
+        {
+          "runIndex": 5,
+          "durationMs": 10.200000017881393,
+          "fps": 61,
+          "memoryUsedMb": 26.980448722839355
+        },
+        {
+          "runIndex": 6,
+          "durationMs": 10.299999982118607,
+          "fps": 60.98760574463897,
+          "memoryUsedMb": 24.883663177490234
+        },
+        {
+          "runIndex": 7,
+          "durationMs": 6,
+          "fps": 60.981607160421035,
+          "memoryUsedMb": 29.975211143493652
+        },
+        {
+          "runIndex": 8,
+          "durationMs": 10.800000011920929,
+          "fps": 61,
+          "memoryUsedMb": 34.96976375579834
+        },
+        {
+          "runIndex": 9,
+          "durationMs": 5.800000011920929,
+          "fps": 61,
+          "memoryUsedMb": 30.899986267089844
+        }
+      ],
+      "duration": {
+        "mean": 8.560000002384186,
+        "median": 8.900000005960464,
+        "min": 5.800000011920929,
+        "max": 10.800000011920929,
+        "stdDev": 1.8746733029516793,
+        "sampleCount": 10
+      },
+      "startedAt": "2026-09-19T06:54:56.824Z",
+      "finishedAt": "2026-09-19T06:55:14.538Z",
+      "failed": false,
+      "fps": {
+        "mean": 60.993203013897684,
+        "median": 60.993802872319485,
+        "min": 60.981607160421035,
+        "max": 61,
+        "stdDev": 0.00700554502408985,
+        "sampleCount": 10
+      },
+      "memoryUsedMb": {
+        "mean": 24.951533222198485,
+        "median": 25.18502950668335,
+        "min": 15.84305477142334,
+        "max": 34.96976375579834,
+        "stdDev": 5.6610612791380275,
+        "sampleCount": 10
+      },
+      "consoleErrors": []
+    },
+    {
+      "scenarioId": "S05",
+      "libraryId": "openlayers",
+      "featureCount": 1000,
+      "warmupRuns": 3,
+      "measuredRuns": 10,
+      "raw": [
+        {
+          "runIndex": 0,
+          "durationMs": 6.899999976158142,
+          "fps": 61,
+          "memoryUsedMb": 13.761177062988281
+        },
+        {
+          "runIndex": 1,
+          "durationMs": 7.199999988079071,
+          "fps": 60.98760574463897,
+          "memoryUsedMb": 15.049510955810547
+        },
+        {
+          "runIndex": 2,
+          "durationMs": 8.699999988079071,
+          "fps": 60.98760574463897,
+          "memoryUsedMb": 16.45693588256836
+        },
+        {
+          "runIndex": 3,
+          "durationMs": 8.600000023841858,
+          "fps": 60.98760574463897,
+          "memoryUsedMb": 17.32312774658203
+        },
+        {
+          "runIndex": 4,
+          "durationMs": 6.800000011920929,
+          "fps": 60.99360550909985,
+          "memoryUsedMb": 19.129143714904785
+        },
+        {
+          "runIndex": 5,
+          "durationMs": 8.199999988079071,
+          "fps": 61,
+          "memoryUsedMb": 23.408615112304688
+        },
+        {
+          "runIndex": 6,
+          "durationMs": 10.300000011920929,
+          "fps": 60.98760574463897,
+          "memoryUsedMb": 22.69038486480713
+        },
+        {
+          "runIndex": 7,
+          "durationMs": 28.599999994039536,
+          "fps": 61,
+          "memoryUsedMb": 26.875099182128906
+        },
+        {
+          "runIndex": 8,
+          "durationMs": 5.5,
+          "fps": 60,
+          "memoryUsedMb": 25.981919288635254
+        },
+        {
+          "runIndex": 9,
+          "durationMs": 10.800000011920929,
+          "fps": 57,
+          "memoryUsedMb": 30.112594604492188
+        }
+      ],
+      "duration": {
+        "mean": 10.159999999403954,
+        "median": 8.400000005960464,
+        "min": 5.5,
+        "max": 28.599999994039536,
+        "stdDev": 6.334540235501227,
+        "sampleCount": 10
+      },
+      "startedAt": "2026-09-19T06:55:16.200Z",
+      "finishedAt": "2026-09-19T06:55:33.780Z",
+      "failed": false,
+      "fps": {
+        "mean": 60.494402848765574,
+        "median": 60.98760574463897,
+        "min": 57,
+        "max": 61,
+        "stdDev": 1.2018473516388846,
+        "sampleCount": 10
+      },
+      "memoryUsedMb": {
+        "mean": 21.078850841522218,
+        "median": 20.909764289855957,
+        "min": 13.761177062988281,
+        "max": 30.112594604492188,
+        "stdDev": 5.257757559867206,
+        "sampleCount": 10
+      },
+      "consoleErrors": []
+    },
+    {
+      "scenarioId": "S07",
+      "libraryId": "openlayers",
+      "featureCount": 1000,
+      "warmupRuns": 3,
+      "measuredRuns": 10,
+      "raw": [
+        {
+          "runIndex": 0,
+          "durationMs": 1013.3999999761581,
+          "fps": 60.98160716042093,
+          "memoryUsedMb": 13.110843658447266
+        },
+        {
+          "runIndex": 1,
+          "durationMs": 1028.699999988079,
+          "fps": 60.987605744639026,
+          "memoryUsedMb": 15.06228256225586
+        },
+        {
+          "runIndex": 2,
+          "durationMs": 1020.9000000059605,
+          "fps": 60.98760574463897,
+          "memoryUsedMb": 17.61418628692627
+        },
+        {
+          "runIndex": 3,
+          "durationMs": 1027.5,
+          "fps": 60.98760574463897,
+          "memoryUsedMb": 23.089580535888672
+        },
+        {
+          "runIndex": 4,
+          "durationMs": 1010.4000000059605,
+          "fps": 61,
+          "memoryUsedMb": 19.575836181640625
+        },
+        {
+          "runIndex": 5,
+          "durationMs": 1007.5999999940395,
+          "fps": 61,
+          "memoryUsedMb": 25.0323486328125
+        },
+        {
+          "runIndex": 6,
+          "durationMs": 980.5,
+          "fps": 61,
+          "memoryUsedMb": 23.135684967041016
+        },
+        {
+          "runIndex": 7,
+          "durationMs": 1009.5,
+          "fps": 61,
+          "memoryUsedMb": 26.40898609161377
+        },
+        {
+          "runIndex": 8,
+          "durationMs": 1027.5999999940395,
+          "fps": 60.98760574463886,
+          "memoryUsedMb": 31.798328399658203
+        },
+        {
+          "runIndex": 9,
+          "durationMs": 1014.8000000119209,
+          "fps": 54.101908321857245,
+          "memoryUsedMb": 36.915836334228516
+        }
+      ],
+      "duration": {
+        "mean": 1014.0899999976158,
+        "median": 1014.0999999940395,
+        "min": 980.5,
+        "max": 1028.699999988079,
+        "stdDev": 13.52127582610091,
+        "sampleCount": 10
+      },
+      "startedAt": "2026-09-19T06:55:36.660Z",
+      "finishedAt": "2026-09-19T06:55:56.222Z",
+      "failed": false,
+      "fps": {
+        "mean": 60.303393846083395,
+        "median": 60.987605744639,
+        "min": 54.101908321857245,
+        "max": 61,
+        "stdDev": 2.0671724705531744,
+        "sampleCount": 10
+      },
+      "memoryUsedMb": {
+        "mean": 23.17439136505127,
+        "median": 23.112632751464844,
+        "min": 13.110843658447266,
+        "max": 36.915836334228516,
+        "stdDev": 6.986198399158577,
+        "sampleCount": 10
+      },
+      "consoleErrors": []
+    },
+    {
+      "scenarioId": "S06",
+      "libraryId": "openlayers",
+      "featureCount": 100,
+      "warmupRuns": 3,
+      "measuredRuns": 10,
+      "raw": [
+        {
+          "runIndex": 0,
+          "durationMs": 1.300000011920929,
+          "fps": 61,
+          "memoryUsedMb": 5.238127708435059
+        },
+        {
+          "runIndex": 1,
+          "durationMs": 2.100000023841858,
+          "fps": 61,
+          "memoryUsedMb": 6.3681135177612305
+        },
+        {
+          "runIndex": 2,
+          "durationMs": 3.5999999940395355,
+          "fps": 60.981607160421035,
+          "memoryUsedMb": 8.247946739196777
+        },
+        {
+          "runIndex": 3,
+          "durationMs": 2,
+          "fps": 60.98760574463897,
+          "memoryUsedMb": 8.348143577575684
+        },
+        {
+          "runIndex": 4,
+          "durationMs": 1.0999999940395355,
+          "fps": 61,
+          "memoryUsedMb": 7.128291130065918
+        },
+        {
+          "runIndex": 5,
+          "durationMs": 1.7999999821186066,
+          "fps": 61,
+          "memoryUsedMb": 9.38471508026123
+        },
+        {
+          "runIndex": 6,
+          "durationMs": 1.9000000059604645,
+          "fps": 61,
+          "memoryUsedMb": 8.531779289245605
+        },
+        {
+          "runIndex": 7,
+          "durationMs": 1.5,
+          "fps": 60.999999999999886,
+          "memoryUsedMb": 7.815985679626465
+        },
+        {
+          "runIndex": 8,
+          "durationMs": 1.7999999821186066,
+          "fps": 61,
+          "memoryUsedMb": 7.8514299392700195
+        },
+        {
+          "runIndex": 9,
+          "durationMs": 1.5,
+          "fps": 61,
+          "memoryUsedMb": 9.593708038330078
+        }
+      ],
+      "duration": {
+        "mean": 1.8599999994039536,
+        "median": 1.7999999821186066,
+        "min": 1.0999999940395355,
+        "max": 3.5999999940395355,
+        "stdDev": 0.6529931080171147,
+        "sampleCount": 10
+      },
+      "startedAt": "2026-09-19T06:55:57.265Z",
+      "finishedAt": "2026-09-19T06:56:17.105Z",
+      "failed": false,
+      "datasetSize": "small",
+      "fps": {
+        "mean": 60.996921290505995,
+        "median": 61,
+        "min": 60.981607160421035,
+        "max": 61,
+        "stdDev": 0.006301821897251981,
+        "sampleCount": 10
+      },
+      "memoryUsedMb": {
+        "mean": 7.850824069976807,
+        "median": 8.049688339233398,
+        "min": 5.238127708435059,
+        "max": 9.593708038330078,
+        "stdDev": 1.2572621073312995,
+        "sampleCount": 10
+      },
+      "consoleErrors": []
+    },
+    {
+      "scenarioId": "S06",
+      "libraryId": "openlayers",
+      "featureCount": 1000,
+      "warmupRuns": 3,
+      "measuredRuns": 10,
+      "raw": [
+        {
+          "runIndex": 0,
+          "durationMs": 16,
+          "fps": 60.99360550909985,
+          "memoryUsedMb": 14.591904640197754
+        },
+        {
+          "runIndex": 1,
+          "durationMs": 16.5,
+          "fps": 60.98760574463897,
+          "memoryUsedMb": 15.695164680480957
+        },
+        {
+          "runIndex": 2,
+          "durationMs": 12.400000005960464,
+          "fps": 60.98760574463897,
+          "memoryUsedMb": 17.714116096496582
+        },
+        {
+          "runIndex": 3,
+          "durationMs": 11.799999982118607,
+          "fps": 61,
+          "memoryUsedMb": 18.82045841217041
+        },
+        {
+          "runIndex": 4,
+          "durationMs": 13,
+          "fps": 60.98760574463897,
+          "memoryUsedMb": 19.325589179992676
+        },
+        {
+          "runIndex": 5,
+          "durationMs": 56.30000001192093,
+          "fps": 36.39224943444474,
+          "memoryUsedMb": 23.896900177001953
+        },
+        {
+          "runIndex": 6,
+          "durationMs": 24.399999976158142,
+          "fps": 61,
+          "memoryUsedMb": 28.941932678222656
+        },
+        {
+          "runIndex": 7,
+          "durationMs": 17.100000023841858,
+          "fps": 60.98760574463897,
+          "memoryUsedMb": 24.924885749816895
+        },
+        {
+          "runIndex": 8,
+          "durationMs": 11.900000005960464,
+          "fps": 61,
+          "memoryUsedMb": 28.80367660522461
+        },
+        {
+          "runIndex": 9,
+          "durationMs": 11.600000023841858,
+          "fps": 61,
+          "memoryUsedMb": 33.0464973449707
+        }
+      ],
+      "duration": {
+        "mean": 19.10000000298023,
+        "median": 14.5,
+        "min": 11.600000023841858,
+        "max": 56.30000001192093,
+        "stdDev": 12.945192158776809,
+        "sampleCount": 10
+      },
+      "startedAt": "2026-09-19T06:56:20.892Z",
+      "finishedAt": "2026-09-19T06:56:39.571Z",
+      "failed": false,
+      "datasetSize": "medium",
+      "fps": {
+        "mean": 58.533627792210055,
+        "median": 60.99060562686941,
+        "min": 36.39224943444474,
+        "max": 61,
+        "stdDev": 7.38046153423196,
+        "sampleCount": 10
+      },
+      "memoryUsedMb": {
+        "mean": 22.57611255645752,
+        "median": 21.611244678497314,
+        "min": 14.591904640197754,
+        "max": 33.0464973449707,
+        "stdDev": 5.963231191620958,
+        "sampleCount": 10
+      },
+      "consoleErrors": []
+    },
+    {
+      "scenarioId": "S06",
+      "libraryId": "openlayers",
+      "featureCount": 10000,
+      "warmupRuns": 3,
+      "measuredRuns": 10,
+      "raw": [
+        {
+          "runIndex": 0,
+          "durationMs": 171.40000000596046,
+          "fps": 50.16722408026754,
+          "memoryUsedMb": 79.5633316040039
+        },
+        {
+          "runIndex": 1,
+          "durationMs": 243.80000001192093,
+          "fps": 42.30201672405312,
+          "memoryUsedMb": 100.08650588989258
+        },
+        {
+          "runIndex": 2,
+          "durationMs": 118.69999998807907,
+          "fps": 52,
+          "memoryUsedMb": 119.64558124542236
+        },
+        {
+          "runIndex": 3,
+          "durationMs": 159.90000000596046,
+          "fps": 51.15089514066495,
+          "memoryUsedMb": 131.00043964385986
+        },
+        {
+          "runIndex": 4,
+          "durationMs": 128.5,
+          "fps": 53.118237261459846,
+          "memoryUsedMb": 150.19390201568604
+        },
+        {
+          "runIndex": 5,
+          "durationMs": 2886.0999999940395,
+          "fps": 0.6857299595419323,
+          "memoryUsedMb": 168.41137409210205
+        },
+        {
+          "runIndex": 6,
+          "durationMs": 114.2999999821186,
+          "fps": 52,
+          "memoryUsedMb": 189.0356683731079
+        },
+        {
+          "runIndex": 7,
+          "durationMs": 167.5,
+          "fps": 50.16722408026754,
+          "memoryUsedMb": 202.04773807525635
+        },
+        {
+          "runIndex": 8,
+          "durationMs": 234.5,
+          "fps": 47.21621089907542,
+          "memoryUsedMb": 221.3346757888794
+        },
+        {
+          "runIndex": 9,
+          "durationMs": 135.40000000596046,
+          "fps": 52,
+          "memoryUsedMb": 239.64074802398682
+        }
+      ],
+      "duration": {
+        "mean": 436.00999999940393,
+        "median": 163.70000000298023,
+        "min": 114.2999999821186,
+        "max": 2886.0999999940395,
+        "stdDev": 817.7992729866694,
+        "sampleCount": 10
+      },
+      "startedAt": "2026-09-19T06:56:42.113Z",
+      "finishedAt": "2026-09-19T06:57:02.769Z",
+      "failed": false,
+      "datasetSize": "large",
+      "fps": {
+        "mean": 45.08075381453303,
+        "median": 50.659059610466244,
+        "min": 0.6857299595419323,
+        "max": 53.118237261459846,
+        "stdDev": 15.099734165195416,
+        "sampleCount": 10
+      },
+      "memoryUsedMb": {
+        "mean": 160.09599647521972,
+        "median": 159.30263805389404,
+        "min": 79.5633316040039,
+        "max": 239.64074802398682,
+        "stdDev": 50.409949560207664,
+        "sampleCount": 10
+      },
+      "consoleErrors": []
+    },
+    {
+      "scenarioId": "S01",
+      "libraryId": "maplibre",
+      "featureCount": 1000,
+      "warmupRuns": 3,
+      "measuredRuns": 10,
+      "raw": [
+        {
+          "runIndex": 0,
+          "durationMs": 458,
+          "fps": 61,
+          "memoryUsedMb": 12.000910758972168
+        },
+        {
+          "runIndex": 1,
+          "durationMs": 693.9000000059605,
+          "fps": 60.98760574463908,
+          "memoryUsedMb": 11.8636474609375
+        },
+        {
+          "runIndex": 2,
+          "durationMs": 187.7999999821186,
+          "fps": 61,
+          "memoryUsedMb": 11.190776824951172
+        },
+        {
+          "runIndex": 3,
+          "durationMs": 331.89999997615814,
+          "fps": 60.98760574463908,
+          "memoryUsedMb": 9.240020751953125
+        },
+        {
+          "runIndex": 4,
+          "durationMs": 229.40000000596046,
+          "fps": 61,
+          "memoryUsedMb": 8.484586715698242
+        },
+        {
+          "runIndex": 5,
+          "durationMs": 419.5,
+          "fps": 61,
+          "memoryUsedMb": 13.838146209716797
+        },
+        {
+          "runIndex": 6,
+          "durationMs": 182.80000001192093,
+          "fps": 61,
+          "memoryUsedMb": 12.071342468261719
+        },
+        {
+          "runIndex": 7,
+          "durationMs": 220.09999999403954,
+          "fps": 61,
+          "memoryUsedMb": 19.43429946899414
+        },
+        {
+          "runIndex": 8,
+          "durationMs": 218.69999998807907,
+          "fps": 61,
+          "memoryUsedMb": 12.8408203125
+        },
+        {
+          "runIndex": 9,
+          "durationMs": 335.7000000178814,
+          "fps": 57,
+          "memoryUsedMb": 13.98160171508789
+        }
+      ],
+      "duration": {
+        "mean": 327.77999999821185,
+        "median": 280.6499999910593,
+        "min": 182.80000001192093,
+        "max": 693.9000000059605,
+        "stdDev": 152.73474261238414,
+        "sampleCount": 10
+      },
+      "startedAt": "2026-09-19T06:57:03.884Z",
+      "finishedAt": "2026-09-19T06:58:02.501Z",
+      "failed": false,
+      "fps": {
+        "mean": 60.59752114892782,
+        "median": 61,
+        "min": 57,
+        "max": 61,
+        "stdDev": 1.1991836798225723,
+        "sampleCount": 10
+      },
+      "memoryUsedMb": {
+        "mean": 12.494615268707275,
+        "median": 12.036126613616943,
+        "min": 8.484586715698242,
+        "max": 19.43429946899414,
+        "stdDev": 2.8546280378720112,
+        "sampleCount": 10
+      },
+      "consoleErrors": []
+    },
+    {
+      "scenarioId": "S02",
+      "libraryId": "maplibre",
+      "featureCount": 1000,
+      "warmupRuns": 3,
+      "measuredRuns": 10,
+      "raw": [
+        {
+          "runIndex": 0,
+          "durationMs": 1.199999988079071,
+          "fps": 61,
+          "memoryUsedMb": 12.324435234069824
+        },
+        {
+          "runIndex": 1,
+          "durationMs": 1.9000000059604645,
+          "fps": 61,
+          "memoryUsedMb": 14.365437507629395
+        },
+        {
+          "runIndex": 2,
+          "durationMs": 1,
+          "fps": 61,
+          "memoryUsedMb": 8.96923542022705
+        },
+        {
+          "runIndex": 3,
+          "durationMs": 0.800000011920929,
+          "fps": 36.16636528028938,
+          "memoryUsedMb": 7.298029899597168
+        },
+        {
+          "runIndex": 4,
+          "durationMs": 0.4000000059604645,
+          "fps": 60.99360550909985,
+          "memoryUsedMb": 20.533973693847656
+        },
+        {
+          "runIndex": 5,
+          "durationMs": 1,
+          "fps": 34.666666666666664,
+          "memoryUsedMb": 14.28957748413086
+        },
+        {
+          "runIndex": 6,
+          "durationMs": 1.199999988079071,
+          "fps": 60.98760574463908,
+          "memoryUsedMb": 9.920105934143066
+        },
+        {
+          "runIndex": 7,
+          "durationMs": 0.4000000059604645,
+          "fps": 60.00393468424125,
+          "memoryUsedMb": 9.750265121459961
+        },
+        {
+          "runIndex": 8,
+          "durationMs": 0.6000000238418579,
+          "fps": 61,
+          "memoryUsedMb": 19.055397033691406
+        },
+        {
+          "runIndex": 9,
+          "durationMs": 0.7000000178813934,
+          "fps": 60.98760574463864,
+          "memoryUsedMb": 7.489008903503418
+        }
+      ],
+      "duration": {
+        "mean": 0.9200000047683716,
+        "median": 0.9000000059604645,
+        "min": 0.4000000059604645,
+        "max": 1.9000000059604645,
+        "stdDev": 0.42848570103863204,
+        "sampleCount": 10
+      },
+      "startedAt": "2026-09-19T06:58:03.286Z",
+      "finishedAt": "2026-09-19T06:58:51.347Z",
+      "failed": false,
+      "fps": {
+        "mean": 55.780578362957485,
+        "median": 60.99060562686947,
+        "min": 34.666666666666664,
+        "max": 61,
+        "stdDev": 10.191774770971389,
+        "sampleCount": 10
+      },
+      "memoryUsedMb": {
+        "mean": 12.39954662322998,
+        "median": 11.122270584106445,
+        "min": 7.298029899597168,
+        "max": 20.533973693847656,
+        "stdDev": 4.392994888832353,
+        "sampleCount": 10
+      },
+      "consoleErrors": []
+    },
+    {
+      "scenarioId": "S03",
+      "libraryId": "maplibre",
+      "featureCount": 1000,
+      "warmupRuns": 3,
+      "measuredRuns": 10,
+      "raw": [
+        {
+          "runIndex": 0,
+          "durationMs": 1.0999999940395355,
+          "fps": 61,
+          "memoryUsedMb": 8.109193801879883
+        },
+        {
+          "runIndex": 1,
+          "durationMs": 1,
+          "fps": 59.020263623844066,
+          "memoryUsedMb": 12.423809051513672
+        },
+        {
+          "runIndex": 2,
+          "durationMs": 0.7999999821186066,
+          "fps": 53.12346286276439,
+          "memoryUsedMb": 12.230628967285156
+        },
+        {
+          "runIndex": 3,
+          "durationMs": 0.699999988079071,
+          "fps": 61,
+          "memoryUsedMb": 11.620979309082031
+        },
+        {
+          "runIndex": 4,
+          "durationMs": 0.5999999940395355,
+          "fps": 60.98760574463886,
+          "memoryUsedMb": 12.548592567443848
+        },
+        {
+          "runIndex": 5,
+          "durationMs": 1.199999988079071,
+          "fps": 61,
+          "memoryUsedMb": 15.103355407714844
+        },
+        {
+          "runIndex": 6,
+          "durationMs": 0.9000000059604645,
+          "fps": 60.98760574463908,
+          "memoryUsedMb": 12.633628845214844
+        },
+        {
+          "runIndex": 7,
+          "durationMs": 0.699999988079071,
+          "fps": 61,
+          "memoryUsedMb": 7.783571243286133
+        },
+        {
+          "runIndex": 8,
+          "durationMs": 0.5,
+          "fps": 55,
+          "memoryUsedMb": 20.309316635131836
+        },
+        {
+          "runIndex": 9,
+          "durationMs": 0.7000000178813934,
+          "fps": 60.98760574463908,
+          "memoryUsedMb": 14.881881713867188
+        }
+      ],
+      "duration": {
+        "mean": 0.8199999958276749,
+        "median": 0.75,
+        "min": 0.5,
+        "max": 1.199999988079071,
+        "stdDev": 0.21354156347753026,
+        "sampleCount": 10
+      },
+      "startedAt": "2026-09-19T06:58:52.254Z",
+      "finishedAt": "2026-09-19T06:59:42.135Z",
+      "failed": false,
+      "fps": {
+        "mean": 59.41065437205255,
+        "median": 60.98760574463908,
+        "min": 53.12346286276439,
+        "max": 61,
+        "stdDev": 2.7694667175336813,
+        "sampleCount": 10
+      },
+      "memoryUsedMb": {
+        "mean": 12.764495754241944,
+        "median": 12.48620080947876,
+        "min": 7.783571243286133,
+        "max": 20.309316635131836,
+        "stdDev": 3.3931078162476727,
+        "sampleCount": 10
+      },
+      "consoleErrors": []
+    },
+    {
+      "scenarioId": "S04",
+      "libraryId": "maplibre",
+      "featureCount": 1000,
+      "warmupRuns": 3,
+      "measuredRuns": 10,
+      "raw": [
+        {
+          "runIndex": 0,
+          "durationMs": 1.699999988079071,
+          "fps": 61,
+          "memoryUsedMb": 7.304800987243652
+        },
+        {
+          "runIndex": 1,
+          "durationMs": 0.9000000059604645,
+          "fps": 61,
+          "memoryUsedMb": 13.444347381591797
+        },
+        {
+          "runIndex": 2,
+          "durationMs": 0.9000000059604645,
+          "fps": 60.99360550909985,
+          "memoryUsedMb": 11.523266792297363
+        },
+        {
+          "runIndex": 3,
+          "durationMs": 0.5,
+          "fps": 59.99803285138188,
+          "memoryUsedMb": 15.319989204406738
+        },
+        {
+          "runIndex": 4,
+          "durationMs": 0.5999999940395355,
+          "fps": 61,
+          "memoryUsedMb": 14.864410400390625
+        },
+        {
+          "runIndex": 5,
+          "durationMs": 0.7999999821186066,
+          "fps": 60.99360550909985,
+          "memoryUsedMb": 12.96323013305664
+        },
+        {
+          "runIndex": 6,
+          "durationMs": 0.699999988079071,
+          "fps": 45,
+          "memoryUsedMb": 15.239952087402344
+        },
+        {
+          "runIndex": 7,
+          "durationMs": 0.699999988079071,
+          "fps": 60.98760574463908,
+          "memoryUsedMb": 15.075725555419922
+        },
+        {
+          "runIndex": 8,
+          "durationMs": 0.800000011920929,
+          "fps": 60.98760574463908,
+          "memoryUsedMb": 13.83819580078125
+        },
+        {
+          "runIndex": 9,
+          "durationMs": 0.5999999940395355,
+          "fps": 25.26448760461075,
+          "memoryUsedMb": 13.843204498291016
+        }
+      ],
+      "duration": {
+        "mean": 0.8199999958276749,
+        "median": 0.7499999850988388,
+        "min": 0.5,
+        "max": 1.699999988079071,
+        "stdDev": 0.3187475477760084,
+        "sampleCount": 10
+      },
+      "startedAt": "2026-09-19T06:59:42.706Z",
+      "finishedAt": "2026-09-19T07:00:33.889Z",
+      "failed": false,
+      "fps": {
+        "mean": 55.722494296347044,
+        "median": 60.99060562686947,
+        "min": 25.26448760461075,
+        "max": 61,
+        "stdDev": 11.20495653191566,
+        "sampleCount": 10
+      },
+      "memoryUsedMb": {
+        "mean": 13.341712284088135,
+        "median": 13.840700149536133,
+        "min": 7.304800987243652,
+        "max": 15.319989204406738,
+        "stdDev": 2.3074904233955844,
+        "sampleCount": 10
+      },
+      "consoleErrors": []
+    },
+    {
+      "scenarioId": "S05",
+      "libraryId": "maplibre",
+      "featureCount": 1000,
+      "warmupRuns": 3,
+      "measuredRuns": 10,
+      "raw": [
+        {
+          "runIndex": 0,
+          "durationMs": 8,
+          "fps": 51,
+          "memoryUsedMb": 9.086725234985352
+        },
+        {
+          "runIndex": 1,
+          "durationMs": 8.900000005960464,
+          "fps": 61,
+          "memoryUsedMb": 14.267096519470215
+        },
+        {
+          "runIndex": 2,
+          "durationMs": 7.800000011920929,
+          "fps": 60.98760574463886,
+          "memoryUsedMb": 9.311454772949219
+        },
+        {
+          "runIndex": 3,
+          "durationMs": 8.599999994039536,
+          "fps": 56,
+          "memoryUsedMb": 10.080391883850098
+        },
+        {
+          "runIndex": 4,
+          "durationMs": 9,
+          "fps": 60.98760574463908,
+          "memoryUsedMb": 11.351746559143066
+        },
+        {
+          "runIndex": 5,
+          "durationMs": 7.799999982118607,
+          "fps": 60.98760574463908,
+          "memoryUsedMb": 8.413127899169922
+        },
+        {
+          "runIndex": 6,
+          "durationMs": 8.400000005960464,
+          "fps": 60.98760574463864,
+          "memoryUsedMb": 8.93774700164795
+        },
+        {
+          "runIndex": 7,
+          "durationMs": 7.100000023841858,
+          "fps": 61,
+          "memoryUsedMb": 12.313218116760254
+        },
+        {
+          "runIndex": 8,
+          "durationMs": 8.099999994039536,
+          "fps": 61,
+          "memoryUsedMb": 12.937464714050293
+        },
+        {
+          "runIndex": 9,
+          "durationMs": 7.9000000059604645,
+          "fps": 61,
+          "memoryUsedMb": 13.224272727966309
+        }
+      ],
+      "duration": {
+        "mean": 8.160000002384185,
+        "median": 8.049999997019768,
+        "min": 7.100000023841858,
+        "max": 9,
+        "stdDev": 0.5462600074872691,
+        "sampleCount": 10
+      },
+      "startedAt": "2026-09-19T07:00:34.740Z",
+      "finishedAt": "2026-09-19T07:01:27.096Z",
+      "failed": false,
+      "fps": {
+        "mean": 59.49504229785557,
+        "median": 60.98760574463908,
+        "min": 51,
+        "max": 61,
+        "stdDev": 3.199244248534727,
+        "sampleCount": 10
+      },
+      "memoryUsedMb": {
+        "mean": 10.992324542999267,
+        "median": 10.716069221496582,
+        "min": 8.413127899169922,
+        "max": 14.267096519470215,
+        "stdDev": 1.9880904351800837,
+        "sampleCount": 10
+      },
+      "consoleErrors": []
+    },
+    {
+      "scenarioId": "S07",
+      "libraryId": "maplibre",
+      "featureCount": 1000,
+      "warmupRuns": 3,
+      "measuredRuns": 10,
+      "raw": [
+        {
+          "runIndex": 0,
+          "durationMs": 1021.4000000059605,
+          "fps": 61,
+          "memoryUsedMb": 8.829889297485352
+        },
+        {
+          "runIndex": 1,
+          "durationMs": 1012.3000000119209,
+          "fps": 60.99390060993898,
+          "memoryUsedMb": 13.196345329284668
+        },
+        {
+          "runIndex": 2,
+          "durationMs": 1029.5,
+          "fps": 60.99360550909985,
+          "memoryUsedMb": 13.649351119995117
+        },
+        {
+          "runIndex": 3,
+          "durationMs": 1028.699999988079,
+          "fps": 60.98760574463908,
+          "memoryUsedMb": 13.242392539978027
+        },
+        {
+          "runIndex": 4,
+          "durationMs": 1011.6999999880791,
+          "fps": 59.99400059993987,
+          "memoryUsedMb": 11.443702697753906
+        },
+        {
+          "runIndex": 5,
+          "durationMs": 1007.2999999821186,
+          "fps": 61,
+          "memoryUsedMb": 17.69520664215088
+        },
+        {
+          "runIndex": 6,
+          "durationMs": 1012.8000000119209,
+          "fps": 61,
+          "memoryUsedMb": 19.449125289916992
+        },
+        {
+          "runIndex": 7,
+          "durationMs": 1011.7000000178814,
+          "fps": 61,
+          "memoryUsedMb": 20.43748378753662
+        },
+        {
+          "runIndex": 8,
+          "durationMs": 1011.3000000119209,
+          "fps": 61,
+          "memoryUsedMb": 10.776434898376465
+        },
+        {
+          "runIndex": 9,
+          "durationMs": 1012.8000000119209,
+          "fps": 61,
+          "memoryUsedMb": 10.090010643005371
+        }
+      ],
+      "duration": {
+        "mean": 1015.9500000029802,
+        "median": 1012.5500000119209,
+        "min": 1007.2999999821186,
+        "max": 1029.5,
+        "stdDev": 7.3593817652814995,
+        "sampleCount": 10
+      },
+      "startedAt": "2026-09-19T07:01:27.587Z",
+      "finishedAt": "2026-09-19T07:02:28.133Z",
+      "failed": false,
+      "fps": {
+        "mean": 60.896911246361775,
+        "median": 61,
+        "min": 59.99400059993987,
+        "max": 61,
+        "stdDev": 0.3009972742888972,
+        "sampleCount": 10
+      },
+      "memoryUsedMb": {
+        "mean": 13.88099422454834,
+        "median": 13.219368934631348,
+        "min": 8.829889297485352,
+        "max": 20.43748378753662,
+        "stdDev": 3.807019387428084,
+        "sampleCount": 10
+      },
+      "consoleErrors": []
+    },
+    {
+      "scenarioId": "S06",
+      "libraryId": "maplibre",
+      "featureCount": 100,
+      "warmupRuns": 3,
+      "measuredRuns": 10,
+      "raw": [
+        {
+          "runIndex": 0,
+          "durationMs": 0.8999999761581421,
+          "fps": 60.98760574463897,
+          "memoryUsedMb": 12.287949562072754
+        },
+        {
+          "runIndex": 1,
+          "durationMs": 1.0999999940395355,
+          "fps": 61,
+          "memoryUsedMb": 13.721433639526367
+        },
+        {
+          "runIndex": 2,
+          "durationMs": 0.699999988079071,
+          "fps": 60.9939006099391,
+          "memoryUsedMb": 7.809776306152344
+        },
+        {
+          "runIndex": 3,
+          "durationMs": 0.699999988079071,
+          "fps": 60.98760574463908,
+          "memoryUsedMb": 7.138520240783691
+        },
+        {
+          "runIndex": 4,
+          "durationMs": 0.6000000238418579,
+          "fps": 61,
+          "memoryUsedMb": 8.75364875793457
+        },
+        {
+          "runIndex": 5,
+          "durationMs": 0.699999988079071,
+          "fps": 61,
+          "memoryUsedMb": 11.0624361038208
+        },
+        {
+          "runIndex": 6,
+          "durationMs": 1.5,
+          "fps": 60.98760574463908,
+          "memoryUsedMb": 12.933282852172852
+        },
+        {
+          "runIndex": 7,
+          "durationMs": 0.699999988079071,
+          "fps": 60.00393468424125,
+          "memoryUsedMb": 11.07373046875
+        },
+        {
+          "runIndex": 8,
+          "durationMs": 0.5,
+          "fps": 60.98760574463908,
+          "memoryUsedMb": 11.795071601867676
+        },
+        {
+          "runIndex": 9,
+          "durationMs": 0.4000000059604645,
+          "fps": 60.9939006099391,
+          "memoryUsedMb": 13.810155868530273
+        }
+      ],
+      "duration": {
+        "mean": 0.7799999952316284,
+        "median": 0.699999988079071,
+        "min": 0.4000000059604645,
+        "max": 1.5,
+        "stdDev": 0.30265491652699633,
+        "sampleCount": 10
+      },
+      "startedAt": "2026-09-19T07:02:28.818Z",
+      "finishedAt": "2026-09-19T07:03:30.015Z",
+      "failed": false,
+      "datasetSize": "small",
+      "fps": {
+        "mean": 60.89421588826757,
+        "median": 60.99075317728909,
+        "min": 60.00393468424125,
+        "max": 61,
+        "stdDev": 0.29680502113162016,
+        "sampleCount": 10
+      },
+      "memoryUsedMb": {
+        "mean": 11.038600540161132,
+        "median": 11.434401035308838,
+        "min": 7.138520240783691,
+        "max": 13.810155868530273,
+        "stdDev": 2.26849716894808,
+        "sampleCount": 10
+      },
+      "consoleErrors": []
+    },
+    {
+      "scenarioId": "S06",
+      "libraryId": "maplibre",
+      "featureCount": 1000,
+      "warmupRuns": 3,
+      "measuredRuns": 10,
+      "raw": [
+        {
+          "runIndex": 0,
+          "durationMs": 0.8999999761581421,
+          "fps": 61,
+          "memoryUsedMb": 10.782947540283203
+        },
+        {
+          "runIndex": 1,
+          "durationMs": 1,
+          "fps": 59,
+          "memoryUsedMb": 11.217062950134277
+        },
+        {
+          "runIndex": 2,
+          "durationMs": 0.699999988079071,
+          "fps": 61,
+          "memoryUsedMb": 12.099570274353027
+        },
+        {
+          "runIndex": 3,
+          "durationMs": 0.5999999940395355,
+          "fps": 61,
+          "memoryUsedMb": 11.381842613220215
+        },
+        {
+          "runIndex": 4,
+          "durationMs": 0.699999988079071,
+          "fps": 60.98760574463886,
+          "memoryUsedMb": 12.917292594909668
+        },
+        {
+          "runIndex": 5,
+          "durationMs": 0.699999988079071,
+          "fps": 60.98760574463886,
+          "memoryUsedMb": 8.553689002990723
+        },
+        {
+          "runIndex": 6,
+          "durationMs": 0.6000000238418579,
+          "fps": 58,
+          "memoryUsedMb": 21.113823890686035
+        },
+        {
+          "runIndex": 7,
+          "durationMs": 0.7000000178813934,
+          "fps": 61,
+          "memoryUsedMb": 7.900250434875488
+        },
+        {
+          "runIndex": 8,
+          "durationMs": 0.4000000059604645,
+          "fps": 60.98760574463908,
+          "memoryUsedMb": 21.57832145690918
+        },
+        {
+          "runIndex": 9,
+          "durationMs": 0.5,
+          "fps": 61,
+          "memoryUsedMb": 7.425455093383789
+        }
+      ],
+      "duration": {
+        "mean": 0.6799999982118606,
+        "median": 0.699999988079071,
+        "min": 0.4000000059604645,
+        "max": 1,
+        "stdDev": 0.16613247202020612,
+        "sampleCount": 10
+      },
+      "startedAt": "2026-09-19T07:03:31.440Z",
+      "finishedAt": "2026-09-19T07:04:23.949Z",
+      "failed": false,
+      "datasetSize": "medium",
+      "fps": {
+        "mean": 60.496281723391675,
+        "median": 60.99380287231954,
+        "min": 58,
+        "max": 61,
+        "stdDev": 1.0228949032430124,
+        "sampleCount": 10
+      },
+      "memoryUsedMb": {
+        "mean": 12.49702558517456,
+        "median": 11.299452781677246,
+        "min": 7.425455093383789,
+        "max": 21.57832145690918,
+        "stdDev": 4.74631242354984,
+        "sampleCount": 10
+      },
+      "consoleErrors": []
+    },
+    {
+      "scenarioId": "S06",
+      "libraryId": "maplibre",
+      "featureCount": 10000,
+      "warmupRuns": 3,
+      "measuredRuns": 10,
+      "raw": [
+        {
+          "runIndex": 0,
+          "durationMs": 1.0999999940395355,
+          "fps": 60.00393468424157,
+          "memoryUsedMb": 16.88108253479004
+        },
+        {
+          "runIndex": 1,
+          "durationMs": 1,
+          "fps": 60.98760574463886,
+          "memoryUsedMb": 22.67557716369629
+        },
+        {
+          "runIndex": 2,
+          "durationMs": 0.800000011920929,
+          "fps": 60.98760574463908,
+          "memoryUsedMb": 16.88374900817871
+        },
+        {
+          "runIndex": 3,
+          "durationMs": 0.5,
+          "fps": 61,
+          "memoryUsedMb": 20.250917434692383
+        },
+        {
+          "runIndex": 4,
+          "durationMs": 0.800000011920929,
+          "fps": 61,
+          "memoryUsedMb": 11.738293647766113
+        },
+        {
+          "runIndex": 5,
+          "durationMs": 0.5999999940395355,
+          "fps": 21.875,
+          "memoryUsedMb": 27.281099319458008
+        },
+        {
+          "runIndex": 6,
+          "durationMs": 0.8999999761581421,
+          "fps": 60.0019355463082,
+          "memoryUsedMb": 10.120514869689941
+        },
+        {
+          "runIndex": 7,
+          "durationMs": 0.5,
+          "fps": 60.98760574463864,
+          "memoryUsedMb": 29.552071571350098
+        },
+        {
+          "runIndex": 8,
+          "durationMs": 0.5999999940395355,
+          "fps": 61,
+          "memoryUsedMb": 11.19753360748291
+        },
+        {
+          "runIndex": 9,
+          "durationMs": 1,
+          "fps": 60.00393468424125,
+          "memoryUsedMb": 12.264692306518555
+        }
+      ],
+      "duration": {
+        "mean": 0.7799999982118606,
+        "median": 0.800000011920929,
+        "min": 0.5,
+        "max": 1.0999999940395355,
+        "stdDev": 0.2088061291505751,
+        "sampleCount": 10
+      },
+      "startedAt": "2026-09-19T07:04:24.635Z",
+      "finishedAt": "2026-09-19T07:05:14.225Z",
+      "failed": false,
+      "datasetSize": "large",
+      "fps": {
+        "mean": 56.78476221487076,
+        "median": 60.987605744638756,
+        "min": 21.875,
+        "max": 61,
+        "stdDev": 11.645017023951159,
+        "sampleCount": 10
+      },
+      "memoryUsedMb": {
+        "mean": 17.884553146362304,
+        "median": 16.882415771484375,
+        "min": 10.120514869689941,
+        "max": 29.552071571350098,
+        "stdDev": 6.552435286287689,
+        "sampleCount": 10
+      },
+      "consoleErrors": []
+    }
+  ]
+}

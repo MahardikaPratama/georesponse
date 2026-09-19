@@ -1,0 +1,86 @@
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  color: #1a1a1a;
+  background: #f7f7f8;
+}
+
+.app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+  padding: 16px 24px 32px;
+}
+
+.app__header h1 {
+  margin-bottom: 4px;
+}
+
+.app__layout {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  grid-template-rows: auto 1fr;
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.benchmark-panel {
+  grid-column: 1;
+  grid-row: 1 / span 2;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.benchmark-panel__field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.map-container {
+  grid-column: 2;
+  grid-row: 1;
+  min-height: 420px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background: #e9e9ec;
+}
+
+.metric-panel {
+  grid-column: 2;
+  grid-row: 2;
+  overflow-x: auto;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.metric-panel table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 14px;
+}
+
+.metric-panel th,
+.metric-panel td {
+  text-align: left;
+  padding: 6px 10px;
+  border-bottom: 1px solid #eee;
+  white-space: nowrap;
+}
