@@ -251,42 +251,73 @@ merged to `main`, since later phases depend on earlier ones (section 1).
 
 **Branch:** `feature/phase-1-backend-domain` (see section 2.1)
 
-- [ ] Implement the `Resource` domain struct per `DOMAIN_MODEL.md` section 3
+- [x] Implement the `Resource` domain struct per `DOMAIN_MODEL.md` section 3
       (identity, type, attributes, status, location).
-- [ ] Implement the `ResourceType` enum (`VEHICLE`, `FACILITY`, `EQUIPMENT`,
+      (`georesponse-be/internal/resource/resource.go`.)
+- [x] Implement the `ResourceType` enum (`VEHICLE`, `FACILITY`, `EQUIPMENT`,
       `IOT_DEVICE`) per `BUSINESS_RULES.md` BR-003.
-- [ ] Implement the `ResourceStatus` enum (`AVAILABLE`, `IN_USE`,
+      (`Type` in `resource.go`, with a `Valid()` method.)
+- [x] Implement the `ResourceStatus` enum (`AVAILABLE`, `IN_USE`,
       `MAINTENANCE`, `UNAVAILABLE`) per BR-006.
-- [ ] Implement the `Location` value type (latitude/longitude) with range
+      (`Status` in `resource.go`, with a `Valid()` method.)
+- [x] Implement the `Location` value type (latitude/longitude) with range
       validation (`-90..90`, `-180..180`) per BR-010.
-- [ ] Implement domain-level coordinate validation and unit-test it with a
+      (`georesponse-be/internal/resource/location.go`.)
+- [x] Implement domain-level coordinate validation and unit-test it with a
       table-driven test covering valid, boundary, and out-of-range values
-      (`BACKEND_TESTING.md`).
-- [ ] Implement the `AttributeValidator` interface and
+      (`BACKEND_TESTING.md`). (`ValidateLocation`/`Location.Validate` +
+      `location_test.go`'s `TestValidateLocation`, covering both boundaries
+      exactly at ±90/±180 and just outside them.)
+- [x] Implement the `AttributeValidator` interface and
       `AttributeValidatorRegistry` (Strategy pattern) per
       `BACKEND_ARCHITECTURE.md` section 8.2, so each resource type's
       attribute rules are added as a new file rather than a new branch in
       shared code (Open/Closed Principle).
-- [ ] Implement `VehicleAttributeValidator` (`vehicleType`, `capacity`) per
+      (`georesponse-be/internal/resource/attribute_validator.go`.)
+- [x] Implement `VehicleAttributeValidator` (`vehicleType`, `capacity`) per
       `DOMAIN_MODEL.md` section 6.2, and register it in the registry.
-- [ ] Implement `FacilityAttributeValidator` (`facilityType`, `capacity`),
-      and register it.
-- [ ] Implement `EquipmentAttributeValidator` (`equipmentType`, `quantity`),
-      and register it.
-- [ ] Implement `IoTDeviceAttributeValidator` (`deviceType`), and register
-      it.
-- [ ] Unit-test that registering a fifth, hypothetical validator requires no
+      (`attribute_validator_vehicle.go`.)
+- [x] Implement `FacilityAttributeValidator` (`facilityType`, `capacity`),
+      and register it. (`attribute_validator_facility.go`.)
+- [x] Implement `EquipmentAttributeValidator` (`equipmentType`, `quantity`),
+      and register it. (`attribute_validator_equipment.go`.)
+- [x] Implement `IoTDeviceAttributeValidator` (`deviceType`), and register
+      it. (`attribute_validator_iotdevice.go`.)
+- [x] Unit-test that registering a fifth, hypothetical validator requires no
       change to `AttributeValidatorRegistry`, `resource.Service`, or any
       existing validator (confirms the Open/Closed property actually holds).
-- [ ] Implement the `User`, `Role`, and `Permission` domain structs per
-      `DATA_CONTRACT.md` sections 5–7.
-- [ ] Implement the `ResourceStatusHistory`, `ResourceLocationHistory`, and
+      (`attribute_validator_test.go`'s `TestAttributeValidatorRegistry_OpenClosed`
+      registers a hypothetical `DRONE` validator alongside the four real
+      ones without touching the registry or any existing validator file;
+      `resource.Service` does not exist yet — it is Phase 3 scope — so
+      there is nothing to verify there yet.)
+- [x] Implement the `User`, `Role`, and `Permission` domain structs per
+      `DATA_CONTRACT.md` sections 5–7. (`User` in
+      `georesponse-be/internal/auth/user.go` — credentials deliberately
+      excluded, matching the `users` table schema
+      [`database/migrations/0002`], which excludes them by design; `Role`
+      and `Permission` in `georesponse-be/internal/authorization/role.go`.)
+- [x] Implement the `ResourceStatusHistory`, `ResourceLocationHistory`, and
       `ResourceChangeHistory` domain structs per `DATA_CONTRACT.md`
-      section 8.
-- [ ] Implement the `AuditRecord` domain struct per `DATA_CONTRACT.md`
+      section 8. (`StatusHistory`, `LocationHistory`, `ResourceChangeHistory`
+      in `georesponse-be/internal/resourcehistory/history.go` — named to
+      match `BACKEND_ARCHITECTURE.md`'s package layout, which puts this
+      package's own `StatusHistory`/`LocationHistory` types under the
+      `resourcehistory` package rather than repeating "Resource" in the
+      type name.)
+- [x] Implement the `AuditRecord` domain struct per `DATA_CONTRACT.md`
       section 9, including the operation-type enum from BR-035.
-- [ ] Unit-test each domain validation rule against its `BUSINESS_RULES.md`
-      ID (one test per BR where behavior is non-trivial).
+      (`georesponse-be/internal/audit/audit.go`.)
+- [x] Unit-test each domain validation rule against its `BUSINESS_RULES.md`
+      ID (one test per BR where behavior is non-trivial). Covered:
+      BR-001/002/003/005/006 (`resource_test.go`), BR-004
+      (`attribute_validator*_test.go`), BR-009/010
+      (`location_test.go`), BR-036/037 (`audit_test.go`). `go test ./...`
+      passes; `go build ./...` and `go vet ./...` are clean; new files are
+      gofmt-clean (pre-existing Phase 0 files show as gofmt-dirty only due
+      to CRLF line endings from the Windows checkout — a pre-existing,
+      environment-only artifact CI's Linux runner won't reproduce; left
+      untouched as out of scope for this phase).
 - [ ] Push, open a PR, confirm CI passes, merge into `main`, delete the
       branch (workflow: section 2.1).
 
