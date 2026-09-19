@@ -329,33 +329,89 @@ merged to `main`, since later phases depend on earlier ones (section 1).
 
 **Branch:** `feature/phase-2-backend-repository` (see section 2.1)
 
-- [ ] Implement `ResourceRepository` interface per `DEPENDENCY_RULES.md`
+- [x] Implement `ResourceRepository` interface per `DEPENDENCY_RULES.md`
       section 2 (application code depends on the interface, not the
-      implementation).
-- [ ] Implement `postgresResourceRepository.Create`.
-- [ ] Implement `postgresResourceRepository.GetByID`.
-- [ ] Implement `postgresResourceRepository.List` with `search`, `type`,
+      implementation). (`georesponse-be/internal/resource/repository.go`;
+      implementation in `internal/repository/postgres/resource_repository.go`,
+      with a compile-time `var _ resource.Repository = (*ResourceRepository)(nil)`
+      check in `assertions.go`.)
+- [x] Implement `postgresResourceRepository.Create`.
+- [x] Implement `postgresResourceRepository.GetByID`.
+- [x] Implement `postgresResourceRepository.List` with `search`, `type`,
       `status`, `page`, `pageSize` filtering per `API_CONTRACT.md`
-      section 6.1.
-- [ ] Implement `postgresResourceRepository.Update`.
-- [ ] Implement `postgresResourceRepository.UpdateStatus`.
-- [ ] Implement `postgresResourceRepository.UpdateLocation`.
-- [ ] Implement `postgresResourceRepository.Delete` (hard delete, per
-      `DATABASE_ARCHITECTURE.md`'s deletion-model decision).
-- [ ] Implement uniqueness enforcement on `id` at the repository/DB level
+      section 6.1. (Filters combine with AND per BR-045; `page`/`pageSize`
+      default to 1/20 and cap at 100, per section 3.)
+- [x] Implement `postgresResourceRepository.Update`.
+- [x] Implement `postgresResourceRepository.UpdateStatus`.
+- [x] Implement `postgresResourceRepository.UpdateLocation`.
+- [x] Implement `postgresResourceRepository.Delete` (hard delete, per
+      `DATABASE_ARCHITECTURE.md`'s deletion-model decision). **Found and
+      fixed a real schema bug while implementing this**: migrations
+      0003's `resource_status_history`/`resource_location_history`/
+      `resource_change_history` used `ON DELETE CASCADE` on `resource_id`,
+      which would silently delete a resource's own history the moment the
+      resource itself was hard-deleted — directly contradicting
+      `DATABASE_ARCHITECTURE.md` and `API_CONTRACT.md`'s explicit
+      requirement that history remain available after deletion.
+      `audit_records` already used `ON DELETE SET NULL` and was unaffected.
+      Added migration `0006_relax_history_resource_id_cascade` (changes
+      all three history tables' FK to `ON DELETE SET NULL`, matching
+      `audit_records`) — applied to the live database and covered by
+      `TestResourceHistoryRepository_SurvivesResourceDeletion`, which
+      fails without the fix and passes with it.
+- [x] Implement uniqueness enforcement on `id` at the repository/DB level
       (DB constraint + mapped `RESOURCE_ID_CONFLICT` error) per BR-001.
-- [ ] Implement `ResourceHistoryRepository` (`InsertStatusHistory`,
+      (`resources.id` is already the primary key; `Create` detects
+      SQLSTATE `23505` and returns `resource.ErrIDConflict`. Live-tested:
+      `TestResourceRepository_Create_DuplicateID`.)
+- [x] Implement `ResourceHistoryRepository` (`InsertStatusHistory`,
       `InsertLocationHistory`, `InsertChangeHistory`, `ListByResourceID`
       with the `type` filter from `API_CONTRACT.md` section 9.1).
-- [ ] Implement `AuditRepository` (`Insert`, `List` with the filters from
-      `API_CONTRACT.md` section 11.1).
-- [ ] Implement `UserRepository`, `RoleRepository`, `PermissionRepository`
-      per `API_CONTRACT.md` section 10.
-- [ ] Write repository-level integration tests against the real local
+      (`georesponse-be/internal/resourcehistory/repository.go` +
+      `internal/repository/postgres/resourcehistory_repository.go`.)
+- [x] Implement `AuditRepository` (`Insert`, `List` with the filters from
+      `API_CONTRACT.md` section 11.1). (`internal/audit/repository.go` +
+      `internal/repository/postgres/audit_repository.go`.)
+- [x] Implement `UserRepository`, `RoleRepository`, `PermissionRepository`
+      per `API_CONTRACT.md` section 10. Section 10 does not define exact
+      request/response JSON bodies for these endpoints (left to
+      implementation); interfaces are grounded in the Phase 1
+      `auth.User{ID, Name, RoleNames}` /
+      `authorization.Role{ID, Name, Permissions}` /
+      `authorization.Permission{ID, Code, Name}` structs.
+      `RoleRepository.SetPermissions` and `UserRepository.SetRoles` are
+      full-replace (not merge) operations, matching
+      `PUT /api/v1/roles/{id}/permissions` and
+      `PUT /api/v1/users/{id}/roles`'s semantics, and run inside a
+      transaction so a reference to an unknown permission/role code
+      leaves the previous assignment untouched rather than partially
+      applied (`internal/auth/repository.go`,
+      `internal/authorization/repository.go`, implementations in
+      `internal/repository/postgres/`). `auth.User` still has no
+      credential field (schema excludes it by design, per Phase 1), so
+      login/credential lookup remains out of scope here, same as noted in
+      Phase 1.
+- [x] Write repository-level integration tests against the real local
       PostgreSQL+PostGIS instance for `Create`, `List` (with each filter),
       `Update`, `Delete`, and the spatial index usage, per
-      `BACKEND_TESTING.md`.
-- [ ] Push, open a PR, confirm CI passes, merge into `main`, delete the
+      `BACKEND_TESTING.md`. **Live-tested** against the `georesponse-db`
+      Docker container from Phase 0 section 3.3 (all 21 integration tests
+      pass; `go test ./...` also skips them cleanly via `t.Skip` when
+      `DATABASE_URL` is unset, so the suite stays runnable without a
+      database). Each test runs inside its own transaction, rolled back
+      afterward, so the pre-existing seed data is never modified — list
+      filter assertions use a `zztest`-prefixed name marker so they can't
+      collide with real seed rows. "Spatial index usage" is covered
+      indirectly: every `Location` read/write round-trips through the
+      `geography(Point,4326)` column via `ST_MakePoint`/`ST_X`/`ST_Y`
+      (`TestResourceRepository_CreateAndGetByID`,
+      `TestResourceRepository_UpdateLocation`), but no `EXPLAIN`-based
+      check that the GIST index (`idx_resources_location`) is actually
+      chosen by the query planner exists, since no spatial predicate
+      query (e.g. `ST_DWithin`) is implemented yet — radius/bounding-box
+      search is explicitly out of scope per `API_CONTRACT.md` section 16,
+      so there is currently no query that would exercise that index.
+- [x] Push, open a PR, confirm CI passes, merge into `main`, delete the
       branch (workflow: section 2.1).
 
 ---
