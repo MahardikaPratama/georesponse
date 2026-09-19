@@ -1,6 +1,6 @@
 /*
  * Author       : Mahardika Pratama
- * Version      : 1.3.0
+ * Version      : 1.4.0
  * Created Date : 2026-09-19
  * Description  : The map-first application shell (FRONTEND_UI_UX.md
  *                section 3): top bar, resource list panel, map, and a
@@ -24,6 +24,13 @@
  *                        ResourceMap's onResourceSelect (section 9.1), so
  *                        this is what makes that selection actually open
  *                        the panel (FR-021, UC-05 step 5).
+ * - 1.4.0 (2026-09-19): Added a "New Resource" button opening
+ *                        CreateResourceModal (Phase 6 section 9.4). No
+ *                        extra wiring was needed for the created resource
+ *                        to appear in the list/map without a refresh —
+ *                        useCreateResource already invalidates
+ *                        resourceKeys.lists(), which this component's own
+ *                        useResources call shares.
  */
 import React, { useMemo, useState } from "react";
 
@@ -31,6 +38,7 @@ import { ResourceFilters } from "@api/resources/resourceApi.types";
 import { useCurrentUser } from "@hooks/useCurrentUser";
 import { useLogout } from "@hooks/useLogout";
 import { useResources } from "@hooks/useResources";
+import CreateResourceModal from "@components/resource-create-form/CreateResourceModal";
 import ResourceDetail from "@components/resource-detail/ResourceDetail";
 import ResourceFilterBar from "@components/resource-filter-bar/ResourceFilterBar";
 import ResourceList from "@components/resource-list/ResourceList";
@@ -44,6 +52,7 @@ function AppShell() {
 	const [filters, setFilters] = useState<ResourceFilters>({});
 	const { data: resourcesPage } = useResources(filters);
 	const [selectedResourceId, setSelectedResourceId] = useState<string | null>(null);
+	const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
 	const markers = useMemo<MapMarker[]>(
 		() =>
@@ -78,6 +87,14 @@ function AppShell() {
 					className="w-80 p-4 overflow-y-auto border-r shrink-0 border-white/10"
 					aria-label="Resource list"
 				>
+					<button
+						type="button"
+						onClick={() => setIsCreateModalOpen(true)}
+						className="w-full h-9 mb-3 text-sm font-medium rounded-md bg-primary-20 hover:bg-primary-50"
+					>
+						+ New Resource
+					</button>
+
 					<ResourceFilterBar filters={filters} onFiltersChange={setFilters} />
 					<ResourceList
 						filters={filters}
@@ -100,6 +117,10 @@ function AppShell() {
 					resourceId={selectedResourceId}
 					onClose={() => setSelectedResourceId(null)}
 				/>
+			)}
+
+			{isCreateModalOpen && (
+				<CreateResourceModal onClose={() => setIsCreateModalOpen(false)} />
 			)}
 		</div>
 	);

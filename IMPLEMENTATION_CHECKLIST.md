@@ -938,25 +938,68 @@ individually as each feature completes (see section 2.1).
       (`ResourceDetail`, distinct message when `error.code` is
       `RESOURCE_NOT_FOUND` vs. the generic error-code-derived message for
       anything else; covered by `ResourceDetail.test.tsx`.)
+- [x] Push, open a PR, confirm CI passes, merge into `main`, delete the
+      branch (workflow: section 2.1). PR #13 (`feature/phase-6-resource-detail`)
+      merged into `main` (squash commit `863b157`); branch deleted (remote
+      and local). CI initially failed one `useResource` test (the mocked
+      `resourceApi.get`'s call history leaked from the first test into the
+      second, which asserted it was never called — fixed with a
+      `beforeEach(() => vi.mocked(resourceApi.get).mockClear())`); fixed
+      and re-pushed, then green.
+
+### 9.4 Create Resource (FR-001, FR-006–009, FR-013–015, UC-06)
+
+- [x] Implement the create-resource form with fields for id, name, type,
+      status, type-specific attributes, and location.
+      (`src/components/resource-create-form/` — `ResourceCreateForm.tsx`
+      (presentation) + `useResourceCreateForm.ts` (state via a reducer, a
+      multi-field transition per `FRONTEND_STATE.md` section 3) +
+      `CreateResourceModal.tsx` (wraps it in the shared `Modal`). Attribute
+      fields are driven by the new
+      `src/constants/resourceAttributeSchema.constants.ts`, mirroring the
+      backend's per-type attribute validators
+      (`georesponse-be/internal/resource/attribute_validator_*.go`).
+      Opened from a new "+ New Resource" button in `AppShell`'s list panel.
+      **Scope note**: location is typed latitude/longitude, not picked by
+      clicking the map — `FRONTEND_UI_UX.md` section 6 also describes
+      map-click placement, deferred since the Map Adapter's
+      `onMarkerClick` is currently wired only to marker selection, not
+      blank-map placement.)
+- [x] Implement frontend validation mirroring `API_CONTRACT.md` section 12
+      (non-authoritative, UX-only). (`validateResourceForm.ts`, covered by
+      `validateResourceForm.test.ts`.)
+- [x] Implement the `useCreateResource` mutation, invalidating the resource
+      list query on success (`FRONTEND_STATE.md`). (`src/hooks/useCreateResource.ts`,
+      covered by `useCreateResource.test.ts`.)
+- [x] Implement field-level error display from the backend's `details`
+      array on `VALIDATION_ERROR`/`RESOURCE_ID_CONFLICT` responses
+      (FR-043). (New `src/utils/mapValidationError.ts`, reusable by later
+      resource forms (e.g. 9.5's update form), not just this one — covered
+      by `mapValidationError.test.ts`. **Known backend gap, not silently
+      worked around**: `georesponse-be/internal/http/httpresponse/error.go`
+      currently sends `details: nil` for every domain validation failure
+      (missing/invalid attribute, invalid type/status/location) — only a
+      malformed JSON body (`details: [{field: "", ...}]`) actually
+      populates the array today, and even that never sets `field`. This
+      function still implements the array-mapping in full and needs no
+      changes once the backend starts attaching per-field details to
+      domain errors too; in the meantime, most validation failures surface
+      as a form-level message instead of under a specific field. Field-name
+      conventions for nested paths (`location.latitude`,
+      `attributes.<key>`) are this frontend's own assumption, since nothing
+      currently emits them to confirm against.)
+- [x] Verify the newly created resource appears in the list and on the map
+      without a manual page refresh (UC-06 step 8). By construction rather
+      than a live run (no Node/npm locally, see below): `AppShell`'s own
+      `useResources(filters)` call (which both `ResourceList` and the map's
+      markers are derived from) shares its TanStack Query cache entry with
+      `useCreateResource`'s `resourceKeys.lists()` invalidation, so a
+      successful create refetches that same cache entry automatically.
 - [ ] Push, open a PR, confirm CI passes, merge into `main`, delete the
       branch (workflow: section 2.1). **Not yet verified**: this
       environment has no Node.js/npm available, so typecheck/lint/build/test
       could not be run locally before this push — CI is the first real
       verification.
-
-### 9.4 Create Resource (FR-001, FR-006–009, FR-013–015, UC-06)
-
-- [ ] Implement the create-resource form with fields for id, name, type,
-      status, type-specific attributes, and location.
-- [ ] Implement frontend validation mirroring `API_CONTRACT.md` section 12
-      (non-authoritative, UX-only).
-- [ ] Implement the `useCreateResource` mutation, invalidating the resource
-      list query on success (`FRONTEND_STATE.md`).
-- [ ] Implement field-level error display from the backend's `details`
-      array on `VALIDATION_ERROR`/`RESOURCE_ID_CONFLICT` responses
-      (FR-043).
-- [ ] Verify the newly created resource appears in the list and on the map
-      without a manual page refresh (UC-06 step 8).
 
 ### 9.5 Update Resource (FR-004, UC-07)
 
