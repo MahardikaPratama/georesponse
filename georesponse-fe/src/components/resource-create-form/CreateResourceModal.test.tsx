@@ -1,6 +1,6 @@
 /*
  * Author       : Mahardika Pratama
- * Version      : 1.0.0
+ * Version      : 1.1.0
  * Created Date : 2026-09-19
  * Description  : Tests CreateResourceModal's submit flow end to end:
  *                client-side validation blocks an invalid submit, a valid
@@ -11,6 +11,9 @@
  *
  * Changelog:
  * - 1.0.0 (2026-09-19): Initial creation.
+ * - 1.1.0 (2026-09-19): Added a test for initialLocation pre-filling
+ *                        latitude/longitude (the map-click-placement flow
+ *                        AppShell wires up on a map double-click).
  */
 import React from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -105,5 +108,21 @@ describe("CreateResourceModal", () => {
 			await screen.findByText("A resource with that ID already exists.")
 		).toBeInTheDocument();
 		expect(onClose).not.toHaveBeenCalled();
+	});
+
+	it("pre-fills latitude/longitude from initialLocation and shows the map-click hint", () => {
+		const onClose = vi.fn();
+		renderWithQueryClient(
+			<CreateResourceModal
+				onClose={onClose}
+				initialLocation={{ latitude: -6.2, longitude: 106.8166 }}
+			/>
+		);
+
+		expect(screen.getByLabelText("Latitude")).toHaveValue("-6.2");
+		expect(screen.getByLabelText("Longitude")).toHaveValue("106.8166");
+		expect(
+			screen.getByText("Filled in from where you double-clicked the map.")
+		).toBeInTheDocument();
 	});
 });

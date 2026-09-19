@@ -23,6 +23,12 @@
  *                        source/layer pair alongside the resource one, not
  *                        a change to it, keeping hotspots separate from
  *                        application-managed resources as required.
+ * - 1.3.0 (2026-09-19): Added onMapDoubleClick, the map-click placement
+ *                        callback FRONTEND_UI_UX.md section 6 describes for
+ *                        create ("Placing a resource by clicking the map
+ *                        ... going through the map adapter's click
+ *                        callback"), fired only when the double-click
+ *                        didn't land on an existing marker/hotspot.
  */
 
 /** A resource's position on the map, in the domain's lat/lng order. */
@@ -60,6 +66,13 @@ export interface MapAdapterOptions {
 	zoom?: number;
 	/** Called when a marker is clicked, with that resource's id. */
 	onMarkerClick?: (resourceId: string) => void;
+	/**
+	 * Called when the map is double-clicked somewhere that isn't an existing
+	 * marker or hotspot, with the clicked position in the domain's lat/lng
+	 * order. Double-click zoom is disabled so this doesn't fight the
+	 * browser's default map interaction.
+	 */
+	onMapDoubleClick?: (location: { latitude: number; longitude: number }) => void;
 }
 
 /**

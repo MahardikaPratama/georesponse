@@ -1,6 +1,6 @@
 /*
  * Author       : Mahardika Pratama
- * Version      : 1.1.0
+ * Version      : 1.2.0
  * Created Date : 2026-09-19
  * Description  : The create-resource form's fields (FR-001, FR-006-009,
  *                FR-013-015, UC-06): id, name, type, status, type-specific
@@ -12,11 +12,10 @@
  *                submission live in useResourceCreateForm, owned by this
  *                component's container, CreateResourceModal.
  *
- *                Location is entered as typed latitude/longitude, not by
- *                clicking the map — FRONTEND_UI_UX.md section 6 also
- *                describes map-click placement for create, which is
- *                deferred; the Map Adapter's onMarkerClick is currently
- *                wired only to marker selection, not blank-map placement.
+ *                Location can be typed directly or filled in by
+ *                double-clicking the map before opening this form — see
+ *                AppShell's onMapDoubleClick — per FRONTEND_UI_UX.md
+ *                section 6's map-click placement.
  *
  * Changelog:
  * - 1.0.0 (2026-09-19): Initial creation.
@@ -24,6 +23,15 @@
  *                        RESOURCE_TYPE_OPTIONS/RESOURCE_STATUS_OPTIONS
  *                        instead of its own copy of the same
  *                        Object.keys(...).map(...) (Phase 6 section 9.6).
+ * - 1.2.0 (2026-09-19): Latitude/longitude (and numeric attribute fields)
+ *                        switched from `type="number"` to `type="text"`
+ *                        with `inputMode="decimal"`/`"numeric"` — the native
+ *                        number input's up/down spinner served no purpose
+ *                        for coordinates and was the only thing forcing a
+ *                        click into the field before typing. Added
+ *                        placeholders to every field, a hint when latitude/
+ *                        longitude were filled in from a map double-click,
+ *                        and a tip pointing at that feature.
  */
 import React from "react";
 
@@ -57,11 +65,16 @@ function ResourceCreateForm({
 	dispatch,
 	errors,
 	formError,
-	isSubmitting
+	isSubmitting,
+	locationPrefilled
 }: ResourceCreateFormProps) {
 	return (
 		<div className="flex flex-col w-full max-w-md gap-3 px-6 text-white">
 			<h2 className="text-lg font-bold">New Resource</h2>
+			<p className="-mt-2 text-xs text-neutral-3">
+				Tip: close this and double-click a spot on the map to open this form with
+				latitude/longitude already filled in.
+			</p>
 
 			<FieldError message={formError ?? undefined} />
 
@@ -72,6 +85,7 @@ function ResourceCreateForm({
 					value={state.id}
 					onChange={(event) => dispatch({ type: "SET_ID", value: event.target.value })}
 					disabled={isSubmitting}
+					placeholder="e.g. resource-006"
 					className={fieldClassName}
 				/>
 				<FieldError message={errors.id} />
@@ -84,6 +98,7 @@ function ResourceCreateForm({
 					value={state.name}
 					onChange={(event) => dispatch({ type: "SET_NAME", value: event.target.value })}
 					disabled={isSubmitting}
+					placeholder="e.g. Ambulance Unit 2 - Jakarta Pusat"
 					className={fieldClassName}
 				/>
 				<FieldError message={errors.name} />
@@ -131,7 +146,8 @@ function ResourceCreateForm({
 						{field.label}
 						<input
 							id={`resource-attribute-${field.key}`}
-							type={field.kind === "number" ? "number" : "text"}
+							type="text"
+							inputMode={field.kind === "number" ? "numeric" : "text"}
 							value={state.attributes[field.key] ?? ""}
 							onChange={(event) =>
 								dispatch({
@@ -141,6 +157,7 @@ function ResourceCreateForm({
 								})
 							}
 							disabled={isSubmitting}
+							placeholder={field.kind === "number" ? "e.g. 4" : `e.g. ${field.label}`}
 							className={fieldClassName}
 						/>
 						<FieldError message={errors[`attributes.${field.key}`]} />
@@ -153,12 +170,14 @@ function ResourceCreateForm({
 					Latitude
 					<input
 						id="resource-latitude"
-						type="number"
+						type="text"
+						inputMode="decimal"
 						value={state.latitude}
 						onChange={(event) =>
 							dispatch({ type: "SET_LATITUDE", value: event.target.value })
 						}
 						disabled={isSubmitting}
+						placeholder="e.g. -6.2088"
 						className={fieldClassName}
 					/>
 					<FieldError message={errors["location.latitude"]} />
@@ -168,16 +187,24 @@ function ResourceCreateForm({
 					Longitude
 					<input
 						id="resource-longitude"
-						type="number"
+						type="text"
+						inputMode="decimal"
 						value={state.longitude}
 						onChange={(event) =>
 							dispatch({ type: "SET_LONGITUDE", value: event.target.value })
 						}
 						disabled={isSubmitting}
+						placeholder="e.g. 106.8456"
 						className={fieldClassName}
 					/>
 					<FieldError message={errors["location.longitude"]} />
 				</label>
+
+				{locationPrefilled && (
+					<p className="col-span-2 -mt-1 text-xs text-primary-50">
+						Filled in from where you double-clicked the map.
+					</p>
+				)}
 			</div>
 		</div>
 	);

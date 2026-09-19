@@ -11,6 +11,11 @@
  *
  * Changelog:
  * - 1.0.0 (2026-09-19): Initial creation.
+ * - 1.1.0 (2026-09-19): Added initialLocation, forwarded to
+ *                        useResourceCreateForm, so AppShell can open this
+ *                        pre-filled from a map double-click
+ *                        (FRONTEND_UI_UX.md section 6's map-click
+ *                        placement).
  */
 import React from "react";
 
@@ -21,11 +26,12 @@ import { useResourceCreateForm } from "./useResourceCreateForm";
 
 interface CreateResourceModalProps {
 	onClose: () => void;
+	initialLocation?: { latitude: number; longitude: number };
 }
 
-function CreateResourceModal({ onClose }: CreateResourceModalProps) {
+function CreateResourceModal({ onClose, initialLocation }: CreateResourceModalProps) {
 	const { state, dispatch, errors, formError, isSubmitting, handleSubmit } =
-		useResourceCreateForm(onClose);
+		useResourceCreateForm(onClose, initialLocation);
 
 	return (
 		<Modal handleClose={onClose} handleConfirm={handleSubmit} label="Create" loading={isSubmitting}>
@@ -35,6 +41,7 @@ function CreateResourceModal({ onClose }: CreateResourceModalProps) {
 				errors={errors}
 				formError={formError}
 				isSubmitting={isSubmitting}
+				locationPrefilled={!!initialLocation}
 			/>
 		</Modal>
 	);

@@ -12,6 +12,9 @@
  *                        is shared in both directions).
  * - 1.2.0 (2026-09-19): Added hotspots/hotspotLayerVisible for the BMKG
  *                        situational-awareness overlay.
+ * - 1.3.0 (2026-09-19): Added onMapDoubleClick, passed through to the
+ *                        adapter's onMapDoubleClick (map-click placement,
+ *                        FRONTEND_UI_UX.md section 6).
  */
 import { HotspotMarker, MapMarker } from "./map-adapter/MapAdapter.types";
 
@@ -21,4 +24,5 @@ export interface ResourceMapProps {
 	onResourceSelect?: (resourceId: string) => void;
 	hotspots?: HotspotMarker[];
 	hotspotLayerVisible?: boolean;
+	onMapDoubleClick?: (location: { latitude: number; longitude: number }) => void;
 }

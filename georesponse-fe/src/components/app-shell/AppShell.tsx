@@ -1,6 +1,6 @@
 /*
  * Author       : Mahardika Pratama
- * Version      : 1.9.0
+ * Version      : 1.10.0
  * Created Date : 2026-09-19
  * Description  : The map-first application shell (FRONTEND_UI_UX.md
  *                section 3): top bar, resource list panel, map, and a
@@ -55,6 +55,12 @@
  *                        same way as "Manage Roles" — any authenticated
  *                        user can open it, the modal itself blocks a
  *                        caller lacking audit.read.
+ * - 1.10.0 (2026-09-20): Wired ResourceMap's onMapDoubleClick to open
+ *                        CreateResourceModal with latitude/longitude
+ *                        pre-filled from the clicked point
+ *                        (FRONTEND_UI_UX.md section 6's map-click
+ *                        placement), and added a one-line tip next to
+ *                        "+ New Resource" so the feature is discoverable.
  */
 import React, { useMemo, useState } from "react";
 
@@ -93,6 +99,10 @@ function AppShell() {
 	const [hotspotLayerVisible, setHotspotLayerVisible] = useState(true);
 	const [isRoleManagementOpen, setIsRoleManagementOpen] = useState(false);
 	const [isAuditLogOpen, setIsAuditLogOpen] = useState(false);
+	const [createLocation, setCreateLocation] = useState<{
+		latitude: number;
+		longitude: number;
+	} | null>(null);
 
 	const markers = useMemo<MapMarker[]>(
 		() =>
@@ -165,11 +175,17 @@ function AppShell() {
 				>
 					<button
 						type="button"
-						onClick={() => setIsCreateModalOpen(true)}
-						className="w-full h-9 mb-3 text-sm font-medium rounded-md bg-primary-20 hover:bg-primary-50"
+						onClick={() => {
+							setCreateLocation(null);
+							setIsCreateModalOpen(true);
+						}}
+						className="w-full h-9 text-sm font-medium rounded-md bg-primary-20 hover:bg-primary-50"
 					>
 						+ New Resource
 					</button>
+					<p className="mb-3 text-xs text-neutral-3">
+						Tip: double-click the map to create a resource at that location.
+					</p>
 
 					<ResourceFilterBar filters={filters} onFiltersChange={setFilters} />
 					<ResourceList
@@ -186,6 +202,10 @@ function AppShell() {
 						onResourceSelect={setSelectedResourceId}
 						hotspots={hotspots}
 						hotspotLayerVisible={hotspotLayerVisible}
+						onMapDoubleClick={(location) => {
+							setCreateLocation(location);
+							setIsCreateModalOpen(true);
+						}}
 					/>
 
 					{selectedResourceId && (
@@ -200,7 +220,10 @@ function AppShell() {
 			</div>
 
 			{isCreateModalOpen && (
-				<CreateResourceModal onClose={() => setIsCreateModalOpen(false)} />
+				<CreateResourceModal
+					onClose={() => setIsCreateModalOpen(false)}
+					initialLocation={createLocation ?? undefined}
+				/>
 			)}
 
 			{editingResourceId && (

@@ -14,6 +14,10 @@
  *                        so a list-driven selection highlights the marker.
  * - 1.2.0 (2026-09-19): Added hotspots/hotspotLayerVisible, synced to the
  *                        adapter's setHotspots/toggleHotspotLayer.
+ * - 1.3.0 (2026-09-19): Wired onMapDoubleClick through to the adapter's
+ *                        init option, same onXRef pattern as onResourceSelect
+ *                        so a fresh inline handler each render still reaches
+ *                        the adapter's one-time click listener.
  */
 import React, { useEffect, useRef } from "react";
 
@@ -25,7 +29,8 @@ function ResourceMap({
 	selectedResourceId = null,
 	onResourceSelect,
 	hotspots = [],
-	hotspotLayerVisible = true
+	hotspotLayerVisible = true,
+	onMapDoubleClick
 }: ResourceMapProps) {
 	const containerRef = useRef<HTMLDivElement | null>(null);
 	const adapterRef = useRef(createMapLibreAdapter());
@@ -38,6 +43,9 @@ function ResourceMap({
 	const onResourceSelectRef = useRef(onResourceSelect);
 	onResourceSelectRef.current = onResourceSelect;
 
+	const onMapDoubleClickRef = useRef(onMapDoubleClick);
+	onMapDoubleClickRef.current = onMapDoubleClick;
+
 	useEffect(() => {
 		if (!containerRef.current) return;
 
@@ -45,7 +53,8 @@ function ResourceMap({
 		adapter.init({
 			container: containerRef.current,
 			tileUrl: process.env.MAP_TILE_URL ?? "",
-			onMarkerClick: (resourceId) => onResourceSelectRef.current?.(resourceId)
+			onMarkerClick: (resourceId) => onResourceSelectRef.current?.(resourceId),
+			onMapDoubleClick: (location) => onMapDoubleClickRef.current?.(location)
 		});
 
 		return () => adapter.destroy();

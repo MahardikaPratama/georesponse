@@ -23,6 +23,14 @@
  *                        (not routed through onMarkerClick/selection —
  *                        hotspots stay separate from application-managed
  *                        resources).
+ * - 1.3.0 (2026-09-19): Wired onMapDoubleClick: disables MapLibre's default
+ *                        double-click-to-zoom interaction and instead fires
+ *                        the callback with the clicked lat/lng, skipped when
+ *                        the double-click landed on an existing marker or
+ *                        hotspot feature (queried via
+ *                        queryRenderedFeatures), so double-clicking a
+ *                        marker doesn't also offer to create a resource on
+ *                        top of it.
  */
 import maplibregl, { GeoJSONSource, Map as MapLibreMap, Popup } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
@@ -129,6 +137,12 @@ export function createMapLibreAdapter(): MapAdapter {
 				zoom: options.zoom ?? 4
 			});
 
+			// Double-click is repurposed for map-click placement
+			// (FRONTEND_UI_UX.md section 6), so the default zoom-on-
+			// double-click interaction is disabled to avoid the two
+			// fighting each other.
+			map.doubleClickZoom.disable();
+
 			map.on("load", () => {
 				if (!map) return;
 
@@ -203,6 +217,20 @@ export function createMapLibreAdapter(): MapAdapter {
 				});
 				map.on("mouseleave", HOTSPOT_LAYER_ID, () => {
 					if (map) map.getCanvas().style.cursor = "";
+				});
+
+				map.on("dblclick", (event) => {
+					if (!map) return;
+					const hits = map.queryRenderedFeatures(event.point, {
+						layers: [MARKER_LAYER_ID, HOTSPOT_LAYER_ID].filter((id) =>
+							map!.getLayer(id)
+						)
+					});
+					if (hits.length > 0) return;
+					options.onMapDoubleClick?.({
+						latitude: event.lngLat.lat,
+						longitude: event.lngLat.lng
+					});
 				});
 			});
 		},

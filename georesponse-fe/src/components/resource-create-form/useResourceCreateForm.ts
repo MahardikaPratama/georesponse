@@ -10,6 +10,10 @@
  *
  * Changelog:
  * - 1.0.0 (2026-09-19): Initial creation.
+ * - 1.1.0 (2026-09-19): Takes an optional initialLocation, forwarded to
+ *                        createInitialResourceFormState, so the form can
+ *                        open pre-filled from a map double-click
+ *                        (FRONTEND_UI_UX.md section 6's map-click placement).
  */
 import { useReducer, useState } from "react";
 
@@ -34,8 +38,11 @@ const KNOWN_FIELDS = [
 		.map((field) => `attributes.${field.key}`)
 ];
 
-export function useResourceCreateForm(onCreated: () => void) {
-	const [state, dispatch] = useReducer(resourceFormReducer, undefined, createInitialResourceFormState);
+export function useResourceCreateForm(
+	onCreated: () => void,
+	initialLocation?: { latitude: number; longitude: number }
+) {
+	const [state, dispatch] = useReducer(resourceFormReducer, initialLocation, createInitialResourceFormState);
 	const [errors, setErrors] = useState<ResourceFormErrors>({});
 	const [formError, setFormError] = useState<string | null>(null);
 	const createResource = useCreateResource();

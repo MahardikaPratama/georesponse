@@ -15,6 +15,9 @@
  *                        hook itself, so CreateResourceModal (its
  *                        container) can drive Modal's Confirm button from
  *                        the same hook instance without a ref bridge.
+ * - 1.2.0 (2026-09-19): Added locationPrefilled, so the form can show a
+ *                        hint that latitude/longitude were filled in from a
+ *                        map double-click instead of typed.
  */
 import { Dispatch } from "react";
 
@@ -51,4 +54,5 @@ export interface ResourceCreateFormProps {
 	errors: ResourceFormErrors;
 	formError: string | null;
 	isSubmitting: boolean;
+	locationPrefilled?: boolean;
 }

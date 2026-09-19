@@ -6,18 +6,25 @@
  *
  * Changelog:
  * - 1.0.0 (2026-09-19): Initial creation.
+ * - 1.1.0 (2026-09-19): createInitialResourceFormState takes an optional
+ *                        initial location, pre-filling latitude/longitude
+ *                        when the form was opened from a map double-click
+ *                        (FRONTEND_UI_UX.md section 6's map-click placement).
  */
 import { ResourceFormAction, ResourceFormState } from "./ResourceCreateForm.types";
 
-export function createInitialResourceFormState(): ResourceFormState {
+export function createInitialResourceFormState(initialLocation?: {
+	latitude: number;
+	longitude: number;
+}): ResourceFormState {
 	return {
 		id: "",
 		name: "",
 		type: "VEHICLE",
 		status: "AVAILABLE",
 		attributes: {},
-		latitude: "",
-		longitude: ""
+		latitude: initialLocation ? String(initialLocation.latitude) : "",
+		longitude: initialLocation ? String(initialLocation.longitude) : ""
 	};
 }
 

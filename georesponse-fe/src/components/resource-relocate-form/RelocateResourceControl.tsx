@@ -1,6 +1,6 @@
 /*
  * Author       : Mahardika Pratama
- * Version      : 1.0.0
+ * Version      : 1.1.0
  * Created Date : 2026-09-19
  * Description  : The relocation interaction (FR-022-026, UC-09): a
  *                "set new location" control in the detail panel's
@@ -18,6 +18,10 @@
  *
  * Changelog:
  * - 1.0.0 (2026-09-19): Initial creation.
+ * - 1.1.0 (2026-09-19): Latitude/longitude switched from `type="number"` to
+ *                        `type="text"` with `inputMode="decimal"`, dropping
+ *                        the native spinner arrows the coordinate fields
+ *                        never needed (matches ResourceCreateForm).
  */
 import React, { useState } from "react";
 
@@ -84,10 +88,12 @@ function RelocateResourceControl({ resourceId, location }: RelocateResourceContr
 				</label>
 				<input
 					id="relocate-latitude"
-					type="number"
+					type="text"
+					inputMode="decimal"
 					value={latitude}
 					onChange={(event) => setLatitude(event.target.value)}
 					disabled={relocate.isPending}
+					placeholder="Latitude"
 					className={fieldClassName}
 				/>
 				<label className="sr-only" htmlFor="relocate-longitude">
@@ -95,10 +101,12 @@ function RelocateResourceControl({ resourceId, location }: RelocateResourceContr
 				</label>
 				<input
 					id="relocate-longitude"
-					type="number"
+					type="text"
+					inputMode="decimal"
 					value={longitude}
 					onChange={(event) => setLongitude(event.target.value)}
 					disabled={relocate.isPending}
+					placeholder="Longitude"
 					className={fieldClassName}
 				/>
 			</div>

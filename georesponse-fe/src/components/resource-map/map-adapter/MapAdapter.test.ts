@@ -1,6 +1,6 @@
 /*
  * Author       : Mahardika Pratama
- * Version      : 1.0.0
+ * Version      : 1.1.0
  * Created Date : 2026-09-19
  * Description  : Tests createMapLibreAdapter's hotspot layer at the
  *                boundary, with maplibre-gl mocked per
@@ -11,6 +11,12 @@
  *
  * Changelog:
  * - 1.0.0 (2026-09-19): Initial creation.
+ * - 1.1.0 (2026-09-19): Added MockMap.doubleClickZoom/queryRenderedFeatures
+ *                        stubs — init() now unconditionally calls
+ *                        doubleClickZoom.disable() (the map-click-placement
+ *                        double-click handler in MapAdapter.ts), which every
+ *                        existing test's init() call would otherwise throw
+ *                        on since the mock didn't have that property.
  */
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -81,6 +87,14 @@ const { MockMap, MockPopup, instances } = vi.hoisted(() => {
 		getCanvas() {
 			return { style: {} };
 		}
+
+		featuresAtPoint: unknown[] = [];
+
+		queryRenderedFeatures() {
+			return this.featuresAtPoint;
+		}
+
+		doubleClickZoom = { disable: vi.fn() };
 
 		remove() {
 			/* no-op */
@@ -191,5 +205,47 @@ describe("createMapLibreAdapter — hotspot layer", () => {
 		});
 
 		expect(onMarkerClick).not.toHaveBeenCalled();
+	});
+
+	it("disables the default double-click-zoom interaction on init", () => {
+		const adapter = createMapLibreAdapter();
+		adapter.init({ container: document.createElement("div"), tileUrl: "" });
+
+		expect(instances[0].doubleClickZoom.disable).toHaveBeenCalled();
+	});
+
+	it("fires onMapDoubleClick with the clicked lat/lng when nothing was hit", () => {
+		const onMapDoubleClick = vi.fn();
+		const adapter = createMapLibreAdapter();
+		adapter.init({
+			container: document.createElement("div"),
+			tileUrl: "",
+			onMapDoubleClick
+		});
+
+		instances[0].emit("dblclick", {
+			point: { x: 10, y: 20 },
+			lngLat: { lat: -6.2, lng: 106.8 }
+		});
+
+		expect(onMapDoubleClick).toHaveBeenCalledWith({ latitude: -6.2, longitude: 106.8 });
+	});
+
+	it("does not fire onMapDoubleClick when the double-click landed on a marker/hotspot", () => {
+		const onMapDoubleClick = vi.fn();
+		const adapter = createMapLibreAdapter();
+		adapter.init({
+			container: document.createElement("div"),
+			tileUrl: "",
+			onMapDoubleClick
+		});
+
+		instances[0].featuresAtPoint = [{ properties: { id: "res-001" } }];
+		instances[0].emit("dblclick", {
+			point: { x: 10, y: 20 },
+			lngLat: { lat: -6.2, lng: 106.8 }
+		});
+
+		expect(onMapDoubleClick).not.toHaveBeenCalled();
 	});
 });
