@@ -24,7 +24,8 @@
 2. [About GeoResponse](#about-georesponse)
 3. [Implementation Status](#implementation-status)
 4. [Demo Accounts](#demo-accounts)
-5. [Contributors](#contributors)
+5. [Demo Screenshots](#demo-screenshots)
+6. [Contributors](#contributors)
 6. [Technologies We Use](#technologies-we-use)
 7. [Setup](#setup)
 8. [Installation (Docker — one command)](#installation-docker)
@@ -243,6 +244,13 @@ rather than left implicit.
   <li><strong>Identifier:</strong> user-002</li>
   <li><strong>Password:</strong> ChangeMe123!</li>
 </ul>
+
+<h2 id="demo-screenshots">Demo Screenshots</h2>
+<p>Login screen and the main map + resource list view, running locally at <a href="http://localhost:5173">http://localhost:5173</a>:</p>
+<div align="center">
+  <img src="docs/14_demo/demo-01.png" alt="GeoResponse sign-in screen" width="45%" />
+  <img src="docs/14_demo/demo-02.jpeg" alt="GeoResponse map view with resource list, detail panel, and BMKG hotspot overlay" width="45%" />
+</div>
 
 ### <h1 id="contributors" align="center">🌟 Contributors 🌟</h1>
 <div align="center">
