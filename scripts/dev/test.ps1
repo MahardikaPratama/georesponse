@@ -2,14 +2,19 @@
 Author       : Mahardika Pratama
 Version      : 1.0.0
 Created Date : 2026-09-19
-Description  : Runs frontend tests (npm test) then backend tests
-               (go test ./...). Windows PowerShell equivalent of
+Description  : Runs frontend tests (npm test), backend tests
+               (go test ./...), and - when GEORESPONSE_API_URL points at
+               a running stack - the API integration tests under
+               tests\integration\. Windows PowerShell equivalent of
                test.sh. Frontend tests are skipped with a clear message
                when npm is unavailable, rather than failing the whole
                script.
 
 Changelog:
 - 1.0.0 (2026-09-19): Initial creation.
+- 1.1.0 (2026-09-20): Added the tests\integration\ suite, run only when
+                       GEORESPONSE_API_URL is set (it needs a live
+                       backend + database).
 #>
 
 $ErrorActionPreference = "Stop"
@@ -63,6 +68,24 @@ if (Get-Command go -ErrorAction SilentlyContinue) {
     }
 } else {
     Write-Host "SKIP: 'go' is not on PATH; skipping backend tests."
+}
+
+# --- Integration tests (need a running stack) ----------------------------------
+$IntegrationDir = Join-Path $RepoRoot "tests\integration"
+if (-not $env:GEORESPONSE_API_URL) {
+    Write-Host "SKIP: GEORESPONSE_API_URL is not set; skipping tests\integration\ (start the stack with .\run.ps1 and set `$env:GEORESPONSE_API_URL = 'http://localhost:8080' to run them)."
+} elseif ((Get-Command go -ErrorAction SilentlyContinue) -and (Test-Path (Join-Path $IntegrationDir "go.mod"))) {
+    Write-Host "--- Integration tests (go test ./... in tests/integration/ against $env:GEORESPONSE_API_URL) ---"
+    Push-Location $IntegrationDir
+    try {
+        go test ./... -count=1
+        if ($LASTEXITCODE -ne 0) {
+            Write-Host "FAILED: integration tests"
+            $Failed = $true
+        }
+    } finally {
+        Pop-Location
+    }
 }
 
 if ($Failed) {

@@ -3,13 +3,18 @@
 # Author       : Mahardika Pratama
 # Version      : 1.0.0
 # Created Date : 2026-09-19
-# Description  : Runs frontend tests (npm test) then backend tests
-#                (go test ./...). Frontend tests are skipped with a clear
-#                message when npm is unavailable, rather than failing the
-#                whole script.
+# Description  : Runs frontend tests (npm test), backend tests
+#                (go test ./...), and — when GEORESPONSE_API_URL points at
+#                a running stack — the API integration tests under
+#                tests/integration/. Frontend tests are skipped with a
+#                clear message when npm is unavailable, rather than
+#                failing the whole script.
 #
 # Changelog:
 # - 1.0.0 (2026-09-19): Initial creation.
+# - 1.1.0 (2026-09-20): Added the tests/integration/ suite, run only when
+#                        GEORESPONSE_API_URL is set (it needs a live
+#                        backend + database).
 
 set -euo pipefail
 
@@ -50,6 +55,17 @@ if command -v go >/dev/null 2>&1; then
     fi
 else
     echo "SKIP: 'go' is not on PATH; skipping backend tests."
+fi
+
+# --- Integration tests (need a running stack) --------------------------------
+if [ -z "${GEORESPONSE_API_URL:-}" ]; then
+    echo "SKIP: GEORESPONSE_API_URL is not set; skipping tests/integration/ (start the stack with ./run.sh and set GEORESPONSE_API_URL=http://localhost:8080 to run them)."
+elif command -v go >/dev/null 2>&1 && [ -f "${REPO_ROOT}/tests/integration/go.mod" ]; then
+    echo "--- Integration tests (go test ./... in tests/integration/ against ${GEORESPONSE_API_URL}) ---"
+    if ! (cd "${REPO_ROOT}/tests/integration" && go test ./... -count=1); then
+        echo "FAILED: integration tests"
+        FAILED=1
+    fi
 fi
 
 if [ "${FAILED}" -ne 0 ]; then
