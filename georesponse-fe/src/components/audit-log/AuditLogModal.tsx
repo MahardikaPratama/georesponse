@@ -1,6 +1,6 @@
 /*
  * Author       : Mahardika Pratama
- * Version      : 1.0.0
+ * Version      : 1.1.0
  * Created Date : 2026-09-19
  * Description  : The audit-log view (FR-038-040, UC-14), restricted to
  *                authorized users: GET /api/v1/audit-logs is itself
@@ -17,6 +17,12 @@
  *
  * Changelog:
  * - 1.0.0 (2026-09-19): Initial creation.
+ * - 1.1.0 (2026-09-19): Switched directly on auditLogsQuery.status instead
+ *                        of derived isBlocked/isOtherError/isLoading
+ *                        booleans — the derived booleans broke TypeScript's
+ *                        control-flow narrowing on auditLogsQuery.data in
+ *                        the success branch (`'data' is possibly
+ *                        undefined`), what CI's typecheck caught.
  */
 import React, { useState } from "react";
 
@@ -47,24 +53,20 @@ function AuditLogModal({ onClose }: AuditLogModalProps) {
 	const [filters, setFilters] = useState<AuditFilters>({});
 	const auditLogsQuery = useAuditLogs(filters);
 
-	const isBlocked = isForbidden(auditLogsQuery.error);
-	const isOtherError = auditLogsQuery.status === "error" && !isBlocked;
 	const isLoading = auditLogsQuery.status === "pending";
 
 	let body: React.ReactNode;
-	if (isBlocked) {
-		body = (
+	if (auditLogsQuery.status === "error") {
+		body = isForbidden(auditLogsQuery.error) ? (
 			<p role="alert" className="px-6 text-sm text-white">
 				You do not have permission to view the audit trail.
 			</p>
-		);
-	} else if (isOtherError) {
-		body = (
+		) : (
 			<p role="alert" className="px-6 text-sm text-white">
 				{getApiErrorMessage(auditLogsQuery.error)}
 			</p>
 		);
-	} else if (isLoading) {
+	} else if (auditLogsQuery.status === "pending") {
 		body = <p className="px-6 text-sm text-white">Loading…</p>;
 	} else {
 		const records = auditLogsQuery.data.data;
