@@ -15,6 +15,7 @@ Changelog:
 package logging
 
 import (
+	"context"
 	"log/slog"
 	"os"
 	"strings"
@@ -28,6 +29,25 @@ func New(level string) *slog.Logger {
 		Level: parseLevel(level),
 	})
 	return slog.New(handler)
+}
+
+// ctxKey is the context key WithContext stores a logger under.
+type ctxKey struct{}
+
+// WithContext returns a copy of ctx carrying logger, so it can be
+// retrieved later (e.g. inside a handler) via FromContext.
+func WithContext(ctx context.Context, logger *slog.Logger) context.Context {
+	return context.WithValue(ctx, ctxKey{}, logger)
+}
+
+// FromContext returns the logger attached by WithContext, or
+// slog.Default() if none was attached (e.g. in a test that doesn't set
+// one up).
+func FromContext(ctx context.Context) *slog.Logger {
+	if logger, ok := ctx.Value(ctxKey{}).(*slog.Logger); ok {
+		return logger
+	}
+	return slog.Default()
 }
 
 func parseLevel(level string) slog.Level {
