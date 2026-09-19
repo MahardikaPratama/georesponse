@@ -36,7 +36,7 @@ describe("ResourceList", () => {
 
 		render(<ResourceList />);
 
-		expect(screen.getAllByRole("listitem").length).toBeGreaterThan(0);
+		expect(screen.getByTestId("resource-list-skeleton").children.length).toBeGreaterThan(0);
 	});
 
 	it("shows a retryable error message derived from the error code", () => {

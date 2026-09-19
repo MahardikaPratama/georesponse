@@ -29,7 +29,7 @@ function formatLocation(resource: Resource): string {
 
 function ResourceListSkeleton() {
 	return (
-		<ul aria-hidden="true" className="flex flex-col gap-2">
+		<ul aria-hidden="true" data-testid="resource-list-skeleton" className="flex flex-col gap-2">
 			{Array.from({ length: 6 }, (_, index) => (
 				<li
 					key={index}
