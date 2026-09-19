@@ -812,13 +812,22 @@ exist in Phase 6).
       login screen (`LoginForm.tsx` + `useLoginForm.ts` container hook);
       `hooks/useLogin.ts`/`useLogout.ts` implement the mutations. Covered
       by `LoginForm.test.tsx` (submit flow, server error display).
-- [ ] Push, open a PR, confirm CI passes, merge into `main`, delete the
-      branch (workflow: section 2.1). **Not yet verified**: this
-      environment has no Node.js/npm available (confirmed absent, same as
-      every prior frontend check in this checklist), so
-      `typecheck`/`lint`/`build`/`test` could not be run locally before
-      this push — CI is the first real verification, matching how Phase 0
-      caught its three frontend bugs.
+- [x] Push, open a PR, confirm CI passes, merge into `main`, delete the
+      branch (workflow: section 2.1). Branch `feature/phase-5-frontend-foundation`,
+      PR #10. Also folded into this PR: a common/ UI component library
+      (Button, Alert, Dropdown, SearchableDropdown, Modal, MoveableModal,
+      Tooltip, DotLoading, InputValidation) adapted from a prior personal
+      project for Phase 6's use, a LoginForm restyle using it, and a
+      backend CORS fix (the frontend's `credentials: "include"` requests
+      were silently blocked without it). CI caught real bugs across four
+      rounds before going green: ESLint errors (`react/display-name`,
+      `no-require-imports`), TypeScript errors (two pre-existing Phase 5
+      files importing `resource.types` through the `@types/*` alias hit
+      TS6137; several adapted test files never actually ran before — they
+      used bare `jest.*` calls and no test globals were enabled), and a
+      runtime-only failure (`require("./colors")` doesn't resolve a `.ts`
+      file under Node, only under Vitest's own `import` handling). Merged
+      into `main`, branch deleted (remote and local).
 
 ---
 
