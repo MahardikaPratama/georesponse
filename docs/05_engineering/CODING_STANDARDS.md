@@ -400,7 +400,7 @@ Do not use comments as a substitute for clear naming or structure.
 
 - Tests are colocated with the source:
   - `ResourceList.test.tsx`
-  - `resourceApi.test.ts`
+  - `httpClient.test.ts`
 - Use Vitest and React Testing Library.
 - Prefer user-facing behavior and interaction assertions.
 

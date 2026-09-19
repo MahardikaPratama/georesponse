@@ -58,10 +58,10 @@ Conceptually:
 ```text
 App
  │
- ├── Pages / Features
- │    ├── Dashboard
+ ├── Pages / Features   (one map-first page composing the feature areas)
  │    ├── Resource Management
- │    └── Map
+ │    ├── Map
+ │    └── Access (login, roles, audit)
  │
  ├── Components
  │

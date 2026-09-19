@@ -217,7 +217,12 @@ GeoResponse is implemented end to end and runs with one command
 Intentionally not implemented at this scope, per
 `docs/01_product/SCOPE.md` and `docs/05_engineering/TECHNOLOGY_SELECTION.md`
 section 17: any deployment to a hosted environment, continuous deployment,
-TLS termination, a container registry, and the e2e suite as a CI stage. The
+TLS termination, a container registry, and the e2e suite as a CI stage.
+Three functional items are partial (role create/rename/delete is API-only,
+the list and map show only the first page of 20 resources, and the map has
+no dedicated empty state) and a few endpoint-level contract deviations
+exist; both are itemized in `docs/01_product/SCOPE.md` section 11 and
+`docs/04_contracts/API_CONTRACT.md` section 19. The
 exact, checkbox-level state of every phase — including which verification
 steps were run in which environment — is tracked in
 `IMPLEMENTATION_CHECKLIST.md`. This status is disclosed here, consistent

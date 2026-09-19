@@ -46,9 +46,10 @@ Static analysis is used as an automated first pass so that human review time is 
 
 | Tool | Purpose |
 |---|---|
-| ESLint | Catches unused variables/imports, React hook-rule violations, and stylistic inconsistencies. |
-| TypeScript compiler (`tsc --noEmit`) | Enforces type-level correctness across the frontend without emitting build output; run as a dedicated check, not only implicitly via the bundler. |
-| Vitest coverage | Reports which frontend code paths (components, hooks, application logic) are exercised by tests. |
+| ESLint (`npm run lint`, flat config in `georesponse-fe/eslint.config.js`: `@eslint/js`, `typescript-eslint`, `eslint-plugin-react`, `eslint-plugin-react-hooks`) | Catches unused variables/imports, React hook-rule violations, and stylistic inconsistencies. |
+| Prettier (`npm run format` / `format:check`, `georesponse-fe/.prettierrc.json`) | Canonical TypeScript/TSX formatting. |
+| TypeScript compiler (`npm run typecheck` = `tsc --noEmit`) | Enforces type-level correctness across the frontend without emitting build output; run as a dedicated check, not only implicitly via the bundler. |
+| Vitest coverage (`vitest run --coverage`; needs the `@vitest/coverage-v8` provider, not installed by default) | Reports which frontend code paths (components, hooks, application logic) are exercised by tests. |
 
 ### 4.2 Backend
 
@@ -56,12 +57,12 @@ Static analysis is used as an automated first pass so that human review time is 
 |---|---|
 | `gofmt` | Canonical Go formatting; no manual formatting debates. |
 | `go vet` | Catches suspicious constructs (unreachable code, bad struct tags, incorrect `Printf`-style calls, etc.). |
-| `golangci-lint` (optional, if configured) | Aggregates additional linters (e.g. `staticcheck`, `errcheck`, `unused`) beyond `go vet` for a stricter pass when time allows. |
+| `golangci-lint` (optional to install; configured in `georesponse-be/.golangci.yml`) | Aggregates `govet`, `staticcheck`, `errcheck`, `unused`, `gosimple`, `ineffassign` beyond `go vet` for a stricter pass; `scripts/quality/check.sh` runs it when it is on `PATH`. |
 | `go test -cover` | Reports test coverage for backend packages, in particular the domain/service layer. |
 
 ### 4.3 Aggregate / Optional
 
-A SonarQube-style static analysis pass is available as an aspirational, opt-in step via `scripts/quality/sonar.sh` (POSIX) and `scripts/quality/sonar.ps1` (Windows). These scripts are placeholders for running a local SonarQube-compatible scanner (e.g. `sonar-scanner` against a local or cloud SonarQube/SonarCloud instance) if one is configured. No SonarQube server is provisioned as part of this take-home submission — this step is proportionate extra assurance, not a required gate. The required gates are defined in `QUALITY_GATES.md` and run via `scripts/quality/check.sh` / `check.ps1`.
+A SonarQube-style static analysis pass is available as an aspirational, opt-in step via `scripts/quality/sonar.sh` (POSIX) and `scripts/quality/sonar.ps1` (Windows). They run `sonar-scanner` against the root `sonar-project.properties` when the CLI is on `PATH` and both `SONAR_HOST_URL` and `SONAR_TOKEN` are set, and otherwise print an explanation and exit 0. No SonarQube server is provisioned as part of this take-home submission — this step is proportionate extra assurance, not a required gate. The required gates are defined in `QUALITY_GATES.md` and run via `scripts/quality/check.sh` / `check.ps1`.
 
 ---
 

@@ -32,12 +32,13 @@ This applies to feature directories, shared primitive directories, and any subfo
 | Component-local constants | `PascalCase.constants.ts` | `ResourceCard.constants.ts` |
 | Component-local utility functions | `PascalCase.utils.ts` | `ResourceCard.utils.ts` |
 | Component-local hook | `useCamelCase.ts` | `useResourceCardActions.ts` |
-| Shared/global hook | `useCamelCase.ts` | `useResourceFilters.ts` |
+| Shared/global hook | `useCamelCase.ts` | `useResources.ts`, `useDebouncedValue.ts` |
 | Shared/global types | `camelCase.types.ts` | `resource.types.ts` |
-| Shared/global constants | `camelCase.constants.ts` | `resource.constants.ts` |
+| Shared/global constants | `camelCase.constants.ts` | `resourceStatus.constants.ts` |
 | Shared/global utility | `camelCase.ts` | `cn.ts`, `withTimeOut.ts` |
-| Store | `useXStore.ts` | `useAlertStore.ts` |
-| Test | colocated `*.test.ts` / `*.test.tsx` | `ResourceCard.test.tsx`, `resourceApi.test.ts` |
+| API module | `<domain>Api.ts` + `<domain>Api.types.ts` + `<domain>Keys.ts` in `api/<domain>/` | `resourceApi.ts`, `resourceKeys.ts` |
+| Store (none exists yet; see section 7) | `useXStore.ts` | `useAlertStore.ts` |
+| Test | colocated `*.test.ts` / `*.test.tsx` | `ResourceList.test.tsx`, `httpClient.test.ts` |
 
 Constant *values* inside a `.constants.ts` file use `SCREAMING_SNAKE_CASE`, per `CODING_STANDARDS.md` section 4:
 
@@ -58,7 +59,7 @@ The base naming rules (casing per identifier kind, nouns for data/types, verbs f
 - Types/interfaces: `Resource`, `ResourceFilters`, `ResourceCardProps`.
 - Functions/variables: `getResources`, `selectedResourceId`.
 - Constants: `DEFAULT_PAGE_SIZE`.
-- Hooks: `useResourceList`, `useAlertStore`.
+- Hooks: `useResources`, `useRelocateResource`, `useDebouncedValue`.
 - Avoid generic names (`data`, `item`, `value`, `result`) when a more specific name is available — prefer `resource`, `resourceFilters`, `selectedResource`.
 
 ---
@@ -129,14 +130,14 @@ components/resource-map/map-adapter/
 
 ## 7. Store Naming
 
-A Zustand-style store lives directly under `store/` (not in its own subdirectory, unless it later grows multiple files) and is named `useXStore.ts`, matching `store/useAlertStore.ts`:
+`store/` is currently empty (a `.gitkeep` placeholder) — no store has been needed, see `FRONTEND_STATE.md` section 8. If one is introduced, it lives directly under `store/` (not in its own subdirectory, unless it later grows multiple files) and is named `useXStore.ts`, for example:
 
 ```text
 store/
 └── useAlertStore.ts
 ```
 
-The store's default export is the hook itself (`useAlertStore`), created with a single `create<T>(...)` call. See `FRONTEND_STATE.md` for when introducing a new store is appropriate.
+The store's default export is the hook itself (`useAlertStore`). See `FRONTEND_STATE.md` for when introducing a store is appropriate.
 
 ---
 

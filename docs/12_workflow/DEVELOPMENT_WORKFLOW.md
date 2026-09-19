@@ -76,14 +76,14 @@ Keep the branch scoped to one unit of work as defined in `DEFINITION_OF_DONE.md`
 
 ### 5.1 Environment
 
-Local development runs the frontend, backend, and a local PostgreSQL + PostGIS instance. The project provides a Docker Compose setup for the local database and, where applicable, the backend and frontend — see `docs/11_devops/DOCKER_COMPOSE.md` for the exact services and commands.
+Local development runs the frontend, backend, and a local PostgreSQL + PostGIS instance. `./run.sh` / `.\run.ps1` bring up all three with Docker Compose (migrated and seeded); for day-to-day iteration you can also run only the database via Compose and start each app directly — see `docs/11_devops/DOCKER_COMPOSE.md` for the exact services and commands, and `scripts/dev/setup.sh` / `setup.ps1` for the one-shot dependency install.
 
 Typical loop:
 
 ```text
 1. Start local dependencies (database, and backend/frontend if run via Compose).
-2. Run the backend in watch/dev mode if not run via Compose.
-3. Run the frontend dev server (Rspack dev server).
+2. Run the backend directly (`go run ./cmd/api` from georesponse-be/) if not run via Compose.
+3. Run the frontend dev server (`npm run dev`, Rspack dev server on port 5173).
 4. Make the change.
 5. Verify it manually against the running application.
 ```

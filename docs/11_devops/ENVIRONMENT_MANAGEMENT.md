@@ -51,28 +51,28 @@ Running Container / Process (environment-specific behavior)
 
 ### 5.1 Frontend (`georesponse-fe`)
 
-| Variable | Purpose | Local Dev Example |
-|---|---|---|
-| `API_BASE_URL` | Base URL the frontend calls for the backend REST API | `http://localhost:8080/api/v1` |
-| `MAP_TILE_URL` | Map tile source URL for MapLibre GL JS, if a non-default tile provider is used | provider-specific |
-| `LOG_LEVEL` | Client-side logger verbosity, read by `src/utils/logger/logger.ts` | `debug` |
+| Variable | Purpose | Default if unset (`rspack.config.js`) | Local Dev Example |
+|---|---|---|---|
+| `API_BASE_URL` | Base URL the frontend calls for the backend REST API | `http://localhost:8080/api/v1` | `http://localhost:8080/api/v1` |
+| `MAP_TILE_URL` | Raster tile URL template for the MapLibre base map; left empty, the map renders with no base tiles, only resource markers | empty | provider-specific (see `georesponse-fe/.env.example`) |
+| `LOG_LEVEL` | Client-side logger verbosity, read by `src/utils/logger/logger.ts` | `debug` (the Dockerfile `ARG` default is `info`; compose passes `debug`) | `debug` |
 
-The frontend build tool is Rspack, not Vite, so these are **not** `VITE_`-prefixed (that convention is Vite-specific and does not apply here). Rspack's `DefinePlugin` injects them at build time as `process.env.API_BASE_URL` etc., per `georesponse-fe/rspack.config.js`, which loads `georesponse-fe/.env` first when running outside Docker. Because the frontend is served as static assets, these values are fixed per build: the Docker image takes them as build arguments (`georesponse-fe/Dockerfile` `ARG`s, fed from the root `.env` by `docker-compose.yml`'s `build.args` or by `scripts/docker/build.sh --build-arg`). Values that need to differ without rebuilding (rare for a static SPA) would require a runtime-injected config file served alongside the assets, which is not currently needed at this scope.
+The frontend build tool is Rspack, not Vite, so these are **not** `VITE_`-prefixed (that convention is Vite-specific and does not apply here). Rspack's `DefinePlugin` injects them at build time as `process.env.API_BASE_URL` etc., per `georesponse-fe/rspack.config.js`, which loads `georesponse-fe/.env` (via `dotenv`) first when running outside Docker. Because the frontend is served as static assets, these values are fixed per build: the Docker image takes them as build arguments (`georesponse-fe/Dockerfile` `ARG`s, fed from the root `.env` by `docker-compose.yml`'s `build.args`, or passed as `--build-arg` by `scripts/docker/build.sh`/`.ps1`, which read them from the environment or the root `.env`). Values that need to differ without rebuilding (rare for a static SPA) would require a runtime-injected config file served alongside the assets, which is not currently needed at this scope.
 
 ### 5.2 Backend (`georesponse-be`)
 
-| Variable | Purpose | Local Dev Example |
-|---|---|---|
-| `APP_ENV` | Declares which environment the process is running as | `development` |
-| `HTTP_PORT` | Port the Go HTTP server listens on | `8080` |
-| `DATABASE_URL` | PostgreSQL/PostGIS connection string | `postgres://georesponse:georesponse_dev_password@georesponse-db:5432/georesponse?sslmode=disable` |
-| `LOG_LEVEL` | Structured logging verbosity (NFR-OBS-001) | `debug` |
-| `CORS_ALLOWED_ORIGINS` | Comma-separated browser origins allowed to call the API cross-origin (SECURITY.md section 8.1); never a wildcard | `http://localhost:5173` |
-| `BMKG_BASE_URL` | BMKG's public GeoHotspot ArcGIS REST layer, queried by GET /api/v1/hotspots | `https://datacuaca.bmkg.go.id/arcgis/rest/services/production/geohotspot/MapServer/0` |
-| `BMKG_TIMEOUT` | Timeout for a single request to BMKG | `10s` |
-| `TOKEN_SECRET` | Signs and verifies authentication tokens (HMAC); required, must be kept confidential | local-dev placeholder only |
-| `TOKEN_TTL` | How long a signed authentication token remains valid | `24h` |
-| `MIGRATIONS_DIR` | Directory of `NNNN_*.up.sql` files the backend applies at start-up when `APP_ENV=development` (`DOCKER_COMPOSE.md` section 6.5) | `../database/migrations` (`go run` from `georesponse-be/`); `/migrations` in the container |
+| Variable | Purpose | Required / default (`internal/platform/config`) | Local Dev Example |
+|---|---|---|---|
+| `APP_ENV` | Declares which environment the process is running as; only `development` auto-migrates at start-up (`DOCKER_COMPOSE.md` section 6.5) and `production` marks the auth cookie `Secure` | default `development` | `development` |
+| `HTTP_PORT` | Port the Go HTTP server listens on | default `8080` | `8080` |
+| `DATABASE_URL` | PostgreSQL/PostGIS connection string | **required** | `postgres://georesponse:georesponse_dev_password@georesponse-db:5432/georesponse?sslmode=disable` |
+| `LOG_LEVEL` | Structured logging verbosity (NFR-OBS-001): `debug`, `info`, `warn`, `error` | default `info` | `debug` |
+| `CORS_ALLOWED_ORIGINS` | Comma-separated browser origins allowed to call the API cross-origin (SECURITY.md section 8.1); never a wildcard | default `http://localhost:5173` | `http://localhost:5173` |
+| `BMKG_BASE_URL` | BMKG's public GeoHotspot ArcGIS REST layer, queried by GET /api/v1/hotspots | default `https://datacuaca.bmkg.go.id/arcgis/rest/services/production/geohotspot/MapServer/0` | same |
+| `BMKG_TIMEOUT` | Timeout for a single request to BMKG | default `10s` | `10s` |
+| `TOKEN_SECRET` | Signs and verifies authentication tokens (HMAC); must be kept confidential | **required** | local-dev placeholder only |
+| `TOKEN_TTL` | How long a signed authentication token remains valid | default `24h` | `24h` |
+| `MIGRATIONS_DIR` | Directory of `NNNN_*.up.sql` files the backend applies at start-up when `APP_ENV=development` (`DOCKER_COMPOSE.md` section 6.5) | default `../database/migrations` (relative to `georesponse-be/`); must exist when `APP_ENV=development` | `../database/migrations` (`go run` from `georesponse-be/`); `/migrations` in the container |
 
 Any further variable follows the same convention — environment variable, never hardcoded, documented here and in `georesponse-be/.env.example`.
 
@@ -92,8 +92,9 @@ Three `.env`/`.env.example` pairs are intended, one per place configuration is a
 
 ```text
 .env.example                (committed — compose-level variables: DB credentials,
-                              ports, and the values docker-compose.yml substitutes
-                              into each service; see DOCKER_COMPOSE.md section 6.4)
+                              ports, IMAGE_TAG, and the values docker-compose.yml
+                              substitutes into each service; see DOCKER_COMPOSE.md
+                              section 6.4)
 .env                        (gitignored — actual local values, created by run.sh/
                               run.ps1 or manually by the developer)
 
@@ -119,10 +120,10 @@ Rules:
    variable its context reads, with a safe placeholder or an obviously-fake
    local-dev default — never a real secret.
 2. Every `.env` file (root and per-app) is excluded via `.gitignore` and is
-   never committed. This is the concrete mechanism satisfying NFR-SEC-004 —
-   verify `.gitignore` actually lists `.env` at the root and inside both
-   `georesponse-fe/` and `georesponse-be/` before the first commit that adds
-   a real `.env.example`.
+   never committed. This is the concrete mechanism satisfying NFR-SEC-004:
+   the root `.gitignore` lists `.env` (covering every directory, including
+   `georesponse-be/`, which has no `.gitignore` of its own) and
+   `georesponse-fe/.gitignore` lists it again.
 3. A developer sets up their environment by copying each example file
    (`cp .env.example .env`, once per pair) and adjusting values only if
    their local setup deviates from the default (e.g. a non-standard port
@@ -142,7 +143,7 @@ This satisfies NFR-SEC-004 (credentials must not be hard-coded or committed) and
 
 The CI pipeline (`CI_CD.md`) does not use `.env` files at all for the unit-test stages, since frontend and backend unit tests are designed to run without a live database dependency (NFR-TEST-002 — unit tests must not depend on external services). Any configuration values unit tests need are supplied directly as job-level environment variables in the GitHub Actions workflow, or as safe in-code test defaults.
 
-If/when the integration test suite in `tests/integration/` is implemented, it would run against an ephemeral PostGIS service container provisioned within the CI job itself (a GitHub Actions `services:` block, or a docker-compose invocation scoped to CI), configured with its own throwaway `DATABASE_URL` — never pointing at a shared or persistent database.
+The integration test suite in `tests/integration/` runs in CI's `integration` job (`CI_CD.md` section 4.3) against an ephemeral PostGIS service container provisioned within the job itself (a GitHub Actions `services:` block), with a throwaway `DATABASE_URL`, `TOKEN_SECRET`, and `APP_ENV=development` set as job-level environment variables — never pointing at a shared or persistent database. The suite itself only needs `GEORESPONSE_API_URL` (see `tests/README.md`).
 
 ---
 

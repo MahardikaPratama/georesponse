@@ -73,7 +73,7 @@ The panel is read from server state directly; it does not maintain its own copy 
 - On submission, the form is disabled and shows a pending indicator until the mutation resolves.
 - On a `VALIDATION_ERROR` response, field-level errors are mapped from `error.details` back onto the corresponding form fields when the shape allows it; otherwise the message is shown as a form-level error.
 - On success, the form closes and the detail/list view reflects the change once the relevant query keys are invalidated (`FRONTEND_STATE.md` section 6).
-- Placing a resource by clicking the map (instead of typing coordinates) is supported for both create and relocate, going through the map adapter's click callback (`FRONTEND_ARCHITECTURE.md` section 8).
+- Placing a new resource by double-clicking the map (instead of typing coordinates) is supported for create, going through the map adapter's `onMapDoubleClick` callback (`FRONTEND_ARCHITECTURE.md` section 8); relocation is entered as coordinates in the detail card's relocate control (marker dragging is not implemented).
 
 ---
 
@@ -103,7 +103,7 @@ These states are driven directly by TanStack Query's status, per `FRONTEND_STATE
 | `success`, empty result | An explicit empty state ("No resources match the current filters") rather than an empty list with no explanation |
 | `success`, populated | Normal rendering |
 | Mutation `pending` | Submitting controls disabled, pending indicator shown |
-| Mutation `error` | Inline or toast feedback (via `store/useAlertStore.ts`) keyed off `error.code`, not the raw `message` string |
+| Mutation `error` | Inline or toast feedback (`common/alert/Alert.tsx`, message derived by `utils/apiErrorMessage.ts`) keyed off `error.code`, not the raw `message` string |
 
 The frontend never presents a raw, unmapped `error.message` from the backend as the primary user-facing text for a known `code`; unknown codes fall back to a generic message rather than exposing internal details.
 

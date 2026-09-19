@@ -32,13 +32,13 @@ All of the following MUST pass before a change is merged to `main`.
 | G2 | Backend build | `go build ./...` completes without errors. | Backend |
 | G3 | Frontend lint | ESLint reports 0 errors. Warnings should be resolved when practical but do not block by themselves unless they indicate a real bug. | Frontend |
 | G4 | Frontend type-check | `tsc --noEmit` passes with 0 errors. | Frontend |
-| G5 | Backend static checks | `gofmt -l .` reports no unformatted files; `go vet ./...` reports no issues. `golangci-lint run` passes if configured. | Backend |
+| G5 | Backend static checks | `gofmt -l .` reports no unformatted files; `go vet ./...` reports no issues. `golangci-lint run` (configured in `georesponse-be/.golangci.yml`) passes when the tool is installed — `check.sh`/`check.ps1` skip it otherwise, and CI does not run it. | Backend |
 | G6 | Frontend tests | `vitest run` passes with 0 failing tests. | Frontend |
 | G7 | Backend tests | `go test ./...` passes with 0 failing tests. | Backend |
 | G8 | Business-rule coverage | Validation, domain/service logic, and status-change/relocation flows have direct test coverage (see §4). | Both |
 | G9 | No merge artifacts | No unresolved merge-conflict markers (`<<<<<<<`, `=======`, `>>>>>>>`) anywhere in the diff. | Both |
 | G10 | No secrets committed | No credentials, API keys, connection strings, or `.env` files with real values are present in the diff. | Both |
-| G11 | Formatting applied | `gofmt` has been applied to all changed Go files; Prettier/`eslint --fix` (or equivalent) has been applied to all changed frontend files. | Both |
+| G11 | Formatting applied | `gofmt` has been applied to all changed Go files; Prettier (`npm run format`, config in `georesponse-fe/.prettierrc.json`) and/or `npm run lint:fix` has been applied to all changed frontend files. | Both |
 
 If a gate cannot be satisfied for a documented, time-boxed reason, the limitation must be recorded (e.g. in `LIMITATIONS.md` or an equivalent known-issues note) rather than silently skipped.
 
@@ -54,7 +54,7 @@ Instead, coverage is expected to be **risk-proportionate**:
 - **Should be covered where practical:** API handlers for their success and primary failure paths, repository behavior where persistence logic is non-trivial.
 - **Not required to be exhaustively covered:** purely presentational components with no branching logic, trivial getters/setters, generated or vendor code.
 
-`vitest run --coverage` and `go test -cover` are used to *observe* coverage and spot obviously untested business logic — not to chase a numeric target for its own sake.
+`go test ./... -cover` (CI runs it this way) and `vitest run --coverage` (needs the `@vitest/coverage-v8` provider, which is not installed by default — add it as a dev dependency when you want the report) are used to *observe* coverage and spot obviously untested business logic — not to chase a numeric target for its own sake.
 
 ---
 

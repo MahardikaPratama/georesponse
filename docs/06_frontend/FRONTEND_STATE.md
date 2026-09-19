@@ -123,23 +123,14 @@ Optimistic updates are not used for destructive operations (delete) or for opera
 
 ## 8. Cross-Cutting UI State: When to Use a Store
 
-A Zustand-style store under `store/` (see `FRONTEND_NAMING.md` section 7) is introduced only for UI state that is:
+A small hook-based store under `store/` (see `FRONTEND_NAMING.md` section 7) would be introduced only for UI state that is:
 
 - genuinely global (not owned by one feature or page); and
 - needed by components with no direct parent/child relationship, so prop drilling would otherwise be required.
 
-The established example is `store/useAlertStore.ts`: a global toast/alert banner that any feature can trigger (after a mutation succeeds or fails) and that is rendered once near the root of the app.
+**No such store exists today** — `store/` is empty. The cross-cutting state the application has (selected resource, active filters, which modal is open) is owned by the single page component `components/app-shell/AppShell.tsx` with `useState`, and passed down as props; toast/alert feedback is rendered by `common/alert/Alert.tsx` from the owning component's local state. That has been sufficient because there is one page.
 
-```ts
-const useAlertStore = create<AlertStore>((set) => ({
-  isOpen: false,
-  messageAlert: "",
-  setIsOpen: (val) => set({ isOpen: val }),
-  setMessageAlert: (val) => set({ messageAlert: val }),
-}));
-```
-
-Do not introduce a new store for state that is local to one feature (use `useState`/`useReducer` in that feature) or for anything that is server state (use TanStack Query). A dedicated global state library beyond this lightweight store pattern (Redux Toolkit, a second state library) is out of scope per `TECHNOLOGY_SELECTION.md` section 11.1 — the current client-side state does not justify it.
+Do not introduce a store for state that is local to one feature (use `useState`/`useReducer` in that feature) or for anything that is server state (use TanStack Query). A dedicated global state library (Redux Toolkit, Zustand, or similar) is out of scope per `TECHNOLOGY_SELECTION.md` section 11.1 — the current client-side state does not justify it; if a store is ever needed it should be a plain React implementation (context + `useReducer`) first.
 
 ---
 
@@ -157,6 +148,6 @@ This document does not define:
 
 ## 10. State Principle
 
-Data that the backend owns lives in TanStack Query. Data the UI owns lives in `useState`/`useReducer`. Data that must cross unrelated features lives in a small, purpose-built store.
+Data that the backend owns lives in TanStack Query. Data the UI owns lives in `useState`/`useReducer`. Data that must cross unrelated features is lifted to the nearest common owner (today, the app shell) — or, if that ever becomes unwieldy, a small, purpose-built store.
 
 > Never let two of these three mechanisms hold the same fact at the same time.

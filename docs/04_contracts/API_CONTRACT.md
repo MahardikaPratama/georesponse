@@ -891,3 +891,22 @@ Field meanings follow `DATA_CONTRACT.md` section 16. If BMKG is
 unreachable, the backend serves the last successfully fetched list
 (possibly stale); only when no prior result exists does it return
 `502 HOTSPOT_UPSTREAM_UNAVAILABLE` (section 13).
+
+---
+
+# 19. Known Implementation Deviations at Submission
+
+As of 2026-09-20 the shipped backend differs from this contract in the
+following points. The contract text above is the intended behaviour and is
+left unchanged; these are recorded so the gap is explicit rather than
+silent (see also `docs/01_product/SCOPE.md` section 11).
+
+| Section | Contract says | Implementation does |
+|---|---|---|
+| 6.4 Update Resource | Body may also carry `status` and `location` | Body accepts only `name`, `type`, `attributes`; a body containing `status` or `location` is rejected with `400 VALIDATION_ERROR` (strict decoding). Status and location change only through 7.1 and 8.1. |
+| 3, 6.1, 9.1, 11.1 Pagination | `pageSize` above 100 is rejected with `400 VALIDATION_ERROR` | `pageSize` above 100 is silently capped to 100; non-positive values fall back to the defaults. |
+| `DATA_CONTRACT.md` 3.1 | Resource payload includes `updatedAt` | `updatedAt` is stored but not emitted in the resource response. |
+| 9.1 View Resource History | Restricted to authorized users | Requires authentication only; no `resource.read` permission check. |
+| `DATA_CONTRACT.md` 12 | Optional fields are `null` | History and audit optional fields (`changedBy`, `userId`, `resourceId`) are omitted from the JSON when absent. |
+| 12 / 13 Validation `details` | `details` names the failing field | Domain validation failures carry no `details`; decode-level failures carry entries with an empty `field`. |
+| 10.3 Update Role | Response is a role object | `permissions` serialises as `null` instead of `[]` on `PUT /api/v1/roles/{id}` only. |

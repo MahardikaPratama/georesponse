@@ -45,9 +45,9 @@ At the unit level, the frontend contributes component, hook, and API-client test
 
 ## 4. Integration Tests
 
-Located under `tests/integration/`.
+Located under `tests/integration/` (its own Go module, `golden_path_test.go`).
 
-Integration tests exercise a real request through multiple layers — typically HTTP handler → application → repository → PostgreSQL/PostGIS — against a real (test) database instance, rather than mocks. They validate that the layers are wired correctly and that persisted state matches what the API contract promises.
+Integration tests exercise a real request through multiple layers — HTTP handler → application → repository → PostgreSQL/PostGIS — as black-box HTTP calls against a running backend and database, rather than mocks. They validate that the layers are wired correctly and that persisted state matches what the API contract promises. The suite targets the backend named by `GEORESPONSE_API_URL` (skipping entirely when it is unset, so a plain `go test ./...` stays safe), logs in with the seeded demo accounts, and cleans up what it creates; `scripts/dev/test.sh`/`.ps1` run it when the variable is set, and CI runs it in its `integration` job against a PostGIS service container (`docs/11_devops/CI_CD.md` section 4.3). Run instructions and variables are in `tests/README.md`.
 
 Representative integration coverage:
 
@@ -63,12 +63,14 @@ Integration tests satisfy `NFR-REL-002` (Data Consistency) and `NFR-TEST-003` (I
 
 ## 5. End-to-End Tests
 
-Located under `tests/e2e/`.
+Located under `tests/e2e/` (Playwright, Chromium only, `golden-path.spec.ts`; run with `npm test` against an already-running stack at `E2E_BASE_URL`, default `http://localhost:5173` — see `tests/README.md`). It is run locally, not in CI (`docs/11_devops/CI_CD.md` section 4.3).
 
 The e2e layer is intentionally thin and covers the **core golden path** through the running application, not every permutation:
 
 ```text
-view resources on map
+      log in
+        ↓
+view resources on map and list
         ↓
    create a resource
         ↓
@@ -114,7 +116,7 @@ These are excluded because they add testing infrastructure disproportionate to a
 ## 8. Test Data
 
 - Unit and integration tests use deterministic, purpose-built fixtures — not production or scraped data.
-- Integration and e2e tests run against a disposable local/test database instance (via the Docker Compose setup referenced in `docs/11_devops/DOCKER_COMPOSE.md`), never against a shared or persistent environment.
+- Integration and e2e tests run against a disposable local/test database instance (the Docker Compose stack from `docs/11_devops/DOCKER_COMPOSE.md`, or CI's throwaway PostGIS service container), seeded with the demo accounts and sample resources from `database/seeds/`, never against a shared or persistent environment.
 - Tests must be deterministic and must not depend on external services unless the test explicitly targets that boundary, per `NFR-TEST-002`.
 
 ---

@@ -98,7 +98,7 @@ Illustrative `CHANGELOG.md` structure:
 - Initial frontend/backend/database scaffolding.
 ```
 
-This is proportionate to the take-home scope: it gives a reviewer a fast, human-readable summary of what changed and when, without requiring release-automation tooling that would not be exercised meaningfully in a single-submission project.
+This is proportionate to the take-home scope: it gives a reviewer a fast, human-readable summary of what changed and when, without requiring release-automation tooling that would not be exercised meaningfully in a single-submission project. As of this writing no `CHANGELOG.md` has been created and no release tag has been cut — the Conventional Commits history on `main` is the change record until one is.
 
 ---
 

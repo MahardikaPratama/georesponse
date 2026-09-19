@@ -21,15 +21,18 @@ React Testing Library encourages testing components through their rendered outpu
 Tests are colocated with the source file they cover, never placed in a separate `__tests__` directory, matching `CODING_STANDARDS.md` section 4 and the existing `utils/logger/logger.test.ts` example.
 
 ```text
-components/resource-card/
-├── ResourceCard.tsx
-├── ResourceCard.types.ts
-├── useResourceCardActions.ts
-└── ResourceCard.test.tsx
+components/resource-list/
+├── ResourceList.tsx
+├── ResourceList.types.ts
+└── ResourceList.test.tsx
 
-api/resources/
-├── resourceApi.ts
-└── resourceApi.test.ts
+api/
+├── httpClient.ts
+└── httpClient.test.ts
+
+hooks/
+├── useResources.ts
+└── useResources.test.ts
 
 utils/logger/
 ├── logger.ts
@@ -37,7 +40,7 @@ utils/logger/
 └── logger.test.ts
 ```
 
-Naming pattern: `<SourceFileName>.test.ts` or `.test.tsx`, matching the case of the file under test (`ResourceCard.test.tsx` for a component, `resourceApi.test.ts` for a module-level file).
+Naming pattern: `<SourceFileName>.test.ts` or `.test.tsx`, matching the case of the file under test (`ResourceList.test.tsx` for a component, `httpClient.test.ts` for a module-level file). Vitest is configured with `globals: true` (`vitest.config.ts`), so `describe`/`it`/`expect`/`vi` may be used without importing them; importing them explicitly is also fine.
 
 ---
 
@@ -69,7 +72,7 @@ Naming pattern: `<SourceFileName>.test.ts` or `.test.tsx`, matching the case of 
   - the correct endpoint/method/payload is used for a given action;
   - a success response updates the UI as expected;
   - an error response with a given `code` (`VALIDATION_ERROR`, `RESOURCE_NOT_FOUND`, ...) produces the corresponding user-facing message, not a raw/unhandled error.
-- `resourceApi.ts` itself is tested against a mocked `httpClient`/`fetch`, asserting it builds the correct request and correctly unwraps the `{ data, meta }` / `{ error }` envelopes from `API_CONTRACT.md` section 4.
+- The envelope handling lives in `httpClient.ts` and is tested there (`api/httpClient.test.ts`) against a mocked `fetch`, asserting it builds the correct request and correctly unwraps the `{ data, meta }` / `{ error }` envelopes from `API_CONTRACT.md` section 4; the per-domain `*Api.ts` modules are thin and are exercised through the hook tests (`hooks/use*.test.ts`) with `httpClient` mocked.
 
 ---
 
@@ -86,11 +89,11 @@ Naming pattern: `<SourceFileName>.test.ts` or `.test.tsx`, matching the case of 
 
 The map adapter (`components/resource-map/map-adapter/MapAdapter.ts`) is the one place `maplibre-gl` is imported, per `FRONTEND_ARCHITECTURE.md` section 8. It is tested at its boundary rather than through a real MapLibre instance:
 
-- `maplibre-gl` is mocked in the adapter's test file, exposing the small surface the adapter uses (`Map`, `addSource`, `addLayer`, `on`, `remove`, ...).
-- Tests assert the adapter's own contract: given a `Resource[]`, it builds the expected GeoJSON feature collection (correct `[longitude, latitude]` order per `DATA_CONTRACT.md` section 2); given a MapLibre click event, it calls the adapter's `onResourceSelect` callback with the correct resource id.
+- `maplibre-gl` is mocked in the adapter's test file (`MapAdapter.test.ts`, `vi.mock("maplibre-gl", ...)`), exposing the small surface the adapter uses (`Map`, `addSource`, `addLayer`, `on`, `remove`, ...).
+- Tests assert the adapter's own contract: given the markers derived from `Resource[]`, it builds the expected GeoJSON feature collection (correct `[longitude, latitude]` order per `DATA_CONTRACT.md` section 2); given a MapLibre click event on the marker layer, it calls the adapter's `onMarkerClick` callback with the correct resource id (which `ResourceMap.tsx` surfaces to its parent as `onResourceSelect`).
 - Tests do not assert anything about MapLibre's actual rendering output.
 
-Feature components that use the map adapter (`ResourceMap.tsx`) mock the adapter module itself, the same way they mock `resourceApi.ts`, so component tests stay independent of both the network and the map engine.
+A test for a feature component that uses the map adapter (`ResourceMap.tsx`) mocks the adapter module itself, the same way hook tests mock the API modules, so component tests stay independent of both the network and the map engine.
 
 ---
 
@@ -166,7 +169,7 @@ describe("ResourceCard", () => {
 This document does not define:
 
 - backend testing conventions (`CODING_STANDARDS.md` section 15, "Backend");
-- end-to-end/browser-automation testing (not part of the current scope);
+- end-to-end/browser-automation testing (the Playwright golden-path suite in `tests/e2e/` is covered by `TESTING_STRATEGY.md` section 5 and `tests/README.md`);
 - performance/load testing (covered separately by the map benchmark methodology for MapLibre itself, not the application);
 - visual regression testing.
 

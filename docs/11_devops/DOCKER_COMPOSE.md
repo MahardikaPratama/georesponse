@@ -27,7 +27,7 @@ Out of scope:
 
 The compose file and its supporting assets are implemented:
 
-- `docker-compose.yml` — at the repository root (what `docker compose up` looks for by default), defining `georesponse-db`, `georesponse-be`, and `georesponse-fe` as sketched in section 5.
+- `docker-compose.yml` — at the repository root (what `docker compose up` looks for by default), defining `georesponse-db`, `georesponse-be`, and `georesponse-fe` as listed in section 5.
 - `docker/postgres/init/01-init-schema-and-seeds.sh` — the one-time database initialization script the compose file mounts into the PostGIS container's `docker-entrypoint-initdb.d` (see section 6.1).
 - `georesponse-fe/nginx.conf` — the frontend runtime image's nginx server block, kept next to its Dockerfile because that Dockerfile's build context is `georesponse-fe/`.
 - `run.sh` / `run.ps1` — the one-command wrapper described in section 7.1.
@@ -59,10 +59,10 @@ The compose file and its supporting assets are implemented:
 
 ## 5. Illustrative `docker-compose.yml`
 
-The sketch below shows the shape of the real root-level `docker-compose.yml`; the real file is the source of truth and adds a few things the sketch omits for brevity: `TOKEN_SECRET`/`TOKEN_TTL`/`CORS_ALLOWED_ORIGINS` passed to the backend, `MIGRATIONS_DIR=/migrations` with `database/migrations` bind-mounted read-only (section 6.5), `image: georesponse-<app>:${IMAGE_TAG:-latest}` on both built services (so `scripts/deployment/deploy.sh --tag` can start a specific tag), the frontend's `build.args` (`API_BASE_URL`, `MAP_TILE_URL`, `LOG_LEVEL` — inlined at build time, see `CONTAINERIZATION.md` section 4.2), `georesponse-fe` waiting for `georesponse-be` to be *healthy* rather than merely started, and the database initialization mounts described in section 6.1.
+The listing below mirrors the real root-level `docker-compose.yml` (the real file, with its explanatory header comments, is the source of truth). Points worth noticing: `TOKEN_SECRET`/`TOKEN_TTL`/`CORS_ALLOWED_ORIGINS` are passed to the backend; `MIGRATIONS_DIR=/migrations` with `database/migrations` bind-mounted read-only (section 6.5); `image: georesponse-<app>:${IMAGE_TAG:-latest}` on both built services (so `scripts/deployment/deploy.sh --tag` can start a specific tag); the frontend's `build.args` (`API_BASE_URL`, `MAP_TILE_URL`, `LOG_LEVEL` — inlined at build time, see `CONTAINERIZATION.md` section 4.2); `georesponse-fe` waits for `georesponse-be` to be *healthy* rather than merely started; and the database initialization mounts are described in section 6.1.
 
 ```yaml
-# docker-compose.yml (illustrative sketch of the real root-level file)
+# docker-compose.yml (mirrors the real root-level file)
 # Reads ./.env automatically (docker compose's default behavior for a file
 # named ".env" next to the compose file) — see section 6.4 and
 # ENVIRONMENT_MANAGEMENT.md section 6 for the root .env/.env.example pair
@@ -86,8 +86,10 @@ services:
       - "5432:5432"
     volumes:
       - georesponse-db-data:/var/lib/postgresql/data
-      - ./database/migrations:/docker-entrypoint-initdb.d/migrations:ro
-      - ./database/seeds:/docker-entrypoint-initdb.d/seeds:ro
+      # Runs once, on first initialisation of an empty data volume only.
+      - ./docker/postgres/init:/docker-entrypoint-initdb.d:ro
+      - ./database/migrations:/georesponse/migrations:ro
+      - ./database/seeds:/georesponse/seeds:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-georesponse} -d ${POSTGRES_DB:-georesponse}"]
       interval: 5s
@@ -99,6 +101,7 @@ services:
     build:
       context: ./georesponse-be
       dockerfile: Dockerfile
+    image: georesponse-be:${IMAGE_TAG:-latest}
     container_name: georesponse-be
     restart: unless-stopped
     environment:
@@ -106,13 +109,19 @@ services:
       HTTP_PORT: ${HTTP_PORT:-8080}
       DATABASE_URL: postgres://${POSTGRES_USER:-georesponse}:${POSTGRES_PASSWORD:-georesponse_dev_password}@georesponse-db:5432/${POSTGRES_DB:-georesponse}?sslmode=disable
       LOG_LEVEL: ${LOG_LEVEL:-debug}
+      TOKEN_SECRET: ${TOKEN_SECRET:-dev-only-secret-do-not-use-in-production}
+      TOKEN_TTL: ${TOKEN_TTL:-24h}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:5173}
+      MIGRATIONS_DIR: /migrations
     ports:
-      - "8080:8080"
+      - "${HTTP_PORT:-8080}:${HTTP_PORT:-8080}"
+    volumes:
+      - ./database/migrations:/migrations:ro
     depends_on:
       georesponse-db:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://localhost:8080/health"]
+      test: ["CMD", "wget", "-qO-", "http://localhost:${HTTP_PORT:-8080}/health"]
       interval: 10s
       timeout: 3s
       retries: 5
@@ -122,15 +131,19 @@ services:
     build:
       context: ./georesponse-fe
       dockerfile: Dockerfile
+      args:
+        # Inlined into the static bundle at build time (rspack DefinePlugin).
+        API_BASE_URL: ${API_BASE_URL:-http://localhost:8080/api/v1}
+        MAP_TILE_URL: ${MAP_TILE_URL:-}
+        LOG_LEVEL: ${LOG_LEVEL:-debug}
+    image: georesponse-fe:${IMAGE_TAG:-latest}
     container_name: georesponse-fe
     restart: unless-stopped
-    environment:
-      API_BASE_URL: ${API_BASE_URL:-http://localhost:8080/api/v1}
     ports:
       - "5173:80"
     depends_on:
       georesponse-be:
-        condition: service_started
+        condition: service_healthy
 
 volumes:
   georesponse-db-data:
@@ -138,12 +151,12 @@ volumes:
 
 ---
 
-## 6. Notes on the Sketch Above
+## 6. Notes on the Listing Above
 
 ### 6.1 Database Volume and Migrations
 
 - `georesponse-db-data` is a named volume providing persistence across `docker compose down`/`up` cycles (data is only lost on an explicit `docker compose down -v`).
-- On **first initialization only** (an empty data volume), the official Postgres/PostGIS image runs the scripts in `docker-entrypoint-initdb.d`. The compose file mounts `docker/postgres/init/` there, and `database/migrations` / `database/seeds` read-only at `/georesponse/migrations` and `/georesponse/seeds`; the init script applies every `*.up.sql` in ascending order, records the resulting version in the same `schema_migrations(version, dirty)` bookkeeping table the golang-migrate CLI uses, then loads every seed file — so a brand-new stack starts with demo resources and the demo login accounts. (Mounting the migration directories *directly* into `docker-entrypoint-initdb.d`, as an earlier sketch did, would not work: the entrypoint only executes files at the top level of that directory, and it would have tried to run the `.down.sql` files too.)
+- On **first initialization only** (an empty data volume), the official Postgres/PostGIS image runs the scripts in `docker-entrypoint-initdb.d`. The compose file mounts `docker/postgres/init/` there, and `database/migrations` / `database/seeds` read-only at `/georesponse/migrations` and `/georesponse/seeds`; the init script applies every `*.up.sql` in ascending order, records the resulting version in the same `schema_migrations(version, dirty)` bookkeeping table the golang-migrate CLI uses, then loads every seed file — so a brand-new stack starts with demo resources and the demo login accounts. (Mounting the migration directories *directly* into `docker-entrypoint-initdb.d` would not work: the entrypoint only executes files at the top level of that directory, and it would have tried to run the `.down.sql` files too.)
 - This first-run hook is a convenience for a brand-new volume, not the primary migration mechanism. On every `georesponse-be` startup in `APP_ENV=development`, the backend itself applies any migration newer than the database's recorded version before it starts serving requests (section 6.5), so the schema is always current without a manual step. `scripts/database/migrate.sh`/`.ps1` remain available for running migrations independently of starting the server (see `DATABASE_MIGRATIONS.md`).
 
 ### 6.2 Health Checks
@@ -156,7 +169,7 @@ volumes:
 | Service | Container Port | Host Port | Notes |
 |---|---|---|---|
 | `georesponse-fe` | 80 (nginx) | 5173 | Chosen to match a typical local frontend dev port; adjustable |
-| `georesponse-be` | 8080 | 8080 | REST API |
+| `georesponse-be` | `HTTP_PORT` (default 8080) | same as container port | REST API; both sides follow `HTTP_PORT` from the root `.env` |
 | `georesponse-db` | 5432 | 5432 | Standard Postgres port |
 
 ### 6.4 Environment Variables

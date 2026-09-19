@@ -1482,25 +1482,42 @@ directly to `main` (see Phase 7 note).
 - [x] For any FR/UC left intentionally unimplemented at submission time,
       document it explicitly (file, section) per the take-home brief's
       "explain unfinished features" requirement — do not leave a silent
-      gap. Every FR/UC in `FUNCTIONAL_REQUIREMENTS.md` is implemented
-      (Phases 1–6 above). What is intentionally *not* delivered is
-      operational, not functional, and is listed in `README.md`
-      "Implementation Status": no hosted deployment, no continuous
-      deployment, no TLS termination, no container registry, and the e2e
-      suite not run as a CI stage — each with its rationale in
-      `DEPLOYMENT.md` section 8 / `CI_CD.md` sections 4.3 and 7. The
-      unverified checkboxes in sections 10–12 above are the honest record of
-      what was built but not exercised in this environment.
+      gap. Done: a full FR/UC/NFR coverage audit against the code found
+      three partial items (FR-033/UC-12 role lifecycle is API-only;
+      FR-002/FR-020 list and map show only the first page; UC-05 has no
+      map empty-state overlay) and seven NFRs whose verification was not
+      carried out; all are recorded in `SCOPE.md` section 11, with pointers
+      from `FUNCTIONAL_REQUIREMENTS.md` section 1, `USE_CASES.md` section
+      1, and `README.md` "Implementation Status". Endpoint-level
+      contract deviations are tabulated in `API_CONTRACT.md` section 19.
+      What is intentionally *not* delivered operationally (no hosted
+      deployment, CD, TLS, registry, e2e as a CI stage) stays in
+      `README.md` with rationale in `DEPLOYMENT.md` section 8 / `CI_CD.md`
+      sections 4.3 and 7.
 - [x] Verify every code example, endpoint list, and script path across
       `docs/` still matches the real implementation (spot-check
-      `API_CONTRACT.md`, `DATABASE_SCHEMA.md`, and both READMEs). Done for
-      the devops/database/backend docs touched by Phase 8 (`CONTAINERIZATION`,
-      `DOCKER_COMPOSE`, `DEPLOYMENT`, `ENVIRONMENT_MANAGEMENT`, `CI_CD`,
-      `DATABASE_MIGRATIONS`, `BACKEND_DEPENDENCIES`) and both READMEs; a
-      repo-wide grep for "placeholder" / "not yet" / "currently empty"
-      claims found no remaining stale statements. `API_CONTRACT.md` and
-      `DATABASE_SCHEMA.md` were reconciled when Phases 4 and 2 landed and
-      were not changed by later phases.
+      `API_CONTRACT.md`, `DATABASE_SCHEMA.md`, and both READMEs). Done as a
+      file-by-file pass over every `docs/` directory, the three READMEs,
+      `QUICK_START.md`, `tests/README.md`, `AGENTS.md`, and `CLAUDE.md`
+      against the router, handlers, DTOs, validators, `go.mod`,
+      migrations, seeds, scripts, compose file, Dockerfiles, CI workflow,
+      and `package.json`. Notable corrections: `GET /api/v1/hotspots` and
+      `HOTSPOT_UPSTREAM_UNAVAILABLE` added to `API_CONTRACT.md`; migration
+      0006/0007 effects (history FKs `ON DELETE SET NULL`, `password_hash`)
+      and the real migration file names in `DATABASE_SCHEMA.md` /
+      `DATABASE_MIGRATIONS.md`; invented pool-size env vars removed from the
+      database docs; `BACKEND_ARCHITECTURE.md` package tree, naming,
+      validation, error-mapping, and testing examples rewritten to the
+      real identifiers; frontend docs (`FRONTEND_ARCHITECTURE`, `_STATE`,
+      `_NAMING`, `_TESTING`, `_UI_UX`) purged of files that never existed
+      (a Zustand alert store, a dashboard feature, marker dragging) and
+      re-pointed at the real `src/` tree; `CI_CD.md`, `CONTAINERIZATION.md`,
+      `DOCKER_COMPOSE.md`, and `ENVIRONMENT_MANAGEMENT.md` re-synced with
+      the workflow, Dockerfiles, compose file, and `config.go` (script
+      names, Go 1.26 image, build args, required/default env vars); Go
+      1.26 and Tailwind CSS v4 in the READMEs and root instruction files; a stray carriage-return byte in `.un.ps1`
+      fixed in `README.md` and `QUICK_START.md`. Static verification only:
+      no `npm`, `docker`, or `go` commands were run for this item.
 - [x] Re-run the redundancy/consistency pass on any doc touched during
       implementation, per the ownership map established in this session.
       Done: the migration bookkeeping table format is now stated once in

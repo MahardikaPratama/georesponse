@@ -42,30 +42,48 @@ src/
 │       └── Tabs.tsx
 │
 ├── components/       # Feature components (pages/features live here)
-│   └── resource-map/
-│       ├── ResourceMap.tsx
-│       ├── ResourceMap.types.ts
-│       └── map-adapter/
-│           └── MapAdapter.ts
+│   ├── app-shell/
+│   │   └── AppShell.tsx            # The single authenticated page: composes list, map, detail, modals
+│   ├── resource-map/
+│   │   ├── ResourceMap.tsx
+│   │   ├── ResourceMap.types.ts
+│   │   └── map-adapter/
+│   │       ├── MapAdapter.ts
+│   │       ├── MapAdapter.types.ts
+│   │       └── MapAdapter.test.ts
+│   ├── resource-list/, resource-detail/, resource-filter-bar/,
+│   ├── resource-create-form/, resource-update-form/, resource-relocate-form/,
+│   ├── resource-delete-confirmation/, resource-history/,
+│   └── login-form/, role-management/, audit-log/, hotspot-toggle/
 │
-├── hooks/            # Shared, reusable hooks
-│   └── useResourceFilters.ts
+├── hooks/            # Shared, reusable hooks (one per query/mutation, plus utilities)
+│   ├── useResources.ts, useResource.ts, useResourceHistory.ts
+│   ├── useCreateResource.ts, useUpdateResource.ts, useDeleteResource.ts
+│   ├── useChangeResourceStatus.ts, useRelocateResource.ts
+│   ├── useCurrentUser.ts, useLogin.ts, useLogout.ts, usePermissions.ts
+│   ├── useRoles.ts, useSetRolePermissions.ts, useSetUserRoles.ts
+│   ├── useAuditLogs.ts, useHotspots.ts
+│   └── useDebouncedValue.ts
 │
-├── store/            # Cross-cutting client UI state (Zustand-style)
-│   └── useAlertStore.ts
+├── store/            # Reserved for cross-cutting client UI state; currently empty (.gitkeep)
 │
 ├── api/              # Data-access layer (TanStack Query)
+│   ├── httpClient.ts
+│   ├── httpClient.types.ts
 │   ├── resources/
 │   │   ├── resourceApi.ts
 │   │   ├── resourceApi.types.ts
 │   │   └── resourceKeys.ts
-│   └── httpClient.ts
+│   └── auth/, authorization/, audit/, hotspots/   # same <domain>Api / .types / <domain>Keys triple
 │
 ├── types/            # Shared domain/application types
-│   └── resource.types.ts
+│   ├── resource.types.ts
+│   └── hotspot.types.ts
 │
 ├── constants/         # Shared application constants
-│   └── resource.constants.ts
+│   ├── resourceStatus.constants.ts
+│   ├── resourceAttributeSchema.constants.ts
+│   ├── fieldNames.constants.ts, auditOperation.constants.ts, hotspot.constants.ts
 │
 ├── utils/            # Shared, framework-agnostic utilities
 │   ├── cn.ts
@@ -77,7 +95,7 @@ src/
 └── assets/
 ```
 
-This mirrors the structure already established in `georesponse-fe/src` (`common/`, `components/`, `hooks/`, `store/`, `types/`, `constants/`, `utils/`, `assets/`). `api/` is the concrete home for the data-access layer described in `SYSTEM_ARCHITECTURE.md` section 3, and `map-adapter/` is the concrete home for the map boundary described in section 5.
+This is the structure of `georesponse-fe/src` (`common/`, `components/`, `hooks/`, `store/`, `api/`, `types/`, `constants/`, `utils/`, `assets/`; each top-level directory has a matching `@<dir>` path alias in `tsconfig.json`, `rspack.config.js`, and `vitest.config.ts`). `api/` is the concrete home for the data-access layer described in `SYSTEM_ARCHITECTURE.md` section 3, and `map-adapter/` is the concrete home for the map boundary described in section 5.
 
 Naming and file-suffix conventions for everything under `src/` are defined in `FRONTEND_NAMING.md`.
 
@@ -112,7 +130,7 @@ App
  │           │
  │           └── Map Adapter           (components/resource-map/map-adapter)
  │
- └── Store                        (store/*  — cross-cutting client UI state)
+ └── Store                        (store/*  — reserved for cross-cutting client UI state; empty today)
 ```
 
 A feature component does not call `fetch`, does not construct HTTP requests, and does not call MapLibre GL JS directly. It renders UI and delegates data access to a hook, and delegates map rendering to the map adapter.
@@ -124,21 +142,24 @@ A feature component does not call `fetch`, does not construct HTTP requests, and
 GeoResponse follows a container/presentational split, expressed through hooks rather than a strict class-based separation:
 
 - **Presentational components** (`common/*`, and the presentation half of a feature component) receive data and callbacks through props, render markup, and hold only local, ephemeral UI state (for example, whether a tooltip is open).
-- **Container behavior** is expressed as a hook (`useResource`, `useResourceFilters`, `useResourceMap`) that owns data fetching, mutation calls, and derived state, and is consumed by the feature component.
+- **Container behavior** is expressed as a hook — a shared query/mutation hook under `hooks/` (`useResources`, `useResource`, `useRelocateResource`, ...) or a feature-local hook (`useResourceCreateForm`) — that owns data fetching, mutation calls, and derived state, and is consumed by the feature component.
 
-Example shape for a feature such as the resource list:
+Example shape, as implemented for the create form:
 
 ```text
-components/resource-list/
-├── ResourceList.tsx          # Presentation: renders rows, calls hook, calls callbacks
-├── ResourceList.types.ts     # Props and local types
-├── useResourceList.ts        # Container behavior: query, filters, pagination
-└── ResourceList.test.tsx
+components/resource-create-form/
+├── CreateResourceModal.tsx        # Composes the form in a modal; calls useCreateResource
+├── ResourceCreateForm.tsx         # Presentation: renders fields, calls callbacks
+├── ResourceCreateForm.types.ts    # Props and local types
+├── useResourceCreateForm.ts       # Container behavior: form state + validation
+├── resourceFormReducer.ts         # useReducer transitions for the form
+├── validateResourceForm.ts        # Client-side validation rules
+└── *.test.ts(x)                   # Colocated tests
 ```
 
-`ResourceList.tsx` renders what `useResourceList.ts` returns. `useResourceList.ts` is the only place in the feature that talks to `api/resources/resourceApi.ts` through TanStack Query.
+The presentational component renders what the hook returns; the hook is the only place in the feature that talks to the API layer (through the shared TanStack Query hooks under `hooks/`).
 
-This mirrors the existing pattern in `georesponse-fe/src/components/status-command/StatusCommand.tsx`, which composes a subordinate feature component (`track-data/TrackData.tsx`) rather than embedding unrelated concerns directly.
+At the top, `components/app-shell/AppShell.tsx` is the single authenticated page: it calls the shared query hooks (`useResources`, `useCurrentUser`, `useHotspots`), owns the selection/filter/modal client state, and composes the feature components (`ResourceList`, `ResourceMap`, `ResourceDetail`, `ResourceFilterBar`, the create/update/delete modals, `RoleManagementModal`, `AuditLogModal`) rather than embedding their concerns directly.
 
 ---
 
@@ -155,11 +176,16 @@ All HTTP communication with the Go backend is isolated in `api/`, per `DEPENDENC
 ```text
 api/
 ├── httpClient.ts              # Base fetch wrapper: base URL, headers, error envelope parsing
-└── resources/
-    ├── resourceApi.ts         # getResources, getResource, createResource, updateResource,
-    │                          # deleteResource, changeResourceStatus, relocateResource, getResourceHistory
-    ├── resourceApi.types.ts   # Request/response shapes matching API_CONTRACT.md
-    └── resourceKeys.ts        # TanStack Query key factory (see FRONTEND_STATE.md)
+├── httpClient.types.ts        # Envelope / ApiError types
+├── resources/
+│   ├── resourceApi.ts         # getResources, getResource, createResource, updateResource,
+│   │                          # deleteResource, changeResourceStatus, relocateResource, getResourceHistory
+│   ├── resourceApi.types.ts   # Request/response shapes matching API_CONTRACT.md
+│   └── resourceKeys.ts        # TanStack Query key factory (see FRONTEND_STATE.md)
+├── auth/                      # authApi / authApi.types / authKeys
+├── authorization/             # roles, permissions, user-role assignment
+├── audit/                     # audit log queries
+└── hotspots/                  # BMKG hotspot overlay (GET /api/v1/hotspots)
 ```
 
 Responsibilities of `httpClient.ts`:
@@ -169,7 +195,7 @@ Responsibilities of `httpClient.ts`:
 - unwrap the `{ "data": ..., "meta": ... }` success envelope defined in `API_CONTRACT.md` section 4;
 - surface the `{ "error": { "code", "message", "details" } }` envelope as a typed error so calling hooks can branch on `code`, not on `message`.
 
-Feature hooks call functions from `resourceApi.ts` through TanStack Query (`useQuery` / `useMutation`). No component imports `httpClient.ts` or `resourceApi.ts` directly; it goes through a hook.
+Feature hooks call functions from `resourceApi.ts` through TanStack Query (`useQuery` / `useMutation`). No component imports `httpClient.ts` or `resourceApi.ts` directly; it goes through a hook. (Importing a *type* from `*.types.ts`, such as `ResourceFilters`, is fine.)
 
 ---
 
@@ -189,8 +215,8 @@ The map adapter is responsible for:
 
 - initializing and tearing down the MapLibre map instance;
 - converting `Resource[]` (domain shape, `{ latitude, longitude }`) into GeoJSON features (`[longitude, latitude]`), per the coordinate-order rule in `DATA_CONTRACT.md` section 2 and section 10;
-- adding/updating/removing point layers as resources are created, relocated, or deleted;
-- translating MapLibre interaction events (feature click, viewport change) into plain callbacks the feature component understands (for example, `onResourceSelect(resourceId: string)`).
+- keeping a GeoJSON source/layer pair for resource markers (and a second pair for the BMKG hotspot overlay) up to date as resources are created, relocated, or deleted;
+- translating MapLibre interaction events into plain callbacks the feature component understands: `onMarkerClick(resourceId)` (surfaced by `ResourceMap.tsx` as `onResourceSelect`) and `onMapDoubleClick({ latitude, longitude })` (used to create a resource at that location).
 
 The feature component (`ResourceMap.tsx`) never imports `maplibre-gl` directly and never calls `map.addLayer` or similar MapLibre APIs itself. Only code inside `map-adapter/` is allowed to import `maplibre-gl`.
 
@@ -198,14 +224,12 @@ The feature component (`ResourceMap.tsx`) never imports `maplibre-gl` directly a
 
 ## 9. Data Flow Example
 
-The following trace follows a user relocating a resource on the map, from interaction to re-render:
+The following trace follows a user relocating a resource, from interaction to re-render (relocation is entered as coordinates in the detail card's `RelocateResourceControl`; marker dragging is not implemented):
 
 ```text
-User drags a resource marker
+User submits new coordinates in RelocateResourceControl
         ↓
-Map Adapter emits onResourceMove(resourceId, { latitude, longitude })
-        ↓
-ResourceMap.tsx calls useRelocateResource().mutate(...)
+RelocateResourceControl calls useRelocateResource(id).mutate(...)
         ↓
 TanStack Query mutation calls api/resources/resourceApi.ts → relocateResource()
         ↓
@@ -217,12 +241,14 @@ Response { data: Resource } returned
         ↓
 TanStack Query invalidates the resource / resource-list query keys
         ↓
-useResourceList / useResource refetch
+useResources / useResource refetch
         ↓
-ResourceMap.tsx receives updated Resource[]
+AppShell passes the updated Resource[] to ResourceMap.tsx
         ↓
 Map Adapter updates the marker's GeoJSON feature
 ```
+
+(`useRelocateResource` also applies the new location optimistically before the response arrives — see `FRONTEND_STATE.md` section 7.)
 
 Cache invalidation conventions are defined in `FRONTEND_STATE.md`.
 
@@ -230,15 +256,15 @@ Cache invalidation conventions are defined in `FRONTEND_STATE.md`.
 
 ## 10. Pages / Features
 
-Per `SYSTEM_ARCHITECTURE.md` section 3, the application is organized around three feature areas:
+Per `SYSTEM_ARCHITECTURE.md` section 3, the application is organized around these feature areas, all rendered on one map-first page (`components/app-shell/AppShell.tsx`) rather than as separate routes:
 
-| Feature | Responsibility |
-|---|---|
-| Dashboard | Overview of resource counts, status distribution, and entry point into the other features |
-| Resource Management | List, search, filter, create, update, delete resources; change status |
-| Map | Geospatial visualization of resources; select a resource from the map; relocate a resource |
+| Feature | Responsibility | Directories |
+|---|---|---|
+| Resource Management | List, search, filter, create, update, delete resources; change status; view history | `resource-list/`, `resource-filter-bar/`, `resource-detail/`, `resource-create-form/`, `resource-update-form/`, `resource-delete-confirmation/`, `resource-history/` |
+| Map | Geospatial visualization of resources; select a resource from the map; create at a double-clicked location; relocate a resource | `resource-map/`, `resource-relocate-form/`, `hotspot-toggle/` |
+| Access | Login, role/permission management, audit log | `login-form/`, `role-management/`, `audit-log/` |
 
-Each feature area is a directory under `components/` (for example, `components/resource-map/`, `components/resource-list/`, `components/dashboard/`). Features may compose `common/` primitives and call shared `hooks/`, but should not import from another feature's directory directly; shared behavior is promoted to `hooks/`, `utils/`, or `api/` instead.
+There is no separate dashboard feature; the app shell's list, filters, and map together provide the overview. Each feature area is a directory under `components/`. Features may compose `common/` primitives and call shared `hooks/`, but should not import from another feature's directory directly (the app shell, as the page, is the one place that composes them); shared behavior is promoted to `hooks/`, `utils/`, or `api/` instead.
 
 ---
 

@@ -473,6 +473,11 @@ scope capabilities in section 4 remain unimplemented by design.
 - **UC-05 — Map empty state.** When no resources match, the map renders no
   markers and the adjacent resource list shows the empty-state message;
   the map itself has no dedicated empty-state overlay.
+- **API contract deviations.** A small number of endpoint-level
+  differences between `docs/04_contracts/API_CONTRACT.md` and the shipped
+  backend (update-body fields, page-size capping, a missing `updatedAt`,
+  history endpoint authorization) are tabulated in that document's
+  section 19.
 
 ### 11.3 Non-Functional Requirements Not Fully Demonstrated
 
