@@ -1,6 +1,6 @@
 /*
  * Author       : Mahardika Pratama
- * Version      : 1.5.0
+ * Version      : 1.7.0
  * Created Date : 2026-09-19
  * Description  : The resource detail panel (FR-003, FR-021, UC-02): shows
  *                the selected resource's identity, type, attributes,
@@ -32,6 +32,15 @@
  *                        opening DeleteResourceConfirmation via onDelete.
  * - 1.5.0 (2026-09-19): Added the history section (Phase 6 section 9.9),
  *                        toggled open/closed as local client state.
+ * - 1.6.0 (2026-09-19): Restyled as a floating card anchored to the map's
+ *                        top-right corner instead of a full-width bottom
+ *                        bar (FRONTEND_UI_UX.md section 3's "side panel"
+ *                        option) — the bottom-bar layout capped the panel
+ *                        at a shallow max-height, which made the history
+ *                        section (the tallest content) cramped and put it
+ *                        below the fold. AppShell now renders this inside
+ *                        `main`, so the card positions relative to the map
+ *                        only, not the resource list.
  */
 import React, { useState } from "react";
 
@@ -77,10 +86,13 @@ function ResourceDetail({ resourceId, onClose, onEdit, onDelete }: ResourceDetai
 	const changeStatus = useChangeResourceStatus(resourceId);
 	const [showHistory, setShowHistory] = useState(false);
 
+	const cardClassName =
+		"absolute right-4 top-4 bottom-4 z-10 flex w-96 max-w-[calc(100%-2rem)] flex-col overflow-hidden rounded-lg border border-white/10 bg-background-100-1 shadow-xl";
+
 	if (status === "pending") {
 		return (
 			<div
-				className="flex items-center justify-between p-4 border-t border-white/10"
+				className={`${cardClassName} items-center justify-between p-4`}
 				data-testid="resource-detail-skeleton"
 			>
 				<div className="w-1/3 rounded h-5 animate-pulse bg-white/5" />
@@ -93,15 +105,17 @@ function ResourceDetail({ resourceId, onClose, onEdit, onDelete }: ResourceDetai
 		const notFound = error instanceof ApiError && error.code === "RESOURCE_NOT_FOUND";
 		return (
 			<div
-				className="flex items-center justify-between gap-3 p-4 text-sm border-t border-white/10"
+				className={`${cardClassName} justify-start gap-3 p-4 text-sm`}
 				role="alert"
 			>
-				<p>
-					{notFound
-						? "This resource could not be found. It may have been deleted."
-						: getApiErrorMessage(error)}
-				</p>
-				<CloseButton onClose={onClose} />
+				<div className="flex items-start justify-between gap-3">
+					<p>
+						{notFound
+							? "This resource could not be found. It may have been deleted."
+							: getApiErrorMessage(error)}
+					</p>
+					<CloseButton onClose={onClose} />
+				</div>
 			</div>
 		);
 	}
@@ -111,8 +125,8 @@ function ResourceDetail({ resourceId, onClose, onEdit, onDelete }: ResourceDetai
 	const attributeEntries = Object.entries(resource.attributes);
 
 	return (
-		<div className="flex flex-col gap-3 p-4 border-t max-h-64 overflow-y-auto border-white/10">
-			<div className="flex items-start justify-between gap-3">
+		<div className={cardClassName}>
+			<div className="flex items-start justify-between gap-3 p-4 border-b shrink-0 border-white/10">
 				<div>
 					<h2 className="text-lg font-bold text-white">{resource.name}</h2>
 					<p className="text-xs text-neutral-3">{resource.id}</p>
@@ -128,7 +142,7 @@ function ResourceDetail({ resourceId, onClose, onEdit, onDelete }: ResourceDetai
 					<button
 						type="button"
 						onClick={() => onDelete?.(resource)}
-						className="px-2 py-1 text-sm rounded-md bg-error-4/20 text-error-4 hover:bg-error-4/30"
+						className="px-2 py-1 text-sm text-white rounded-md bg-error-4 hover:bg-error-4/80"
 					>
 						Delete
 					</button>
@@ -136,64 +150,70 @@ function ResourceDetail({ resourceId, onClose, onEdit, onDelete }: ResourceDetai
 				</div>
 			</div>
 
-			<div className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
-				<div>
-					<p className="text-xs text-neutral-3">Type</p>
-					<p>{RESOURCE_TYPE_LABEL[resource.type]}</p>
-				</div>
-				<div>
-					<p className="text-xs text-neutral-3">Status</p>
-					<div className="flex items-center gap-1.5">
-						<span
-							data-testid="status-color-box"
-							className={`h-2.5 w-2.5 shrink-0 rounded-sm bg-indicator-${statusConfig.indicatorColor}`}
-						/>
-						<Dropdown
-							value={resource.status}
-							options={RESOURCE_STATUS_OPTIONS}
-							disabled={changeStatus.isPending}
-							inputHeight="h-7"
-							fontSize="text-sm"
-							onChange={(value) =>
-								changeStatus.mutate({ status: value as ResourceStatus })
-							}
-						/>
+			<div className="flex flex-col flex-1 gap-4 p-4 overflow-y-auto">
+				<div className="grid grid-cols-2 gap-3 text-sm">
+					<div>
+						<p className="text-xs text-neutral-3">Type</p>
+						<p>{RESOURCE_TYPE_LABEL[resource.type]}</p>
 					</div>
-					{changeStatus.isError && (
-						<p role="alert" className="mt-1 text-xs text-error-4">
-							{getApiErrorMessage(changeStatus.error)}
-						</p>
+					<div>
+						<p className="text-xs text-neutral-3">Status</p>
+						<div className="flex items-center gap-1.5">
+							<span
+								data-testid="status-color-box"
+								className={`h-2.5 w-2.5 shrink-0 rounded-sm bg-indicator-${statusConfig.indicatorColor}`}
+							/>
+							<Dropdown
+								value={resource.status}
+								options={RESOURCE_STATUS_OPTIONS}
+								disabled={changeStatus.isPending}
+								inputHeight="h-7"
+								fontSize="text-sm"
+								onChange={(value) =>
+									changeStatus.mutate({ status: value as ResourceStatus })
+								}
+							/>
+						</div>
+						{changeStatus.isError && (
+							<p role="alert" className="mt-1 text-xs text-error-4">
+								{getApiErrorMessage(changeStatus.error)}
+							</p>
+						)}
+					</div>
+					<div className="col-span-2">
+						<p className="text-xs text-neutral-3">Location</p>
+						<RelocateResourceControl resourceId={resource.id} location={resource.location} />
+					</div>
+				</div>
+
+				{attributeEntries.length > 0 && (
+					<div>
+						<p className="mb-1 text-xs text-neutral-3">Attributes</p>
+						<dl className="grid grid-cols-2 gap-x-3 gap-y-1 text-sm">
+							{attributeEntries.map(([key, value]) => (
+								<div key={key}>
+									<dt className="text-xs text-neutral-3">{humanizeAttributeKey(key)}</dt>
+									<dd>{String(value)}</dd>
+								</div>
+							))}
+						</dl>
+					</div>
+				)}
+
+				<div className="pt-3 border-t border-white/10">
+					<button
+						type="button"
+						onClick={() => setShowHistory((current) => !current)}
+						className="text-xs text-primary-50 hover:underline"
+					>
+						{showHistory ? "Hide history" : "Show history"}
+					</button>
+					{showHistory && (
+						<div className="mt-2">
+							<ResourceHistoryView resourceId={resource.id} />
+						</div>
 					)}
 				</div>
-				<div>
-					<p className="text-xs text-neutral-3">Location</p>
-					<RelocateResourceControl resourceId={resource.id} location={resource.location} />
-				</div>
-			</div>
-
-			{attributeEntries.length > 0 && (
-				<div>
-					<p className="mb-1 text-xs text-neutral-3">Attributes</p>
-					<dl className="grid grid-cols-2 gap-x-3 gap-y-1 text-sm sm:grid-cols-4">
-						{attributeEntries.map(([key, value]) => (
-							<div key={key}>
-								<dt className="text-xs text-neutral-3">{humanizeAttributeKey(key)}</dt>
-								<dd>{String(value)}</dd>
-							</div>
-						))}
-					</dl>
-				</div>
-			)}
-
-			<div>
-				<button
-					type="button"
-					onClick={() => setShowHistory((current) => !current)}
-					className="text-xs text-primary-50 hover:underline"
-				>
-					{showHistory ? "Hide history" : "Show history"}
-				</button>
-				{showHistory && <ResourceHistoryView resourceId={resource.id} />}
 			</div>
 		</div>
 	);
