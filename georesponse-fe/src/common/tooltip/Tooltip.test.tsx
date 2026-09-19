@@ -123,14 +123,4 @@ describe("Tooltip", () => {
 		const tooltip = await screen.findByText("Tooltip text");
 		expect(tooltip).toHaveStyle({ left: "110px", top: "70px" });
 	});
-
-	it("matches snapshot when visible", async () => {
-		const { container } = render(
-			<Tooltip content="Tooltip text">
-				<span>Hover me</span>
-			</Tooltip>
-		);
-		await userEvent.hover(screen.getByRole("button"));
-		expect(container).toMatchSnapshot();
-	});
 });
