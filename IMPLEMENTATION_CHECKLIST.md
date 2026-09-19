@@ -318,8 +318,10 @@ merged to `main`, since later phases depend on earlier ones (section 1).
       to CRLF line endings from the Windows checkout — a pre-existing,
       environment-only artifact CI's Linux runner won't reproduce; left
       untouched as out of scope for this phase).
-- [ ] Push, open a PR, confirm CI passes, merge into `main`, delete the
-      branch (workflow: section 2.1).
+- [x] Push, open a PR, confirm CI passes, merge into `main`, delete the
+      branch (workflow: section 2.1). Branch
+      `feature/phase-1-backend-domain`, PR #6 — CI passed, merged into
+      `main`, branch deleted (remote and local).
 
 ---
 
