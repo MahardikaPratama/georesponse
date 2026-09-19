@@ -572,8 +572,10 @@ merged to `main`, since later phases depend on earlier ones (section 1).
       writes no audit record), and
       `internal/authorization/service_test.go` (permission-denied
       `CreateRole`/`AssignRolePermissions` never call the repository).
-- [ ] Push, open a PR, confirm CI passes, merge into `main`, delete the
-      branch (workflow: section 2.1).
+- [x] Push, open a PR, confirm CI passes, merge into `main`, delete the
+      branch (workflow: section 2.1). Branch `feature/phase-3-backend-usecase`,
+      PR #8 — CI passed, merged into `main`, branch deleted (remote and
+      local).
 
 ---
 
