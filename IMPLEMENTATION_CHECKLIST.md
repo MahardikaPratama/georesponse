@@ -839,15 +839,33 @@ individually as each feature completes (see section 2.1).
 
 ### 9.1 Resource List & Map (FR-002, FR-020, UC-01, UC-05)
 
-- [ ] Implement `useResources` hook (TanStack Query, calls
-      `GET /api/v1/resources`).
-- [ ] Implement `ResourceList` component (rendering identity, type, status,
-      location per FR-002).
-- [ ] Implement the map view rendering resource markers from `useResources`
-      via the Map Adapter (FR-020).
-- [ ] Implement the empty state for zero resources (UC-01 alternative flow).
-- [ ] Implement the error state for a failed list fetch (UC-01 alternative
-      flow).
+- [x] Implement `useResources` hook (TanStack Query, calls
+      `GET /api/v1/resources`). (`src/hooks/useResources.ts`, covered by
+      `useResources.test.ts`.)
+- [x] Implement `ResourceList` component (rendering identity, type, status,
+      location per FR-002). (`src/components/resource-list/ResourceList.tsx`
+      — name, type, a status badge, and a lat/lng cue per row, using the new
+      shared `src/constants/resourceStatus.constants.ts` mapping so list,
+      map marker, and (later) detail panel never disagree on a status's
+      color, per `FRONTEND_UI_UX.md` section 7. Added the "info"
+      (blue/informational) color role to `StatusIndicator`/`colors.ts` for
+      `IN_USE`, which the adapted palette didn't have.)
+- [x] Implement the map view rendering resource markers from `useResources`
+      via the Map Adapter (FR-020). (`AppShell.tsx` now calls `useResources`
+      once and derives `MapMarker[]` — including each marker's status
+      color — passed to `ResourceMap`. `MapAdapter.types.ts`/`MapAdapter.ts`
+      gained `MapMarker.color`, painted via a data-driven `circle-color`
+      expression, without the adapter needing to know the `Resource`
+      domain type. List/map selection is now shared in both directions
+      (`FRONTEND_UI_UX.md` section 3): `AppShell` owns `selectedResourceId`
+      client state; `ResourceMap` gained a `selectedResourceId` prop synced
+      to the adapter's existing `selectMarker`.)
+- [x] Implement the empty state for zero resources (UC-01 alternative flow).
+      (`ResourceList`, covered by `ResourceList.test.tsx`.)
+- [x] Implement the error state for a failed list fetch (UC-01 alternative
+      flow). (`ResourceList`, message derived from `error.code` via the new
+      `src/utils/apiErrorMessage.ts` — reusable by later 9.x error states —
+      with a retry action, covered by `ResourceList.test.tsx`.)
 
 ### 9.2 Search & Filter (FR-016–019, UC-03, UC-04)
 

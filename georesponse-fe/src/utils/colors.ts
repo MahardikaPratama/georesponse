@@ -1,6 +1,6 @@
 /*
  * Author       : Mahardika Pratama
- * Version      : 1.1.0
+ * Version      : 1.2.0
  * Created Date : 2026-09-19
  * Description  : Color palette constants for the application theme system. Contains
  *                all color definitions used throughout the application including
@@ -14,6 +14,9 @@
  *                        default color but missing from the adapted
  *                        palette, which would have rendered "primary"
  *                        buttons with no background at all.
+ * - 1.2.0 (2026-09-19): Added indicator.info (Resource.status IN_USE is
+ *                        informational/blue per FRONTEND_UI_UX.md section 7,
+ *                        a role the adapted indicator palette didn't have).
  */
 
 /**
@@ -113,7 +116,8 @@ const colors = {
 		active: "#00A000",
 		error: "#C80000",
 		warning: "#FFBF00",
-		inactive: "#6E6F6E"
+		inactive: "#6E6F6E",
+		info: "#3575F3"
 	},
 };
 

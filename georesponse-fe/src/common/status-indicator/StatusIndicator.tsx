@@ -1,6 +1,6 @@
 /*
  * Author       : Mahardika Pratama
- * Version      : 1.0.0
+ * Version      : 1.1.0
  * Created Date : 2026-09-19
  * Description  : Reusable component to visually display status messages
  *                with color indicators. Used for Resource.status display
@@ -9,6 +9,9 @@
  * Changelog:
  * - 1.0.0 (2026-09-19): Adapted from a prior personal project for
  *                        GeoResponse.
+ * - 1.1.0 (2026-09-19): Added the "info" color role for Resource.status
+ *                        IN_USE (informational/blue), per
+ *                        FRONTEND_UI_UX.md section 7.
  */
 import React from "react";
 
@@ -16,7 +19,7 @@ interface StatusIndicatorProps {
 	/** The message text to display (e.g., "Data sent") */
 	message: string;
 	/** The color of the indicator box (e.g., "active", "error", "warning") */
-	color?: "active" | "error" | "warning" | "inactive";
+	color?: "active" | "error" | "warning" | "inactive" | "info";
 	/** Optional additional className */
 	className?: string;
 	/** Custom margin-left for color box, e.g., 'ml-8' */
@@ -28,7 +31,7 @@ interface StatusIndicatorProps {
  *
  * @param {Object} props - The props object.
  * @param {string} props.message - The label text to display.
- * @param {"active" | "error" | "warning" | "inactive"} [props.color="active"] - The color of the status indicator.
+ * @param {"active" | "error" | "warning" | "inactive" | "info"} [props.color="active"] - The color of the status indicator.
  * @param {string} [props.className] - Optional additional class names for the container.
  * @param {string} [props.mlClass] - Optional additional class names for the container.
  * @returns {JSX.Element} The rendered status indicator component.
