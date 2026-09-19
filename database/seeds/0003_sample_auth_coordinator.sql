@@ -17,18 +17,25 @@ Description  : Seeds a second, deliberately limited role and demo user —
 
 Changelog:
   - 1.0.0 (2026-09-19): Initial creation.
+  - 1.1.0 (2026-09-20): Every INSERT is ON CONFLICT DO NOTHING, so the seed
+    can be re-run against an already-seeded database (scripts/dev/setup.sh,
+    scripts/database/seed.sh) without failing on duplicate keys.
 */
 
 INSERT INTO roles (id, name) VALUES
-    ('role-002', 'coordinator');
+    ('role-002', 'coordinator')
+ON CONFLICT DO NOTHING;
 
 INSERT INTO role_permissions (role_id, permission_id)
-VALUES ('role-002', 'permission-002'); -- resource.read only
+VALUES ('role-002', 'permission-002')
+ON CONFLICT DO NOTHING; -- resource.read only
 
 -- Demo login: identifier "user-002", password "ChangeMe123!" (change
 -- before any non-local use).
 INSERT INTO users (id, name, password_hash) VALUES
-    ('user-002', 'Demo Response Coordinator', '$2a$10$sTc2NdpMikTzCLKPrMOKBuB24aCHkKTxptZZ1pzipARSqGcmFhrRy');
+    ('user-002', 'Demo Response Coordinator', '$2a$10$sTc2NdpMikTzCLKPrMOKBuB24aCHkKTxptZZ1pzipARSqGcmFhrRy')
+ON CONFLICT DO NOTHING;
 
 INSERT INTO user_roles (user_id, role_id) VALUES
-    ('user-002', 'role-002');
+    ('user-002', 'role-002')
+ON CONFLICT DO NOTHING;

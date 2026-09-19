@@ -13,6 +13,9 @@ Description  : Seeds a minimal permission set, an "administrator" role
 
 Changelog:
   - 1.0.0 (2026-09-19): Initial creation.
+  - 1.1.0 (2026-09-20): Every INSERT is ON CONFLICT DO NOTHING, so the seed
+    can be re-run against an already-seeded database (scripts/dev/setup.sh,
+    scripts/database/seed.sh) without failing on duplicate keys.
 */
 
 INSERT INTO permissions (id, code, name) VALUES
@@ -23,18 +26,23 @@ INSERT INTO permissions (id, code, name) VALUES
     ('permission-005', 'role.read', 'View Roles'),
     ('permission-006', 'role.manage', 'Manage Roles'),
     ('permission-007', 'permission.read', 'View Permissions'),
-    ('permission-008', 'audit.read', 'View Audit Trail');
+    ('permission-008', 'audit.read', 'View Audit Trail')
+ON CONFLICT DO NOTHING;
 
 INSERT INTO roles (id, name) VALUES
-    ('role-001', 'administrator');
+    ('role-001', 'administrator')
+ON CONFLICT DO NOTHING;
 
 INSERT INTO role_permissions (role_id, permission_id)
-SELECT 'role-001', id FROM permissions;
+SELECT 'role-001', id FROM permissions
+ON CONFLICT DO NOTHING;
 
 -- Demo login: identifier "user-001", password "ChangeMe123!" (change
 -- before any non-local use).
 INSERT INTO users (id, name, password_hash) VALUES
-    ('user-001', 'Demo Administrator', '$2a$10$MVW4kZttJVAG75rPtrVsIeIUPDsMwHI1iJYSGTXqHnP3DJj58PnKi');
+    ('user-001', 'Demo Administrator', '$2a$10$MVW4kZttJVAG75rPtrVsIeIUPDsMwHI1iJYSGTXqHnP3DJj58PnKi')
+ON CONFLICT DO NOTHING;
 
 INSERT INTO user_roles (user_id, role_id) VALUES
-    ('user-001', 'role-001');
+    ('user-001', 'role-001')
+ON CONFLICT DO NOTHING;
