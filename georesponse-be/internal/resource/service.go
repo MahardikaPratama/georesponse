@@ -196,16 +196,25 @@ func (s *Service) UpdateResource(ctx context.Context, actingUserID string, actin
 // DeleteResource permanently removes the resource identified by id and
 // records a RESOURCE_DELETED audit entry, atomically (FR-005, BR-019,
 // BR-021, UC-10; DATABASE_ARCHITECTURE.md section 6.4).
+//
+// The audit record is written before the delete, not after: audit_records
+// .resource_id has a foreign key to resources(id) (ON DELETE SET NULL), so
+// inserting it after the resource row is gone would violate that
+// constraint even inside the same transaction — Postgres checks a foreign
+// key immediately, not at commit. Writing it first means resource_id is
+// still valid at insert time; the subsequent delete then sets it to NULL
+// via that same ON DELETE SET NULL, exactly as it does for any other
+// audit record referencing a resource that is later deleted.
 func (s *Service) DeleteResource(ctx context.Context, actingUserID string, actingRoleNames []string, id string) error {
 	if err := s.checker.Require(ctx, actingRoleNames, PermissionResourceDelete); err != nil {
 		return err
 	}
 
 	err := s.tx.WithinTx(ctx, func(ctx context.Context) error {
-		if err := s.repo.Delete(ctx, id); err != nil {
+		if err := s.recordAudit(ctx, actingUserID, audit.OperationResourceDeleted, &id, nil); err != nil {
 			return err
 		}
-		return s.recordAudit(ctx, actingUserID, audit.OperationResourceDeleted, &id, nil)
+		return s.repo.Delete(ctx, id)
 	})
 	if err != nil {
 		return fmt.Errorf("delete resource %q: %w", id, err)

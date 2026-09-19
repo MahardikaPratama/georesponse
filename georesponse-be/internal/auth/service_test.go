@@ -87,6 +87,14 @@ func (f *fakeTokenSigner) Verify(token string) (string, error) {
 	return "", ErrInvalidToken
 }
 
+type fakePermissionChecker struct {
+	denyErr error
+}
+
+func (f *fakePermissionChecker) Require(ctx context.Context, roleNames []string, permissionCode string) error {
+	return f.denyErr
+}
+
 func hashPassword(t *testing.T, password string) string {
 	t.Helper()
 	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.MinCost)
@@ -101,7 +109,7 @@ func TestService_Authenticate_Success(t *testing.T) {
 	repo.users["user-001"] = User{ID: "user-001", Name: "Test Operator", RoleNames: []string{"operator"}}
 	repo.credentials["user-001"] = Credentials{UserID: "user-001", PasswordHash: hashPassword(t, "correct-password")}
 	tokens := &fakeTokenSigner{}
-	svc := NewService(repo, &fakeAuditRepository{}, tokens)
+	svc := NewService(repo, &fakeAuditRepository{}, tokens, &fakePermissionChecker{})
 
 	user, token, err := svc.Authenticate(context.Background(), "user-001", "correct-password")
 	if err != nil {
@@ -123,7 +131,7 @@ func TestService_Authenticate_WrongPassword(t *testing.T) {
 	repo.users["user-001"] = User{ID: "user-001", Name: "Test Operator"}
 	repo.credentials["user-001"] = Credentials{UserID: "user-001", PasswordHash: hashPassword(t, "correct-password")}
 	tokens := &fakeTokenSigner{}
-	svc := NewService(repo, &fakeAuditRepository{}, tokens)
+	svc := NewService(repo, &fakeAuditRepository{}, tokens, &fakePermissionChecker{})
 
 	_, _, err := svc.Authenticate(context.Background(), "user-001", "wrong-password")
 	if !errors.Is(err, ErrInvalidCredentials) {
@@ -137,7 +145,7 @@ func TestService_Authenticate_WrongPassword(t *testing.T) {
 func TestService_Authenticate_UnknownIdentifier(t *testing.T) {
 	repo := newFakeRepository()
 	tokens := &fakeTokenSigner{}
-	svc := NewService(repo, &fakeAuditRepository{}, tokens)
+	svc := NewService(repo, &fakeAuditRepository{}, tokens, &fakePermissionChecker{})
 
 	_, _, err := svc.Authenticate(context.Background(), "no-such-user", "anything")
 	if !errors.Is(err, ErrInvalidCredentials) {
@@ -149,9 +157,9 @@ func TestService_AssignUserRoles_RecordsAudit(t *testing.T) {
 	repo := newFakeRepository()
 	repo.users["user-001"] = User{ID: "user-001", Name: "Test Operator"}
 	auditRepo := &fakeAuditRepository{}
-	svc := NewService(repo, auditRepo, &fakeTokenSigner{})
+	svc := NewService(repo, auditRepo, &fakeTokenSigner{}, &fakePermissionChecker{})
 
-	if err := svc.AssignUserRoles(context.Background(), "admin-001", "user-001", []string{"operator"}); err != nil {
+	if err := svc.AssignUserRoles(context.Background(), "admin-001", []string{"admin"}, "user-001", []string{"operator"}); err != nil {
 		t.Fatalf("AssignUserRoles() = %v, want nil", err)
 	}
 
@@ -166,13 +174,32 @@ func TestService_AssignUserRoles_RecordsAudit(t *testing.T) {
 	}
 }
 
+func TestService_AssignUserRoles_PermissionDenied_NoPersistence(t *testing.T) {
+	repo := newFakeRepository()
+	repo.users["user-001"] = User{ID: "user-001", Name: "Test Operator"}
+	auditRepo := &fakeAuditRepository{}
+	denyErr := errors.New("permission denied (test double)")
+	svc := NewService(repo, auditRepo, &fakeTokenSigner{}, &fakePermissionChecker{denyErr: denyErr})
+
+	err := svc.AssignUserRoles(context.Background(), "user-001", []string{"operator"}, "user-001", []string{"administrator"})
+	if !errors.Is(err, denyErr) {
+		t.Fatalf("AssignUserRoles() = %v, want the checker's denial error", err)
+	}
+	if repo.users["user-001"].RoleNames != nil {
+		t.Fatalf("RoleNames = %v, want unchanged (nil) when permission is denied", repo.users["user-001"].RoleNames)
+	}
+	if len(auditRepo.records) != 0 {
+		t.Fatalf("audit records = %+v, want none", auditRepo.records)
+	}
+}
+
 func TestService_AssignUserRoles_Failure_NoAudit(t *testing.T) {
 	repo := newFakeRepository()
 	repo.setRolesErr = ErrNotFound
 	auditRepo := &fakeAuditRepository{}
-	svc := NewService(repo, auditRepo, &fakeTokenSigner{})
+	svc := NewService(repo, auditRepo, &fakeTokenSigner{}, &fakePermissionChecker{})
 
-	err := svc.AssignUserRoles(context.Background(), "admin-001", "does-not-exist", []string{"operator"})
+	err := svc.AssignUserRoles(context.Background(), "admin-001", []string{"admin"}, "does-not-exist", []string{"operator"})
 	if !errors.Is(err, ErrNotFound) {
 		t.Fatalf("AssignUserRoles() = %v, want ErrNotFound", err)
 	}

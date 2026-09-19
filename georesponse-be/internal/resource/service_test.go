@@ -161,12 +161,31 @@ func (f *fakePermissionChecker) Require(ctx context.Context, roleNames []string,
 	return f.denyErr
 }
 
-// fakeTxRunner runs fn directly, without a real transaction: the fakes it
-// wraps have no atomicity of their own to coordinate.
-type fakeTxRunner struct{}
+// fakeTxRunner simulates a real transaction's atomicity for the fakes:
+// it snapshots fakeRepository and fakeAuditRepository before running fn,
+// and restores that snapshot if fn returns an error, so tests can rely on
+// "a failure partway through leaves nothing persisted" the same way they
+// could against a real database (see
+// internal/repository/postgres/transactor_test.go for that against the
+// real thing).
+type fakeTxRunner struct {
+	repo  *fakeRepository
+	audit *fakeAuditRepository
+}
 
-func (fakeTxRunner) WithinTx(ctx context.Context, fn func(ctx context.Context) error) error {
-	return fn(ctx)
+func (t fakeTxRunner) WithinTx(ctx context.Context, fn func(ctx context.Context) error) error {
+	repoSnapshot := make(map[string]Resource, len(t.repo.resources))
+	for k, v := range t.repo.resources {
+		repoSnapshot[k] = v
+	}
+	auditSnapshot := append([]audit.AuditRecord(nil), t.audit.records...)
+
+	if err := fn(ctx); err != nil {
+		t.repo.resources = repoSnapshot
+		t.audit.records = auditSnapshot
+		return err
+	}
+	return nil
 }
 
 func newTestService(repo *fakeRepository, history *fakeHistoryRecorder, auditRepo *fakeAuditRepository, checker *fakePermissionChecker) *Service {
@@ -176,7 +195,7 @@ func newTestService(repo *fakeRepository, history *fakeHistoryRecorder, auditRep
 		NewEquipmentAttributeValidator(),
 		NewIoTDeviceAttributeValidator(),
 	)
-	return NewService(repo, history, auditRepo, validators, checker, fakeTxRunner{})
+	return NewService(repo, history, auditRepo, validators, checker, fakeTxRunner{repo: repo, audit: auditRepo})
 }
 
 func seedResource() Resource {

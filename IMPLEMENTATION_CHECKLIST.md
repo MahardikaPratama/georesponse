@@ -583,46 +583,163 @@ merged to `main`, since later phases depend on earlier ones (section 1).
 
 **Branch:** `feature/phase-4-backend-http` (see section 2.1)
 
-- [ ] Implement `POST /api/v1/auth/login` handler (FR-027, FR-028).
-- [ ] Implement `POST /api/v1/auth/logout` handler.
-- [ ] Implement `GET /api/v1/auth/me` handler (FR-029).
-- [ ] Implement `GET /api/v1/resources` handler with query-param parsing and
+**Deviation from `BACKEND_ARCHITECTURE.md`'s illustrative package layout,
+found and resolved while starting this phase:** that doc shows each
+feature package (`internal/resource`, `internal/auth`, ...) owning its own
+`handler.go`. But `internal/http/httpresponse.WriteError` (the doc's own
+central error translator) must import `resource`/`auth`/`authorization`'s
+sentinel errors to translate them — so any of those packages importing
+`httpresponse` back to write a response would be an import cycle Go
+rejects outright. Resolved by placing every handler and its DTOs directly
+in `internal/http` (as `resource_handler.go`, `auth_handler.go`, etc.,
+alongside `router.go`) instead of inside each feature package — this
+changes only where handler code physically lives, not the dependency
+direction `DEPENDENCY_RULES.md` requires (HTTP → use case → domain, never
+reversed). `internal/http/middleware/auth.go`'s `RequireAuth` is placed
+there for the identical reason, rather than in `internal/auth` as that
+same doc's tree suggests.
+
+**Two real bugs found and fixed via the live database exercise below,
+both surfaced only by actually running the server, not by unit tests with
+fakes:**
+
+1. Every `resource.Service` method enforces `PermissionResourceRead` (or a
+   write permission) even for `GetResource`/`ListResources` — but the
+   router only put `middleware.RequireAuth` in front of the *mutating*
+   `/resources` routes, leaving `GET` routes reachable without an
+   authenticated context. An anonymous caller has no role names, so every
+   read failed with `403 AUTHORIZATION_DENIED` regardless of the resource.
+   Fixed by moving `r.Use(requireAuth)` to the whole `/resources` route
+   group.
+2. `DeleteResource` recorded its `RESOURCE_DELETED` audit entry *after*
+   calling `repo.Delete` — but `audit_records.resource_id` has a foreign
+   key to `resources(id)` (`ON DELETE SET NULL`), and PostgreSQL checks a
+   foreign key immediately, not at commit, even inside the same
+   transaction. Deleting the resource first meant the audit insert
+   referenced a row that no longer existed, failing with SQLSTATE `23503`
+   on every delete. Fixed by writing the audit record *before* the
+   delete — its `resource_id` is still valid at insert time, and the
+   delete that follows sets it to `NULL` via the same `ON DELETE SET NULL`
+   any other resource-referencing audit record gets once its resource is
+   deleted. Also fixed while testing this: the login cookie was
+   hardcoded `Secure: true`, which a browser (and PowerShell's
+   `WebRequestSession`) correctly refuses to send back over plain
+   `http://localhost` — `AuthHandler` now takes a `secureCookie bool`
+   (`cfg.AppEnv == "production"`), so local development over HTTP works
+   and only a real HTTPS deployment gets the `Secure` flag.
+
+Also found and fixed (Phase 3 gap, not Phase 4): `auth.Service
+.AssignUserRoles` never called a permission guard at all — anyone could
+reassign any user's roles. Added a `PermissionChecker` dependency to
+`auth.Service` (same narrow-interface pattern already used in
+`resource`/`audit`), requiring `authorization.PermissionRoleManage`
+before `AssignUserRoles` proceeds.
+
+- [x] Implement `POST /api/v1/auth/login` handler (FR-027, FR-028).
+      (`auth_handler.go`.) Sets an HttpOnly, `SameSite=Lax` cookie
+      (`Secure` in production only) carrying the signed token —
+      API_CONTRACT.md leaves the transport undecided; this was the
+      implementation decision (confirmed with the user), chosen over
+      returning the token in the JSON body so the frontend never handles
+      it directly.
+- [x] Implement `POST /api/v1/auth/logout` handler. Clears the auth
+      cookie; `auth.Service.Logout` itself is a documented no-op since
+      tokens are stateless (Phase 3).
+- [x] Implement `GET /api/v1/auth/me` handler (FR-029).
+- [x] Implement `GET /api/v1/resources` handler with query-param parsing and
       pagination defaults (`page=1`, `pageSize=20`, max `100`) per
-      `API_CONTRACT.md` section 3.
-- [ ] Implement `GET /api/v1/resources/{id}` handler, mapping "not found" to
+      `API_CONTRACT.md` section 3 (the envelope/pagination-meta shape
+      itself is section 4 — `{"data": [...], "meta": {"page","pageSize",
+      "total"}}`).
+- [x] Implement `GET /api/v1/resources/{id}` handler, mapping "not found" to
       `404 RESOURCE_NOT_FOUND` (FR-051).
-- [ ] Implement `POST /api/v1/resources` handler with full request
+- [x] Implement `POST /api/v1/resources` handler with full request
       validation and `201` response, mapping duplicate ID to
       `409 RESOURCE_ID_CONFLICT`.
-- [ ] Implement `PUT /api/v1/resources/{id}` handler.
-- [ ] Implement `DELETE /api/v1/resources/{id}` handler returning `204`.
-- [ ] Implement `PATCH /api/v1/resources/{id}/status` handler, mapping
+- [x] Implement `PUT /api/v1/resources/{id}` handler. Its request DTO has
+      no `status`/`location` field: per the user's confirmed decision,
+      those stay on `PATCH .../status` and `PATCH .../location` instead,
+      matching `resource.Service.UpdateResource`'s existing (Phase 3)
+      behavior of always keeping the current record's status/location
+      regardless of what's sent — API_CONTRACT.md's prose suggesting PUT
+      can also update them was not followed, to avoid touching already-
+      merged, already-tested Phase 3 logic.
+- [x] Implement `DELETE /api/v1/resources/{id}` handler returning `204`.
+      (Live-tested end-to-end after the audit-ordering fix above.)
+- [x] Implement `PATCH /api/v1/resources/{id}/status` handler, mapping
       invalid status to `400 INVALID_RESOURCE_STATUS`.
-- [ ] Implement `PATCH /api/v1/resources/{id}/location` handler, mapping
+- [x] Implement `PATCH /api/v1/resources/{id}/location` handler, mapping
       invalid coordinates to `400 INVALID_LOCATION`.
-- [ ] Implement `GET /api/v1/resources/{id}/history` handler with the
-      `type`/`page`/`pageSize` query params.
-- [ ] Implement `GET /api/v1/roles`, `POST /api/v1/roles`,
+- [x] Implement `GET /api/v1/resources/{id}/history` handler with the
+      `type`/`page`/`pageSize` query params. API_CONTRACT.md's example
+      response for this endpoint has no `meta`/pagination block despite
+      documenting `page`/`pageSize` params; none was added here either,
+      matching the documented example exactly rather than inventing one.
+- [x] Implement `GET /api/v1/roles`, `POST /api/v1/roles`,
       `PUT /api/v1/roles/{id}`, `DELETE /api/v1/roles/{id}` handlers.
-- [ ] Implement `GET /api/v1/permissions` handler.
-- [ ] Implement `PUT /api/v1/roles/{id}/permissions` handler.
-- [ ] Implement `PUT /api/v1/users/{id}/roles` handler.
-- [ ] Implement `GET /api/v1/audit-logs` handler with its filters and
+      (`authorization_handler.go`. No example request/response JSON exists
+      in API_CONTRACT.md section 10 for any of these; the DTOs here are
+      grounded directly in the `authorization.Role`/`Permission` domain
+      types instead.)
+- [x] Implement `GET /api/v1/permissions` handler.
+- [x] Implement `PUT /api/v1/roles/{id}/permissions` handler.
+- [x] Implement `PUT /api/v1/users/{id}/roles` handler. **Found and fixed
+      the missing-permission-guard bug in `auth.Service.AssignUserRoles`
+      described above while wiring this handler.**
+- [x] Implement `GET /api/v1/audit-logs` handler with its filters and
       pagination.
-- [ ] Implement the centralized error-to-HTTP translation
+- [x] Implement the centralized error-to-HTTP translation
       (`BACKEND_ERROR_HANDLING.md`) covering every error code in
-      `API_CONTRACT.md` section 13.
-- [ ] Implement panic-recovery middleware mapping unexpected panics to
+      `API_CONTRACT.md` section 13. (`internal/http/httpresponse/error.go`
+      — every one of the 9 documented codes is mapped, including
+      `RESOURCE_ID_CONFLICT`, which `BACKEND_ERROR_HANDLING.md`'s own
+      illustrative mapping table omits despite it being in
+      `API_CONTRACT.md` section 13.) Also added `httpresponse
+      .ValidationError` (a field-level validation error type with a
+      `Details()` method, per that doc's illustrative
+      `errors.As(err, &validationErr)` usage — no concrete shape for it
+      exists in either doc, so `[]FieldError{Field, Message}` was chosen)
+      and `httpresponse.DecodeJSON` (rejects unknown fields, wraps a
+      decode failure as a `ValidationError`).
+- [x] Implement panic-recovery middleware mapping unexpected panics to
       `500 PERSISTENCE_ERROR`-shaped responses without leaking internals
-      (FR-053, BR-018).
-- [ ] Implement a `GET /health` endpoint for `DEPLOYMENT.md`'s health-check
-      contract.
-- [ ] Write `httptest`-based handler tests for every endpoint above,
+      (FR-053, BR-018). Replaced the Phase 0 alias to Chi's built-in
+      `Recoverer` (a plain-text body) with a local implementation
+      (`internal/http/middleware/recovery.go`) that emits the same JSON
+      error envelope as every other error, per
+      `BACKEND_ERROR_HANDLING.md`'s own illustrative `Recovery` example.
+- [x] Implement a `GET /health` endpoint for `DEPLOYMENT.md`'s health-check
+      contract. Rewrote the Phase 0 placeholder (`200 OK`, plain-text
+      `"OK"`, no real check) to return
+      `{"status": "ok", "database": "ok"}` / `503` +
+      `{"status": "unavailable", "database": "unavailable"}` based on an
+      actual `pool.Ping(ctx)`, matching `DEPLOYMENT.md` section 6.
+- [x] Write `httptest`-based handler tests for every endpoint above,
       covering the success path and at least one documented failure path
-      each (`BACKEND_TESTING.md`).
-- [ ] Manually exercise the full API surface with a REST client (or `curl`)
+      each (`BACKEND_TESTING.md`). 30 tests across
+      `resource_handler_test.go`, `auth_handler_test.go`,
+      `authorization_handler_test.go`, `audit_handler_test.go`,
+      `resourcehistory_handler_test.go`, and `router_test.go`, each
+      constructing the real `*Service` for its feature against
+      hand-written fakes (same pattern as every feature package's own
+      Phase 3 `service_test.go`), so these tests exercise real handler +
+      real service + real error-translation code, with only persistence
+      faked. `go test ./...` passes both with and without `DATABASE_URL`
+      set (no test here depends on a live database).
+- [x] Manually exercise the full API surface with a REST client (or `curl`)
       against the local database and confirm every endpoint in
-      `API_CONTRACT.md` behaves as documented.
+      `API_CONTRACT.md` behaves as documented. **Live-tested** against the
+      `georesponse-db` Docker container and the seeded demo account
+      (`database/seeds/0002_sample_auth.sql`): login → `/me` → list/get/
+      create/update/change-status/relocate/history/delete resources →
+      roles/permissions/audit-logs → logout, plus failure paths (wrong
+      password → 401, duplicate id → 409, invalid status → 400, invalid
+      location → 400, unauthenticated write → 401, not-found → 404) — all
+      confirmed via a real `go build`'d server against the live database,
+      not `go run`'s illustrative wiring. This live exercise is what
+      surfaced both real bugs described above; a REST client alone
+      (without also running the actual server against a real database)
+      would not have caught either one.
 - [ ] Push, open a PR, confirm CI passes, merge into `main`, delete the
       branch (workflow: section 2.1).
 
