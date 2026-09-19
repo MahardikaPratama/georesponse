@@ -17,6 +17,10 @@ Changelog:
     CORS middleware.
   - 2.2.0 (2026-09-19): Wires the BMKG GeoHotspot client/repository/
     service/handler.
+  - 2.3.0 (2026-09-20): Applies pending database migrations before binding
+    the HTTP port when cfg.AutoMigrate is set (APP_ENV=development), so
+    `docker compose up` / run.sh bring up a current schema with no manual
+    migration step.
 */
 package main
 
@@ -70,6 +74,15 @@ func main() {
 		os.Exit(1)
 	}
 	defer pool.Close()
+
+	if cfg.AutoMigrate {
+		applied, err := platformpostgres.Migrate(ctx, pool, cfg.MigrationsDir, logger)
+		if err != nil {
+			logger.Error("apply migrations", slog.String("dir", cfg.MigrationsDir), slog.String("error", err.Error()))
+			os.Exit(1)
+		}
+		logger.Info("migrations up to date", slog.String("dir", cfg.MigrationsDir), slog.Int("applied", applied))
+	}
 
 	router := internalhttp.New(logger, buildDependencies(pool, cfg))
 

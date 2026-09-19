@@ -18,12 +18,21 @@ Changelog:
     which blocked every browser request.
   - 1.3.0 (2026-09-19): Added BMKGBaseURL/BMKGTimeout for the BMKG
     GeoHotspot integration (internal/platform/bmkg).
+  - 1.4.0 (2026-09-20): Startup validation now also rejects a malformed
+    DATABASE_URL, a non-numeric or out-of-range HTTP_PORT, an unknown
+    LOG_LEVEL, a non-positive TOKEN_TTL/BMKG_TIMEOUT, and a non-HTTP
+    BMKG_BASE_URL, so misconfiguration fails at process start with a
+    descriptive error rather than on the first request. Added
+    MigrationsDir/AutoMigrate for apply-pending-migrations-on-startup in
+    development.
 */
 package config
 
 import (
 	"fmt"
+	"net/url"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -46,6 +55,24 @@ const defaultBMKGBaseURL = "https://datacuaca.bmkg.go.id/arcgis/rest/services/pr
 // defaultBMKGTimeout is used when BMKG_TIMEOUT is not set in the
 // environment.
 const defaultBMKGTimeout = 10 * time.Second
+
+// defaultMigrationsDir is used when MIGRATIONS_DIR is not set in the
+// environment: the repository's database/migrations directory, relative to
+// the georesponse-be working directory `go run ./cmd/api` is run from.
+const defaultMigrationsDir = "../database/migrations"
+
+// envDevelopment is the APP_ENV value under which the server applies
+// pending migrations automatically at start-up.
+const envDevelopment = "development"
+
+// validLogLevels lists the LOG_LEVEL values internal/platform/logging
+// understands.
+var validLogLevels = map[string]struct{}{
+	"debug": {},
+	"info":  {},
+	"warn":  {},
+	"error": {},
+}
 
 // Config holds process configuration sourced from environment variables.
 // Nothing outside cmd/api/main.go and internal/platform should construct
@@ -81,6 +108,16 @@ type Config struct {
 
 	// BMKGTimeout bounds how long a single BMKG request may take.
 	BMKGTimeout time.Duration
+
+	// MigrationsDir is the directory holding the NNNN_*.up.sql migration
+	// files applied at start-up when AutoMigrate is set.
+	MigrationsDir string
+
+	// AutoMigrate is true when the server should apply pending database
+	// migrations before it binds its HTTP port. It is derived from AppEnv:
+	// only "development" auto-migrates, so a real deployment keeps
+	// migration as an explicit, separate step.
+	AutoMigrate bool
 }
 
 // Addr returns the address the HTTP server should bind to, in
@@ -102,9 +139,25 @@ func Load() (*Config, error) {
 		TokenSecret: os.Getenv("TOKEN_SECRET"),
 	}
 
+	if cfg.AppEnv == "" {
+		return nil, fmt.Errorf("config: APP_ENV must not be blank")
+	}
+
+	if err := validatePort(cfg.HTTPPort); err != nil {
+		return nil, err
+	}
+
 	if cfg.DatabaseURL == "" {
 		return nil, fmt.Errorf("config: DATABASE_URL is required")
 	}
+	if err := validateDatabaseURL(cfg.DatabaseURL); err != nil {
+		return nil, err
+	}
+
+	if _, ok := validLogLevels[strings.ToLower(cfg.LogLevel)]; !ok {
+		return nil, fmt.Errorf("config: LOG_LEVEL %q is not one of debug, info, warn, error", cfg.LogLevel)
+	}
+
 	if cfg.TokenSecret == "" {
 		return nil, fmt.Errorf("config: TOKEN_SECRET is required")
 	}
@@ -113,6 +166,9 @@ func Load() (*Config, error) {
 	ttl, err := time.ParseDuration(ttlValue)
 	if err != nil {
 		return nil, fmt.Errorf("config: TOKEN_TTL %q is not a valid duration: %w", ttlValue, err)
+	}
+	if ttl <= 0 {
+		return nil, fmt.Errorf("config: TOKEN_TTL %q must be a positive duration", ttlValue)
 	}
 	cfg.TokenTTL = ttl
 
@@ -125,15 +181,70 @@ func Load() (*Config, error) {
 	}
 
 	cfg.BMKGBaseURL = getEnvOrDefault("BMKG_BASE_URL", defaultBMKGBaseURL)
+	if err := validateHTTPURL("BMKG_BASE_URL", cfg.BMKGBaseURL); err != nil {
+		return nil, err
+	}
 
 	bmkgTimeoutValue := getEnvOrDefault("BMKG_TIMEOUT", defaultBMKGTimeout.String())
 	bmkgTimeout, err := time.ParseDuration(bmkgTimeoutValue)
 	if err != nil {
 		return nil, fmt.Errorf("config: BMKG_TIMEOUT %q is not a valid duration: %w", bmkgTimeoutValue, err)
 	}
+	if bmkgTimeout <= 0 {
+		return nil, fmt.Errorf("config: BMKG_TIMEOUT %q must be a positive duration", bmkgTimeoutValue)
+	}
 	cfg.BMKGTimeout = bmkgTimeout
 
+	cfg.MigrationsDir = getEnvOrDefault("MIGRATIONS_DIR", defaultMigrationsDir)
+	cfg.AutoMigrate = cfg.AppEnv == envDevelopment
+	if cfg.AutoMigrate {
+		info, err := os.Stat(cfg.MigrationsDir)
+		if err != nil || !info.IsDir() {
+			return nil, fmt.Errorf("config: MIGRATIONS_DIR %q is not a readable directory (required when APP_ENV=%s, which applies pending migrations at start-up)", cfg.MigrationsDir, envDevelopment)
+		}
+	}
+
 	return cfg, nil
+}
+
+// validatePort rejects an HTTP_PORT that is not an integer in 1..65535.
+func validatePort(port string) error {
+	n, err := strconv.Atoi(port)
+	if err != nil || n < 1 || n > 65535 {
+		return fmt.Errorf("config: HTTP_PORT %q is not a valid TCP port (1-65535)", port)
+	}
+	return nil
+}
+
+// validateDatabaseURL rejects a DATABASE_URL that is not a
+// postgres://host/database style connection URL.
+func validateDatabaseURL(raw string) error {
+	u, err := url.Parse(raw)
+	if err != nil {
+		return fmt.Errorf("config: DATABASE_URL is not a valid URL: %w", err)
+	}
+	if u.Scheme != "postgres" && u.Scheme != "postgresql" {
+		return fmt.Errorf("config: DATABASE_URL must use the postgres:// or postgresql:// scheme, got %q", u.Scheme)
+	}
+	if u.Hostname() == "" {
+		return fmt.Errorf("config: DATABASE_URL has no host")
+	}
+	if strings.Trim(u.Path, "/") == "" {
+		return fmt.Errorf("config: DATABASE_URL has no database name")
+	}
+	return nil
+}
+
+// validateHTTPURL rejects a value that is not an absolute http(s) URL.
+func validateHTTPURL(name, raw string) error {
+	u, err := url.Parse(raw)
+	if err != nil {
+		return fmt.Errorf("config: %s is not a valid URL: %w", name, err)
+	}
+	if (u.Scheme != "http" && u.Scheme != "https") || u.Host == "" {
+		return fmt.Errorf("config: %s %q must be an absolute http(s) URL", name, raw)
+	}
+	return nil
 }
 
 func getEnvOrDefault(key, fallback string) string {
