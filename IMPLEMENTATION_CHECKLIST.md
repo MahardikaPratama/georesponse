@@ -146,18 +146,37 @@ merged to `main`, since later phases depend on earlier ones (section 1).
 
 ### 3.3 Database Bootstrap
 
-- [ ] Stand up a local PostgreSQL + PostGIS instance (Docker container is
-      fine even before `DOCKER_COMPOSE.md` is fully wired up). **Not done —
-      no Docker/database available in this environment.** Required before
-      any item below marked "not verified" can actually be verified.
+- [x] Stand up a local PostgreSQL + PostGIS instance (Docker container is
+      fine even before `DOCKER_COMPOSE.md` is fully wired up). **Done**: a
+      minimal root-level `docker-compose.yml` (`georesponse-db` service only,
+      `postgis/postgis:16-3.4`) plus root/`georesponse-be`/`georesponse-fe`
+      `.env.example` files were added ahead of Phase 8, specifically to
+      unblock this verification. Live-tested: container reports `healthy`;
+      `SELECT version(); SELECT postgis_full_version();` confirms
+      PostgreSQL 16.4 + PostGIS 3.4.3. (Host port 5432 initially conflicted
+      with a pre-existing native Windows `postgresql-x64-18` service; the
+      user stopped that service rather than deviating from the documented
+      port, per `DOCKER_COMPOSE.md` section 6.3.)
 - [x] Implement `scripts/database/migrate.sh` and `migrate.ps1` to apply
       migrations from `database/migrations/` using the tool chosen in
-      `BACKEND_DEPENDENCIES.md`. (Syntax-checked; not run against a live
-      database.)
-- [x] Implement `scripts/database/rollback.sh` and `rollback.ps1`.
-      (Syntax-checked; not run against a live database.)
+      `BACKEND_DEPENDENCIES.md`. **Live-tested and fixed**: `migrate.ps1`
+      originally passed the absolute Windows migrations path straight to
+      `migrate -path`, which golang-migrate cannot turn into a valid
+      `file://` source URL (the drive letter's `:` breaks URL parsing, and a
+      manually-built `file:///D:/...` URI hit a separate file-driver bug) —
+      fixed by running `migrate -path .` from inside the migrations
+      directory via `Push-Location`, which sidesteps the drive letter
+      entirely. Ran against the live container; all 5 migrations
+      (`0001`–`0005`) applied cleanly, `\dt` confirms all expected tables.
+- [x] Implement `scripts/database/rollback.sh` and `rollback.ps1`. Applied
+      the same `Push-Location`/relative-path fix as `migrate.ps1` (same
+      underlying bug); not exercised end-to-end against the live database in
+      this session (no reason yet to roll back a freshly-applied schema),
+      but now uses the same code path already proven to work by `migrate.ps1`.
 - [x] Implement `scripts/database/seed.sh` and `seed.ps1` to load
-      `database/seeds/`. (Syntax-checked; not run against a live database.)
+      `database/seeds/`. **Live-tested**: ran against the live container;
+      all 8 `INSERT` statements in `0001_sample_resources.sql` succeeded,
+      confirmed via `SELECT id, name, type, status FROM resources;`.
 - [x] Write migration `0001` creating the `resources` table and enabling the
       `postgis` extension, per `DATABASE_SCHEMA.md` section on `resources`.
 - [x] Write migration `0002` creating `users`, `roles`, `permissions`,
@@ -171,15 +190,17 @@ merged to `main`, since later phases depend on earlier ones (section 1).
       deliberate no-op migration: every index `DATABASE_SCHEMA.md` lists
       was already created inline in migrations 0001–0004; 0005 reserves
       the sequence number rather than duplicating a `CREATE INDEX`.)
-- [ ] Run `scripts/database/migrate.sh` against the local database and
-      confirm all five migrations apply cleanly. **Not verified — no live
-      database in this environment.**
+- [x] Run `scripts/database/migrate.sh` against the local database and
+      confirm all five migrations apply cleanly. **Verified** (Windows:
+      `migrate.ps1`, see above) — all five applied, re-running reports
+      `no change` as expected.
 - [x] Write at least one seed dataset (a handful of resources across all
       four types and all four statuses) in `database/seeds/`. (8 resources,
       one pair per type across all four statuses, at real Indonesian
       disaster-response-relevant coordinates.)
-- [ ] Run `scripts/database/seed.sh` and confirm the seed data loads.
-      **Not verified — no live database in this environment.**
+- [x] Run `scripts/database/seed.sh` and confirm the seed data loads.
+      **Verified** (Windows: `seed.ps1`) — all 8 sample resources loaded and
+      queried back successfully.
 
 ### 3.4 Dev Loop Tooling
 
@@ -206,11 +227,17 @@ merged to `main`, since later phases depend on earlier ones (section 1).
       explanation and exit non-fatally (no Sonar server is provisioned for
       this take-home by default, consistent with `CODE_QUALITY.md`).
 - [ ] Run `scripts/dev/setup.sh` end to end on a clean checkout and confirm
-      it succeeds. **Not verified as a single script run** — CI now
+      it succeeds. **Still not verified as a single script run** — CI
       independently verifies the FE (`npm install`/lint/typecheck/build/
       test) and BE (`go build`/`vet`/`gofmt`/`test`) halves of what this
-      script does; the database/migration half still requires a live
-      PostgreSQL+PostGIS instance, unavailable in this environment.
+      script does. The database/migration half is now independently
+      verified (section 3.3, above: live `georesponse-db` container,
+      `migrate.ps1`/`seed.ps1` both run successfully against it). What's
+      still missing is Node.js/npm in this environment, so the script's own
+      FE-install step cannot be exercised here — someone with Node available
+      (or a future CI job) still needs to run `setup.sh`/`setup.ps1` itself,
+      not just its constituent pieces separately, to confirm the whole
+      script's control flow (guards, ordering, error handling) works.
 - [x] Push, open a PR, confirm CI passes, merge into `main`, delete the
       branch (workflow: section 2.1). Branch `chore/phase-0-project-setup`,
       PR #2. CI failed twice on real, previously-undetectable bugs (ESLint
@@ -559,22 +586,31 @@ individually as each feature completes (see section 2.1).
 
 ### 11.1 Environment & Secrets
 
-- [ ] Create root `.env.example` documenting the compose-level variables
+- [x] Create root `.env.example` documenting the compose-level variables
       (`POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`, `APP_ENV`,
       `HTTP_PORT`, `LOG_LEVEL`, `API_BASE_URL` — no `VITE_` prefix, since
       the frontend build tool is Rspack, not Vite) per
       `ENVIRONMENT_MANAGEMENT.md` section 6, with obviously-fake local-dev
-      placeholder values — never a real secret.
-- [ ] Create `georesponse-be/.env.example` (variables from
+      placeholder values — never a real secret. **Done early** (ahead of
+      Phase 8), alongside the interim `docker-compose.yml` created to
+      unblock Phase 0 section 3.3's live-database verification.
+- [x] Create `georesponse-be/.env.example` (variables from
       `ENVIRONMENT_MANAGEMENT.md` section 5.2, for running the backend
-      directly with `go run`, outside Docker).
-- [ ] Create `georesponse-fe/.env.example` (variables from
+      directly with `go run`, outside Docker). **Done early**, same reason.
+- [x] Create `georesponse-fe/.env.example` (variables from
       `ENVIRONMENT_MANAGEMENT.md` section 5.1, for running the frontend
-      directly with `npm run dev`, outside Docker).
-- [ ] Add `.env` to `.gitignore` at the repository root, and confirm (or
+      directly with `npm run dev`, outside Docker). **Done early**, same
+      reason.
+- [x] Add `.env` to `.gitignore` at the repository root, and confirm (or
       add) the same in `georesponse-fe/.gitignore` and
       `georesponse-be/.gitignore` — verify with `git status` after creating
       a real local `.env` that it does not show up as untracked/stageable.
+      **Verified**: root `.gitignore` already covered `.env` repo-wide
+      (matches at any depth, including `georesponse-be/.env`, which has no
+      per-app `.gitignore` of its own); `georesponse-fe/.gitignore` already
+      listed it too. `git check-ignore -v` confirmed all three real `.env`
+      files are ignored; `git status --porcelain` shows only the three
+      `.env.example` files and `docker-compose.yml` as untracked, no `.env`.
 - [ ] Implement backend startup validation that fails fast with a clear
       error when a required variable (e.g. `DATABASE_URL`) is missing or
       malformed, per `ENVIRONMENT_MANAGEMENT.md` section 8 (NFR-DEP-004).
@@ -594,6 +630,13 @@ individually as each feature completes (see section 2.1).
 - [ ] Write the real root-level `docker-compose.yml` per `DOCKER_COMPOSE.md`
       section 5 (frontend, backend, PostGIS, healthchecks, `${VAR}`
       substitution from the root `.env` — no hardcoded credentials).
+      **Partially done early**: a `docker-compose.yml` exists at the root
+      with only the `georesponse-db` service (matching section 5's db
+      definition, `${VAR}` substitution, healthcheck), added ahead of this
+      phase to unblock Phase 0 section 3.3. The `georesponse-fe` and
+      `georesponse-be` services are intentionally still missing — their
+      Dockerfiles are empty placeholders — and must be added here once this
+      phase implements them, to match section 5 in full.
 - [ ] Run `docker compose up --build` directly (without the wrapper script)
       from a clean checkout with a real `.env` already in place, and
       confirm the full stack starts and the frontend can reach the backend.
