@@ -67,7 +67,7 @@ function MapLegend({ hotspotLayerVisible, hotspotAsOf }: MapLegendProps) {
 	return (
 		<aside
 			aria-label="Map legend"
-			className="absolute top-3 left-6 z-10 px-3 py-2 text-xs rounded-md border border-white/10 text-neutral-2 shadow-lg"
+			className="absolute top-3 left-12 z-10 px-3 py-2 text-xs rounded-md border border-white/10 text-neutral-2 shadow-lg"
 			style={{ backgroundColor: "rgba(17, 20, 25, 0.88)" }}
 		>
 			<p className="mb-1 font-semibold text-white">Legend</p>
