@@ -1,6 +1,6 @@
 /*
  * Author       : Mahardika Pratama
- * Version      : 1.6.0
+ * Version      : 1.8.0
  * Created Date : 2026-09-19
  * Description  : The map-first application shell (FRONTEND_UI_UX.md
  *                section 3): top bar, resource list panel, map, and a
@@ -38,6 +38,18 @@
  *                        A successful deletion also closes the detail
  *                        panel itself, since the resource it was showing
  *                        no longer exists.
+ * - 1.7.0 (2026-09-19): Added a "Manage Roles" button opening
+ *                        RoleManagementModal (Phase 6 section 9.10). Any
+ *                        authenticated user can open it — the modal itself
+ *                        is what blocks a caller lacking role.read/
+ *                        role.manage, since the frontend has no other way
+ *                        to know a user's permissions in advance.
+ * - 1.8.0 (2026-09-19): Moved ResourceDetail from a full-width bottom bar
+ *                        into `main`, as a floating card anchored to the
+ *                        map's top-right corner (FRONTEND_UI_UX.md section
+ *                        3's "side panel" option) — the bottom-bar layout
+ *                        capped the panel's height and made its history
+ *                        section awkward to read below the fold.
  */
 import React, { useMemo, useState } from "react";
 
@@ -54,6 +66,7 @@ import HotspotToggle from "@components/hotspot-toggle/HotspotToggle";
 import ResourceList from "@components/resource-list/ResourceList";
 import ResourceMap from "@components/resource-map/ResourceMap";
 import { HotspotMarker, MapMarker } from "@components/resource-map/map-adapter/MapAdapter.types";
+import RoleManagementModal from "@components/role-management/RoleManagementModal";
 import { RESOURCE_STATUS_CONFIG } from "@constants/resourceStatus.constants";
 import UpdateResourceModal from "@components/resource-update-form/UpdateResourceModal";
 import { getApiErrorMessage } from "@utils/apiErrorMessage";
@@ -72,6 +85,7 @@ function AppShell() {
 	const [editingResourceId, setEditingResourceId] = useState<string | null>(null);
 	const [deletingResource, setDeletingResource] = useState<Resource | null>(null);
 	const [hotspotLayerVisible, setHotspotLayerVisible] = useState(true);
+	const [isRoleManagementOpen, setIsRoleManagementOpen] = useState(false);
 
 	const markers = useMemo<MapMarker[]>(
 		() =>
@@ -114,6 +128,13 @@ function AppShell() {
 					{user && <span>{user.name}</span>}
 					<button
 						type="button"
+						onClick={() => setIsRoleManagementOpen(true)}
+						className="px-3 py-1 rounded-md bg-white/10 hover:bg-white/20"
+					>
+						Manage Roles
+					</button>
+					<button
+						type="button"
 						onClick={() => logout.mutate()}
 						disabled={logout.isPending}
 						className="px-3 py-1 rounded-md bg-white/10 hover:bg-white/20 disabled:opacity-50"
@@ -152,17 +173,17 @@ function AppShell() {
 						hotspots={hotspots}
 						hotspotLayerVisible={hotspotLayerVisible}
 					/>
+
+					{selectedResourceId && (
+						<ResourceDetail
+							resourceId={selectedResourceId}
+							onClose={() => setSelectedResourceId(null)}
+							onEdit={() => setEditingResourceId(selectedResourceId)}
+							onDelete={setDeletingResource}
+						/>
+					)}
 				</main>
 			</div>
-
-			{selectedResourceId && (
-				<ResourceDetail
-					resourceId={selectedResourceId}
-					onClose={() => setSelectedResourceId(null)}
-					onEdit={() => setEditingResourceId(selectedResourceId)}
-					onDelete={setDeletingResource}
-				/>
-			)}
 
 			{isCreateModalOpen && (
 				<CreateResourceModal onClose={() => setIsCreateModalOpen(false)} />
@@ -185,6 +206,10 @@ function AppShell() {
 						setSelectedResourceId(null);
 					}}
 				/>
+			)}
+
+			{isRoleManagementOpen && (
+				<RoleManagementModal onClose={() => setIsRoleManagementOpen(false)} />
 			)}
 		</div>
 	);

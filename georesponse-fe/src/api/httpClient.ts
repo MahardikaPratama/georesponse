@@ -1,6 +1,6 @@
 /*
  * Author       : Mahardika Pratama
- * Version      : 1.0.0
+ * Version      : 1.1.0
  * Created Date : 2026-09-19
  * Description  : The only place in this codebase that calls fetch. Wraps
  *                the backend's REST API: builds request URLs against
@@ -13,6 +13,10 @@
  *
  * Changelog:
  * - 1.0.0 (2026-09-19): Initial creation.
+ * - 1.1.0 (2026-09-19): Added putNoContent, for the 204-returning
+ *                        role/user role assignment endpoints (Phase 6
+ *                        section 9.10) — put() claims a DataEnvelope<T>
+ *                        that a 204 response never actually has.
  */
 import { logger } from "@utils/logger/logger";
 
@@ -128,6 +132,11 @@ export const httpClient = {
 
 	put<T>(path: string, body?: unknown): Promise<DataEnvelope<T>> {
 		return request<DataEnvelope<T>>(path, { method: "PUT", body });
+	},
+
+	/** For a PUT endpoint that succeeds with 204 No Content (e.g. role/user role assignment). */
+	putNoContent(path: string, body?: unknown): Promise<void> {
+		return request<void>(path, { method: "PUT", body });
 	},
 
 	patch<T>(path: string, body?: unknown): Promise<DataEnvelope<T>> {

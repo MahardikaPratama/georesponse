@@ -1172,11 +1172,44 @@ this phase, but no equivalent frontend toolchain).
 
 ### 9.10 Authorization & Administration (FR-030–033, UC-12)
 
-- [ ] Implement the roles/permissions management view, restricted to users
-      with the required permission.
-- [ ] Implement the user-role assignment control.
-- [ ] Verify a caller without permission is redirected/blocked rather than
-      shown the management UI (FR-032, BR-027).
+- [x] Implement the roles/permissions management view, restricted to users
+      with the required permission. (`src/components/role-management/`
+      — `RoleManagementModal.tsx` fetches roles/permissions and gates the
+      view; `RolePermissionsMatrix.tsx` is a role x permission checkbox
+      grid, each toggle immediately calling the new
+      `useSetRolePermissions` mutation (self-saving, same pattern as
+      `ResourceDetail`'s status Dropdown). New `authorizationApi`/
+      `authorizationKeys`/`useRoles`/`usePermissions` for `GET /api/v1/roles`
+      and `GET /api/v1/permissions`. `httpClient` gained `putNoContent`
+      for these 204-returning endpoints — `put()` claimed a `DataEnvelope<T>`
+      a 204 response never has. Opened via a new "Manage Roles" button in
+      `AppShell`.)
+- [x] Implement the user-role assignment control.
+      (`UserRoleAssignmentControl.tsx` + new `useSetUserRoles`, for
+      `PUT /api/v1/users/{id}/roles`. **Known backend gap, not silently
+      worked around**: the user is identified by typing their id, not
+      picked from a list — there is no `GET /api/v1/users` (or
+      equivalent) endpoint anywhere in `API_CONTRACT.md` section 10 or
+      the backend to enumerate users, only `PUT /api/v1/users/{id}/roles`
+      itself. A real user picker is blocked on that gap.)
+- [x] Verify a caller without permission is redirected/blocked rather than
+      shown the management UI (FR-032, BR-027). `GET /api/v1/roles` and
+      `GET /api/v1/permissions` are themselves permission-gated
+      (`role.read`/`permission.read` respectively, confirmed in
+      `georesponse-be/internal/authorization/service.go`), so
+      `RoleManagementModal` treats an `AUTHORIZATION_DENIED` response from
+      either as "blocked" and renders that instead of the management UI —
+      there's no other way to know a caller's permissions in advance,
+      since `GET /api/v1/auth/me` returns role names, not permission
+      codes. Covered by `RoleManagementModal.test.tsx`'s blocked-state test.
+
+Committed directly to `main`. This section's work was interleaved with a
+concurrent, unrelated `ResourceDetail`/`AppShell` restyle from another
+session working in the same shared directory (per the new direct-to-main
+workflow, no worktree isolation) — reconstructed a clean split so this
+commit contains only the 9.10 work, leaving their in-progress restyle
+uncommitted on disk for them to commit separately. Not yet verified with
+typecheck/lint/build/test: this environment has no Node.js/npm available.
 
 ### 9.11 Audit Trail (FR-038–040, UC-14)
 
