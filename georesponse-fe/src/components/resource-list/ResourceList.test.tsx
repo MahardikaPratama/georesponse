@@ -59,7 +59,7 @@ describe("ResourceList", () => {
 		expect(refetch).toHaveBeenCalled();
 	});
 
-	it("shows an explicit empty state when the list is empty", () => {
+	it("shows a 'no resources exist' empty state when there are no filters", () => {
 		mockedUseResources.mockReturnValue({
 			status: "success",
 			data: { data: [], meta: { page: 1, pageSize: 20, total: 0 } },
@@ -70,7 +70,22 @@ describe("ResourceList", () => {
 
 		render(<ResourceList />);
 
-		expect(screen.getByText(/no resources match/i)).toBeInTheDocument();
+		expect(screen.getByText(/no resources exist/i)).toBeInTheDocument();
+	});
+
+	it("shows a 'no results match' empty state when filters are active", () => {
+		mockedUseResources.mockReturnValue({
+			status: "success",
+			data: { data: [], meta: { page: 1, pageSize: 20, total: 0 } },
+			error: null,
+			refetch: vi.fn(),
+			isFetching: false
+		} as unknown as ReturnType<typeof useResources>);
+
+		render(<ResourceList filters={{ search: "ambulance" }} />);
+
+		expect(useResources).toHaveBeenCalledWith({ search: "ambulance" });
+		expect(screen.getByText(/no resources match the current filters/i)).toBeInTheDocument();
 	});
 
 	it("renders identity, type, status, and location per row, and reports selection", () => {
