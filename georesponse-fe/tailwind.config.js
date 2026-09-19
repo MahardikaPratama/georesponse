@@ -9,8 +9,13 @@
  *
  * Changelog:
  * - 1.0.0 (2026-09-19): Initial creation.
+ * - 1.1.0 (2026-09-19): colors.ts dropped its CommonJS `module.exports`
+ *                        (invalid alongside `export default` once a
+ *                        bundler treats it as an ES module); unwrap the
+ *                        ESM interop shape here instead.
  */
-const colors = require("./src/utils/colors");
+const colorsModule = require("./src/utils/colors");
+const colors = colorsModule.default ?? colorsModule;
 
 /** @type {import("tailwindcss").Config} */
 module.exports = {

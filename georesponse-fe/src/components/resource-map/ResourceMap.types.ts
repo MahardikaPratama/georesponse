@@ -10,11 +10,15 @@
  *                        ResourceList also highlights the matching marker
  *                        (FRONTEND_UI_UX.md section 3: list/map selection
  *                        is shared in both directions).
+ * - 1.2.0 (2026-09-19): Added hotspots/hotspotLayerVisible for the BMKG
+ *                        situational-awareness overlay.
  */
-import { MapMarker } from "./map-adapter/MapAdapter.types";
+import { HotspotMarker, MapMarker } from "./map-adapter/MapAdapter.types";
 
 export interface ResourceMapProps {
 	markers?: MapMarker[];
 	selectedResourceId?: string | null;
 	onResourceSelect?: (resourceId: string) => void;
+	hotspots?: HotspotMarker[];
+	hotspotLayerVisible?: boolean;
 }

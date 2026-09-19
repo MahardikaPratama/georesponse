@@ -68,6 +68,8 @@ The frontend build tool is Rspack, not Vite, so these are **not** `VITE_`-prefix
 | `DATABASE_URL` | PostgreSQL/PostGIS connection string | `postgres://georesponse:georesponse_dev_password@georesponse-db:5432/georesponse?sslmode=disable` |
 | `LOG_LEVEL` | Structured logging verbosity (NFR-OBS-001) | `debug` |
 | `CORS_ALLOWED_ORIGINS` | Comma-separated browser origins allowed to call the API cross-origin (SECURITY.md section 8.1); never a wildcard | `http://localhost:5173` |
+| `BMKG_BASE_URL` | BMKG's public GeoHotspot ArcGIS REST layer, queried by GET /api/v1/hotspots | `https://datacuaca.bmkg.go.id/arcgis/rest/services/production/geohotspot/MapServer/0` |
+| `BMKG_TIMEOUT` | Timeout for a single request to BMKG | `10s` |
 
 Additional variables (e.g. JWT signing secret) would be added here as those concerns are implemented; the convention — environment variable, never hardcoded — applies uniformly.
 

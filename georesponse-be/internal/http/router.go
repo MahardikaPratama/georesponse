@@ -16,6 +16,8 @@ Changelog:
   - 2.1.0 (2026-09-19): Added the CORS middleware (SECURITY.md section
     8.1) so the browser-facing frontend origin can call this API
     cross-origin.
+  - 2.2.0 (2026-09-19): Added GET /api/v1/hotspots (BMKG GeoHotspot
+    situational-awareness overlay).
 */
 package http
 
@@ -49,6 +51,7 @@ type Dependencies struct {
 	Auth               *AuthHandler
 	Authorization      *AuthorizationHandler
 	Audit              *AuditHandler
+	Hotspot            *HotspotHandler
 	CORSAllowedOrigins []string
 }
 
@@ -106,6 +109,11 @@ func New(logger *slog.Logger, deps Dependencies) nethttp.Handler {
 		r.With(requireAuth).Put("/users/{id}/roles", deps.Authorization.SetUserRoles)
 
 		r.With(requireAuth).Get("/audit-logs", deps.Audit.List)
+
+		// Situational-awareness overlay, not an application-managed
+		// resource — still behind requireAuth for consistency with every
+		// other read endpoint in this API.
+		r.With(requireAuth).Get("/hotspots", deps.Hotspot.List)
 	})
 
 	return r
