@@ -6,9 +6,14 @@
  *
  * Changelog:
  * - 1.0.0 (2026-09-19): Initial creation.
+ * - 1.1.0 (2026-09-19): Added filters (Phase 6 section 9.2), so the list
+ *                        queries the same search/type/status combination
+ *                        ResourceFilterBar and the map are showing.
  */
+import { ResourceFilters } from "@api/resources/resourceApi.types";
 
 export interface ResourceListProps {
+	filters?: ResourceFilters;
 	selectedResourceId?: string | null;
 	onSelectResource?: (resourceId: string) => void;
 }

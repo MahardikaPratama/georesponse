@@ -877,12 +877,37 @@ individually as each feature completes (see section 2.1).
 
 ### 9.2 Search & Filter (FR-016–019, UC-03, UC-04)
 
-- [ ] Implement the search input wired to the `search` query param.
-- [ ] Implement the type-filter control wired to the `type` query param.
-- [ ] Implement the status-filter control wired to the `status` query param.
-- [ ] Verify combined filters narrow results correctly (FR-019, BR-045).
-- [ ] Implement empty-state messaging for "no results match" distinct from
-      "no resources exist" (UC-03/UC-04 alternative flows).
+- [x] Implement the search input wired to the `search` query param.
+      (`src/components/resource-filter-bar/ResourceFilterBar.tsx`, debounced
+      300ms via the new `src/hooks/useDebouncedValue.ts` before it reaches
+      `filters.search`, per `FRONTEND_UI_UX.md` section 4.)
+- [x] Implement the type-filter control wired to the `type` query param.
+      (`ResourceFilterBar`, a closed `Dropdown` populated from
+      `RESOURCE_TYPE_LABEL`'s fixed enum, not free text; changes `filters`
+      immediately, no debounce — a selection is a discrete action.)
+- [x] Implement the status-filter control wired to the `status` query param.
+      (`ResourceFilterBar`, same pattern, populated from
+      `RESOURCE_STATUS_CONFIG`.)
+- [x] Verify combined filters narrow results correctly (FR-019, BR-045).
+      By construction rather than a live run (no Node/npm locally, see
+      below): `AppShell` holds one `ResourceFilters` object as client state;
+      every control folds its change onto that same object
+      (`{...filters, <field>: ...}`) rather than replacing it, and both
+      `ResourceList` and the map's own `useResources` call read that one
+      object, so a combined search+type+status query is always a single
+      `GET /resources?search=...&type=...&status=...` call — combining
+      filters server-side is BR-045/the backend's job (already implemented
+      in Phase 3/4). Covered by `ResourceFilterBar.test.tsx`'s "merged onto
+      the existing filters" cases.
+- [x] Implement empty-state messaging for "no results match" distinct from
+      "no resources exist" (UC-03/UC-04 alternative flows). (`ResourceList`,
+      based on whether any of `filters.search`/`type`/`status` is set;
+      covered by `ResourceList.test.tsx`.)
+- [ ] Push, open a PR, confirm CI passes, merge into `main`, delete the
+      branch (workflow: section 2.1). **Not yet verified**: this
+      environment has no Node.js/npm available, so typecheck/lint/build/test
+      could not be run locally before this push — CI is the first real
+      verification.
 
 ### 9.3 Resource Detail (FR-003, FR-021, UC-02)
 
