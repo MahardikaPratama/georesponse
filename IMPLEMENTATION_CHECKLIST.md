@@ -1098,20 +1098,47 @@ individually as each feature completes (see section 2.1).
       no separate map-specific wiring needed for this. Covered by
       `useRelocateResource.test.ts`'s optimistic-update assertions and
       `ResourceDetail.test.tsx`'s relocate-control tests.
+- [x] Push, open a PR, confirm CI passes, merge into `main`, delete the
+      branch (workflow: section 2.1). PR #17 (`feature/phase-6-relocate-resource`)
+      merged into `main` (squash commit `85cb134`); branch deleted (remote
+      and local). CI initially failed a typecheck error in
+      `useRelocateResource.test.ts` (a Promise executor's `resolve` was
+      assigned to a variable typed `(value: unknown) => void`, which its
+      more specific inferred type can't satisfy — parameter types are
+      contravariant; fixed with a definite-assignment-asserted, precisely
+      typed declaration instead); fixed and re-pushed, then green.
+
+### 9.8 Delete Resource (FR-005, UC-10)
+
+- [x] Implement the delete confirmation dialog (UC-10 step 2).
+      (`src/components/resource-delete-confirmation/DeleteResourceConfirmation.tsx`
+      — built on the shared `Modal` component, whose Cancel/Confirm
+      buttons are exactly this pattern; cancelling just calls `onClose`,
+      no mutation involved, per UC-10's alternative flow. Opened via a new
+      "Delete" button in `ResourceDetail`, which passes the already-loaded
+      `Resource` itself to `onDelete` so the dialog can show its name
+      without depending on the possibly-filtered list containing it.)
+- [x] Implement the `useDeleteResource` mutation, invalidating the resource
+      list query. (`src/hooks/useDeleteResource.ts` — also removes
+      `resourceKeys.detail(id)` from the cache entirely per
+      `FRONTEND_STATE.md` section 6's table, rather than just invalidating
+      it, since a deleted resource has nothing to refetch. Covered by
+      `useDeleteResource.test.ts`.)
+- [x] Verify the resource disappears from the list and the map immediately
+      after successful deletion, and remains unchanged if the confirmation
+      is cancelled (UC-10 alternative flow). The map's markers derive from
+      `AppShell`'s `useResources(filters)` call, which shares the exact
+      list cache entry `useDeleteResource`'s `resourceKeys.lists()`
+      invalidation refetches, so no separate map-specific wiring was
+      needed. `AppShell` also closes the detail panel itself
+      (`setSelectedResourceId(null)`) once deletion succeeds, since the
+      resource it was showing no longer exists. Covered by
+      `DeleteResourceConfirmation.test.tsx`'s cancel/confirm cases.
 - [ ] Push, open a PR, confirm CI passes, merge into `main`, delete the
       branch (workflow: section 2.1). **Not yet verified**: this
       environment has no Node.js/npm available, so typecheck/lint/build/test
       could not be run locally before this push — CI is the first real
       verification.
-
-### 9.8 Delete Resource (FR-005, UC-10)
-
-- [ ] Implement the delete confirmation dialog (UC-10 step 2).
-- [ ] Implement the `useDeleteResource` mutation, invalidating the resource
-      list query.
-- [ ] Verify the resource disappears from the list and the map immediately
-      after successful deletion, and remains unchanged if the confirmation
-      is cancelled (UC-10 alternative flow).
 
 ### 9.9 Resource History (FR-034–037, UC-13)
 

@@ -1,11 +1,11 @@
 /*
  * Author       : Mahardika Pratama
- * Version      : 1.2.0
+ * Version      : 1.3.0
  * Created Date : 2026-09-19
  * Description  : Tests ResourceDetail's loading, "not found", generic
  *                error, and populated states, the status-change control's
- *                interaction and error display, and the relocate
- *                control's interaction and validation, with
+ *                interaction and error display, the relocate control's
+ *                interaction and validation, and the delete action, with
  *                useResource/useChangeResourceStatus/useRelocateResource
  *                mocked so no real network call is made.
  *
@@ -21,6 +21,9 @@
  *                        section 9.7), with useRelocateResource now mocked
  *                        too — RelocateResourceControl (rendered inside
  *                        ResourceDetail) calls it unconditionally.
+ * - 1.3.0 (2026-09-19): Added an onDelete assertion for the new delete
+ *                        action (Phase 6 section 9.8) — the confirmation
+ *                        dialog itself is DeleteResourceConfirmation.test.tsx.
  */
 import React from "react";
 import { fireEvent, render, screen } from "@testing-library/react";
@@ -105,25 +108,32 @@ describe("ResourceDetail", () => {
 		);
 	});
 
-	it("renders identity, type, status, location, and attributes, and calls onClose/onEdit", () => {
+	it("renders identity, type, status, location, and attributes, and calls onClose/onEdit/onDelete", () => {
 		const onClose = vi.fn();
 		const onEdit = vi.fn();
+		const onDelete = vi.fn();
+		const resource = {
+			id: "res-001",
+			name: "Ambulance 12",
+			type: "VEHICLE",
+			status: "IN_USE",
+			attributes: { vehicleType: "Ambulance", capacity: 4 },
+			location: { latitude: -6.2, longitude: 106.8166 }
+		};
 		mockedUseResource.mockReturnValue({
 			status: "success",
-			data: {
-				data: {
-					id: "res-001",
-					name: "Ambulance 12",
-					type: "VEHICLE",
-					status: "IN_USE",
-					attributes: { vehicleType: "Ambulance", capacity: 4 },
-					location: { latitude: -6.2, longitude: 106.8166 }
-				}
-			},
+			data: { data: resource },
 			error: null
 		} as unknown as ReturnType<typeof useResource>);
 
-		render(<ResourceDetail resourceId="res-001" onClose={onClose} onEdit={onEdit} />);
+		render(
+			<ResourceDetail
+				resourceId="res-001"
+				onClose={onClose}
+				onEdit={onEdit}
+				onDelete={onDelete}
+			/>
+		);
 
 		expect(screen.getByText("Ambulance 12")).toBeInTheDocument();
 		expect(screen.getByText("res-001")).toBeInTheDocument();
@@ -137,6 +147,9 @@ describe("ResourceDetail", () => {
 
 		fireEvent.click(screen.getByRole("button", { name: "Edit" }));
 		expect(onEdit).toHaveBeenCalled();
+
+		fireEvent.click(screen.getByRole("button", { name: "Delete" }));
+		expect(onDelete).toHaveBeenCalledWith(resource);
 
 		fireEvent.click(screen.getByRole("button", { name: /close resource detail/i }));
 		expect(onClose).toHaveBeenCalled();
