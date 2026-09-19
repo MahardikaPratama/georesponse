@@ -2,65 +2,61 @@
  * Author       : Mahardika Pratama
  * Version      : 1.10.0
  * Created Date : 2026-09-19
- * Description  : The map-first application shell (FRONTEND_UI_UX.md
- *                section 3): top bar, resource list panel, map, and a
- *                detail panel that opens when a resource is selected.
- *                Shown by App.tsx once a user is authenticated.
+ * Description  : The map-first application shell: top bar, resource list
+ *                panel, map, and a detail panel that opens when a resource
+ *                is selected. Shown by App.tsx once a user is authenticated.
  *
  * Changelog:
  * - 1.0.0 (2026-09-19): Initial creation.
- * - 1.1.0 (2026-09-19): Wires the resource list and map to live data
- *                        (Phase 6 section 9.1): owns the shared selection
- *                        state the two panels highlight in both directions
- *                        (FRONTEND_UI_UX.md section 3). The detail panel's
- *                        real content is still Phase 6 section 9.3.
- * - 1.2.0 (2026-09-19): Owns `filters` client state (Phase 6 section 9.2),
- *                        fed by the new ResourceFilterBar and applied to
- *                        both the list and the map's own useResources call,
- *                        so they always show the same filtered set.
- * - 1.3.0 (2026-09-19): Renders ResourceDetail when a resource is selected
- *                        (Phase 6 section 9.3) — map-marker selection
- *                        already flowed into selectedResourceId via
- *                        ResourceMap's onResourceSelect (section 9.1), so
- *                        this is what makes that selection actually open
- *                        the panel (FR-021, UC-05 step 5).
+ * - 1.1.0 (2026-09-19): Wires the resource list and map to live data:
+ *                        owns the shared selection state the two panels
+ *                        highlight in both directions. The detail panel's
+ *                        real content comes in a later revision.
+ * - 1.2.0 (2026-09-19): Owns `filters` client state, fed by the new
+ *                        ResourceFilterBar and applied to both the list
+ *                        and the map's own useResources call, so they
+ *                        always show the same filtered set.
+ * - 1.3.0 (2026-09-19): Renders ResourceDetail when a resource is
+ *                        selected — map-marker selection already flowed
+ *                        into selectedResourceId via ResourceMap's
+ *                        onResourceSelect, so this is what makes that
+ *                        selection actually open the panel (FR-021,
+ *                        UC-05 step 5).
  * - 1.4.0 (2026-09-19): Added a "New Resource" button opening
- *                        CreateResourceModal (Phase 6 section 9.4). No
- *                        extra wiring was needed for the created resource
- *                        to appear in the list/map without a refresh —
- *                        useCreateResource already invalidates
- *                        resourceKeys.lists(), which this component's own
- *                        useResources call shares.
+ *                        CreateResourceModal. No extra wiring was needed
+ *                        for the created resource to appear in the
+ *                        list/map without a refresh — useCreateResource
+ *                        already invalidates resourceKeys.lists(), which
+ *                        this component's own useResources call shares.
  * - 1.5.0 (2026-09-19): Wires ResourceDetail's edit action to
- *                        UpdateResourceModal (Phase 6 section 9.5).
+ *                        UpdateResourceModal.
  * - 1.6.0 (2026-09-19): Wires ResourceDetail's delete action to
- *                        DeleteResourceConfirmation (Phase 6 section 9.8).
- *                        A successful deletion also closes the detail
- *                        panel itself, since the resource it was showing
- *                        no longer exists.
+ *                        DeleteResourceConfirmation. A successful
+ *                        deletion also closes the detail panel itself,
+ *                        since the resource it was showing no longer
+ *                        exists.
  * - 1.7.0 (2026-09-19): Added a "Manage Roles" button opening
- *                        RoleManagementModal (Phase 6 section 9.10). Any
- *                        authenticated user can open it — the modal itself
- *                        is what blocks a caller lacking role.read/
- *                        role.manage, since the frontend has no other way
- *                        to know a user's permissions in advance.
+ *                        RoleManagementModal. Any authenticated user can
+ *                        open it — the modal itself is what blocks a
+ *                        caller lacking role.read/role.manage, since the
+ *                        frontend has no other way to know a user's
+ *                        permissions in advance.
  * - 1.8.0 (2026-09-19): Moved ResourceDetail from a full-width bottom bar
  *                        into `main`, as a floating card anchored to the
- *                        map's top-right corner (FRONTEND_UI_UX.md section
- *                        3's "side panel" option) — the bottom-bar layout
- *                        capped the panel's height and made its history
- *                        section awkward to read below the fold.
+ *                        map's top-right corner (the "side panel" layout
+ *                        option) — the bottom-bar layout capped the
+ *                        panel's height and made its history section
+ *                        awkward to read below the fold.
  * - 1.9.0 (2026-09-19): Added an "Audit Trail" button opening
- *                        AuditLogModal (Phase 6 section 9.11), gated the
- *                        same way as "Manage Roles" — any authenticated
- *                        user can open it, the modal itself blocks a
- *                        caller lacking audit.read.
+ *                        AuditLogModal, gated the same way as "Manage
+ *                        Roles" — any authenticated user can open it,
+ *                        the modal itself blocks a caller lacking
+ *                        audit.read.
  * - 1.10.0 (2026-09-20): Wired ResourceMap's onMapDoubleClick to open
  *                        CreateResourceModal with latitude/longitude
- *                        pre-filled from the clicked point
- *                        (FRONTEND_UI_UX.md section 6's map-click
- *                        placement), and added a one-line tip next to
- *                        "+ New Resource" so the feature is discoverable.
+ *                        pre-filled from the clicked point, and added a
+ *                        one-line tip next to "+ New Resource" so the
+ *                        feature is discoverable.
  */
 import React, { useMemo, useState } from "react";
 
@@ -183,7 +179,7 @@ function AppShell() {
 					>
 						+ New Resource
 					</button>
-					<p className="mb-3 text-xs text-neutral-3">
+					<p className="mt-2 mb-3 text-xs text-neutral-3">
 						Tip: double-click the map to create a resource at that location.
 					</p>
 

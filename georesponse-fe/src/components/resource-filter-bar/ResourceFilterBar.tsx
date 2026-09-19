@@ -4,18 +4,18 @@
  * Created Date : 2026-09-19
  * Description  : The resource list's search + type/status filter controls
  *                (FR-016-019, UC-03, UC-04). The search input is debounced
- *                before it reaches `filters` (FRONTEND_UI_UX.md section 4);
- *                the type and status controls are closed dropdowns
- *                populated from the fixed DOMAIN_MODEL.md enums, not free
- *                text, and change `filters` immediately since a selection
- *                is a discrete action, not typing.
+ *                before it reaches `filters`; the type and status
+ *                controls are closed dropdowns populated from the fixed
+ *                domain enums, not free text, and change `filters`
+ *                immediately since a selection is a discrete action, not
+ *                typing.
  *
  * Changelog:
  * - 1.0.0 (2026-09-19): Initial creation.
  * - 1.1.0 (2026-09-19): Built its type/status options from the new shared
  *                        RESOURCE_TYPE_OPTIONS/RESOURCE_STATUS_OPTIONS
  *                        instead of its own copy of the same
- *                        Object.keys(...).map(...) (Phase 6 section 9.6).
+ *                        Object.keys(...).map(...).
  */
 import React, { useEffect, useRef, useState } from "react";
 
@@ -71,7 +71,7 @@ function ResourceFilterBar({ filters, onFiltersChange }: ResourceFilterBarProps)
 				onChange={(event) => setSearchInput(event.target.value)}
 				placeholder="Search resources by name…"
 				aria-label="Search resources"
-				className="w-full px-3 text-sm text-white rounded-md h-9 bg-background-100-1 placeholder:text-neutral-3 focus:outline-none focus:border-primary-20 border border-transparent"
+				className="w-full px-3 text-sm text-white rounded-md h-9 bg-background-100-1 placeholder:text-neutral-3 focus:outline-none focus:border-primary-20 border border-white/20"
 			/>
 
 			<div className="flex gap-2">
