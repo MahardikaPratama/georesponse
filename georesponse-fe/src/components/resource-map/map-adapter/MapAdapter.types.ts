@@ -17,6 +17,12 @@
  *                        the Resource domain type or its status enum — the
  *                        caller resolves the color, the adapter just paints
  *                        it.
+ * - 1.2.0 (2026-09-19): Added HotspotMarker and the hotspot layer methods
+ *                        (setHotspots/toggleHotspotLayer) for the BMKG
+ *                        GeoHotspot overlay — a second, independent
+ *                        source/layer pair alongside the resource one, not
+ *                        a change to it, keeping hotspots separate from
+ *                        application-managed resources as required.
  */
 
 /** A resource's position on the map, in the domain's lat/lng order. */
@@ -26,6 +32,22 @@ export interface MapMarker {
 	longitude: number;
 	/** CSS color (e.g. a hex string) the marker is painted with. */
 	color: string;
+}
+
+/**
+ * A BMKG hotspot's position and basic details, for the separate,
+ * toggleable situational-awareness layer — never merged with MapMarker or
+ * routed through onMarkerClick, since a hotspot is never an
+ * application-managed resource.
+ */
+export interface HotspotMarker {
+	id: string;
+	latitude: number;
+	longitude: number;
+	province: string;
+	regency: string;
+	observedDate: string;
+	observedTime: string;
 }
 
 export interface MapAdapterOptions {
@@ -49,5 +71,9 @@ export interface MapAdapter {
 	setMarkers(markers: MapMarker[]): void;
 	/** Highlights one marker (or clears the highlight, for null). */
 	selectMarker(id: string | null): void;
+	/** Replaces the BMKG hotspot layer's data. */
+	setHotspots(hotspots: HotspotMarker[]): void;
+	/** Shows or hides the hotspot layer without discarding its data. */
+	toggleHotspotLayer(visible: boolean): void;
 	destroy(): void;
 }

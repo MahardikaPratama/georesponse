@@ -16,6 +16,8 @@ Changelog:
   - 1.2.0 (2026-09-19): Added CORSAllowedOrigins so the frontend's origin
     can call the API cross-origin from the browser (SECURITY.md section
     8.1); previously missing, which blocked every browser request.
+  - 1.3.0 (2026-09-19): Added BMKGBaseURL/BMKGTimeout for the BMKG
+    GeoHotspot integration (internal/platform/bmkg).
 */
 package config
 
@@ -36,6 +38,14 @@ const defaultCORSAllowedOrigins = "http://localhost:5173"
 
 // defaultTokenTTL is used when TOKEN_TTL is not set in the environment.
 const defaultTokenTTL = 24 * time.Hour
+
+// defaultBMKGBaseURL is BMKG's public GeoHotspot ArcGIS REST layer, used
+// when BMKG_BASE_URL is not set in the environment.
+const defaultBMKGBaseURL = "https://datacuaca.bmkg.go.id/arcgis/rest/services/production/geohotspot/MapServer/0"
+
+// defaultBMKGTimeout is used when BMKG_TIMEOUT is not set in the
+// environment.
+const defaultBMKGTimeout = 10 * time.Second
 
 // Config holds process configuration sourced from environment variables.
 // Nothing outside cmd/api/main.go and internal/platform should construct
@@ -64,6 +74,13 @@ type Config struct {
 	// CORSAllowedOrigins lists the browser origins allowed to call this
 	// API cross-origin (SECURITY.md section 8.1). Never a wildcard.
 	CORSAllowedOrigins []string
+
+	// BMKGBaseURL is BMKG's GeoHotspot ArcGIS REST layer base URL, queried
+	// by internal/platform/bmkg.Client.
+	BMKGBaseURL string
+
+	// BMKGTimeout bounds how long a single BMKG request may take.
+	BMKGTimeout time.Duration
 }
 
 // Addr returns the address the HTTP server should bind to, in
@@ -106,6 +123,15 @@ func Load() (*Config, error) {
 			cfg.CORSAllowedOrigins = append(cfg.CORSAllowedOrigins, origin)
 		}
 	}
+
+	cfg.BMKGBaseURL = getEnvOrDefault("BMKG_BASE_URL", defaultBMKGBaseURL)
+
+	bmkgTimeoutValue := getEnvOrDefault("BMKG_TIMEOUT", defaultBMKGTimeout.String())
+	bmkgTimeout, err := time.ParseDuration(bmkgTimeoutValue)
+	if err != nil {
+		return nil, fmt.Errorf("config: BMKG_TIMEOUT %q is not a valid duration: %w", bmkgTimeoutValue, err)
+	}
+	cfg.BMKGTimeout = bmkgTimeout
 
 	return cfg, nil
 }
