@@ -6,8 +6,7 @@
  *                Wires TSX/JSX support via the built-in SWC loader, Tailwind
  *                CSS v4 via PostCSS, the dev server, path aliases matching
  *                tsconfig.json, and build-time injection of the frontend
- *                environment variables defined in
- *                docs/11_devops/ENVIRONMENT_MANAGEMENT.md section 5.1.
+ *                environment variables.
  *
  * Changelog:
  * - 1.0.0 (2026-09-19): Initial creation.
@@ -24,8 +23,7 @@ const isDev = process.env.NODE_ENV !== "production";
  *
  * The build tool is Rspack, not Vite, so these are read as plain
  * `process.env.*` names (no `VITE_` prefix) and injected at build time via
- * DefinePlugin. See docs/11_devops/ENVIRONMENT_MANAGEMENT.md section 5.1 for
- * the variables this mirrors and the naming caveat noted there.
+ * DefinePlugin.
  */
 const definedEnv = {
 	"process.env.NODE_ENV": JSON.stringify(process.env.NODE_ENV || "development"),

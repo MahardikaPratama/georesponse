@@ -3,9 +3,9 @@
  * Version      : 1.0.0
  * Created Date : 2026-09-19
  * Description  : Logging utility with contextual metadata, level
- *                detection, and wrappers for error/debug logs. Established
- *                convention referenced by OBSERVABILITY.md for
- *                client-side logging.
+ *                detection, and wrappers for error/debug logs. The
+ *                established convention for client-side logging in this
+ *                project.
  *
  * Changelog:
  * - 1.0.0 (2026-09-19): Adapted from a prior personal project for

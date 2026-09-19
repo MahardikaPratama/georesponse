@@ -4,11 +4,11 @@ Version      : 1.0.0
 Created Date : 2026-09-19
 Description  : Loads seed data from database/seeds/ into the database
                identified by DATABASE_URL, after migrations have been
-               applied, per DATABASE_MIGRATIONS.md section 7. Seed files
-               are applied via `psql`, since it is the standard
-               PostgreSQL client for running plain SQL files and needs
-               no additional dependency beyond a PostgreSQL client
-               install. Windows PowerShell equivalent of seed.sh.
+               applied. Seed files are applied via `psql`, since it is
+               the standard PostgreSQL client for running plain SQL
+               files and needs no additional dependency beyond a
+               PostgreSQL client install. Windows PowerShell equivalent
+               of seed.sh.
 
 Changelog:
 - 1.0.0 (2026-09-19): Initial creation.

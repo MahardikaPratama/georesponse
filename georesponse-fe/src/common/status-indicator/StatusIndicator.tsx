@@ -4,8 +4,7 @@
  * Created Date : 2026-09-19
  * Description  : Reusable component to visually display status messages
  *                with color indicators. Used for Resource.status display
- *                (AVAILABLE, IN_USE, MAINTENANCE, UNAVAILABLE) per
- *                FRONTEND_UI_UX.md.
+ *                (AVAILABLE, IN_USE, MAINTENANCE, UNAVAILABLE).
  *
  * Changelog:
  * - 1.0.0 (2026-09-19): Adapted from a prior personal project for

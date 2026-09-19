@@ -3,8 +3,7 @@
  * Version      : 1.0.0
  * Created Date : 2026-09-19
  * Description  : ESLint flat configuration (ESLint 9+) for the GeoResponse
- *                frontend: TypeScript, React, and React Hooks rules per
- *                docs/05_engineering/CODING_STANDARDS.md sections 12-13.
+ *                frontend: TypeScript, React, and React Hooks rules.
  *
  * Changelog:
  * - 1.0.0 (2026-09-19): Initial creation.

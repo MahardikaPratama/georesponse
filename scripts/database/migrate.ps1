@@ -4,8 +4,7 @@ Version      : 1.0.0
 Created Date : 2026-09-19
 Description  : Applies all pending golang-migrate "up" migrations in
                database/migrations/ against the database identified by
-               DATABASE_URL, per DATABASE_MIGRATIONS.md section 4.
-               Windows PowerShell equivalent of migrate.sh.
+               DATABASE_URL. Windows PowerShell equivalent of migrate.sh.
 
 Changelog:
 - 1.0.0 (2026-09-19): Initial creation.

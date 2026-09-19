@@ -7,9 +7,8 @@ Description  : Chi router assembly. Wires the global middleware chain and
 	the health check route, structured so the versioned
 	/api/v1 route groups (resources, auth, roles, audit-logs,
 	...) can be added in later phases inside the r.Route
-	block without restructuring this file
-	(docs/07_backend/BACKEND_ARCHITECTURE.md section 5). No
-	handler registers its own sub-router outside this file.
+	block without restructuring this file. No handler
+	registers its own sub-router outside this file.
 
 Changelog:
   - 1.0.0 (2026-09-19): Initial creation. Phase 0: health check only, no
@@ -45,8 +44,8 @@ func New(logger *slog.Logger, deps Dependencies) nethttp.Handler {
 
 	r.Route("/api/v1", func(r chi.Router) {
 		// Feature route groups (auth, resources, roles, audit-logs, ...)
-		// are added here in later phases, per BACKEND_ARCHITECTURE.md
-		// section 5. Phase 0 intentionally leaves this empty.
+		// are added here as those packages land. Intentionally empty for
+		// now - only the health check exists so far.
 		_ = deps
 	})
 
@@ -54,8 +53,7 @@ func New(logger *slog.Logger, deps Dependencies) nethttp.Handler {
 }
 
 // healthHandler responds 200 OK to confirm the process is up. Used by
-// local development, Docker Compose health checks, and deployment tooling
-// (docs/11_devops/DEPLOYMENT.md, DOCKER_COMPOSE.md section 6.2).
+// local development, Docker Compose health checks, and deployment tooling.
 func healthHandler(w nethttp.ResponseWriter, _ *nethttp.Request) {
 	w.WriteHeader(nethttp.StatusOK)
 	_, _ = w.Write([]byte("OK"))

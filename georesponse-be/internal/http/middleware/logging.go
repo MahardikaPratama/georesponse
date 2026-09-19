@@ -6,14 +6,12 @@ Description  : Request logging middleware. Logs one structured line per
 
 	request (method, path, status, duration, request ID) via
 	internal/platform/logging, so every request can be traced
-	through server logs (docs/07_backend/BACKEND_ARCHITECTURE.md
-	section 6). Written locally, rather than using a
+	through server logs. Written locally, rather than using a
 	third-party HTTP logging middleware, because the
 	requirement is small enough that Chi's own
 	middleware.RequestID plus the standard library's
 	net/http/httptest-friendly ResponseWriter wrapper below
-	cover it (docs/07_backend/BACKEND_DEPENDENCIES.md section
-	3, criterion 2).
+	cover it.
 
 Changelog:
 - 1.0.0 (2026-09-19): Initial creation.

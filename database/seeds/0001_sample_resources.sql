@@ -7,10 +7,8 @@ Description  : Seed data for local development: a representative set of
                (VEHICLE, FACILITY, EQUIPMENT, IOT_DEVICE) and a mix of
                statuses (AVAILABLE, IN_USE, MAINTENANCE, UNAVAILABLE),
                located at real Indonesian disaster-response-relevant
-               coordinates, per DATABASE_MIGRATIONS.md section 7 and
-               IMPLEMENTATION_CHECKLIST.md section 3.3. Attribute keys
-               match DOMAIN_MODEL.md section 6.2 / DATA_CONTRACT.md
-               section 3.4 exactly (vehicleType/capacity,
+               coordinates. Attribute keys match the domain model
+               exactly (vehicleType/capacity,
                facilityType/capacity, equipmentType/quantity,
                deviceType).
 
