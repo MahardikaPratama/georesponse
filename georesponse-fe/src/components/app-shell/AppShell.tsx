@@ -71,6 +71,7 @@ function AppShell() {
 	const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 	const [editingResourceId, setEditingResourceId] = useState<string | null>(null);
 	const [deletingResource, setDeletingResource] = useState<Resource | null>(null);
+	const [hotspotLayerVisible, setHotspotLayerVisible] = useState(true);
 
 	const markers = useMemo<MapMarker[]>(
 		() =>
