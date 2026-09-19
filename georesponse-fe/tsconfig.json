@@ -11,22 +11,21 @@
 		"esModuleInterop": true,
 		"forceConsistentCasingInFileNames": true,
 		"skipLibCheck": true,
-		"ignoreDeprecations": "6.0",
+		"types": ["node"],
 
 		"strict": true,
 		"noFallthroughCasesInSwitch": true,
 
-		"baseUrl": ".",
 		"paths": {
-			"@common/*": ["src/common/*"],
-			"@components/*": ["src/components/*"],
-			"@hooks/*": ["src/hooks/*"],
-			"@store/*": ["src/store/*"],
-			"@api/*": ["src/api/*"],
-			"@types/*": ["src/types/*"],
-			"@constants/*": ["src/constants/*"],
-			"@utils/*": ["src/utils/*"],
-			"@assets/*": ["src/assets/*"]
+			"@common/*": ["./src/common/*"],
+			"@components/*": ["./src/components/*"],
+			"@hooks/*": ["./src/hooks/*"],
+			"@store/*": ["./src/store/*"],
+			"@api/*": ["./src/api/*"],
+			"@types/*": ["./src/types/*"],
+			"@constants/*": ["./src/constants/*"],
+			"@utils/*": ["./src/utils/*"],
+			"@assets/*": ["./src/assets/*"]
 		}
 	},
 	"include": ["src", "vitest.config.ts", "vitest.setup.ts"],
