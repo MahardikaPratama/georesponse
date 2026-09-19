@@ -1,0 +1,13 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+coverage/
+
+# Environment files (see docs/11_devops/ENVIRONMENT_MANAGEMENT.md section 6)
+.env
+.env.local
+
+# Editor/OS
+.DS_Store

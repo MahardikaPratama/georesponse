@@ -1,0 +1,28 @@
+/*
+ * Author       : Mahardika Pratama
+ * Version      : 1.0.0
+ * Created Date : 2026-09-19
+ * Description  : Base styles for the application.
+ *
+ * Changelog:
+ * - 1.0.0 (2026-09-19): Initial creation for GeoResponse.
+ */
+@import "tailwindcss";
+
+/* SonarLint ignore */
+@config '../tailwind.config.js';
+
+@layer base {
+	*,
+	::after,
+	::before,
+	::backdrop,
+	::file-selector-button {
+		border-color: var(--color-gray-200, currentcolor);
+	}
+
+	body {
+		/* SonarLint ignore */
+		@apply font-montserrat;
+	}
+}
