@@ -19,8 +19,8 @@ import (
 	"fmt"
 	"time"
 
-	platformbmkg "github.com/mahardika-pratama/georesponse-be/internal/platform/bmkg"
 	"github.com/mahardika-pratama/georesponse-be/internal/hotspot"
+	platformbmkg "github.com/mahardika-pratama/georesponse-be/internal/platform/bmkg"
 )
 
 // defaultSince bounds how far back a query looks when Filters.Since is

@@ -60,17 +60,17 @@ type Feature struct {
 		Coordinates [2]float64 `json:"coordinates"` // [longitude, latitude]
 	} `json:"geometry"`
 	Properties struct {
-		ObjectID    int64  `json:"objectid"`
-		Longitude   float64 `json:"longitude"`
-		Latitude    float64 `json:"latitude"`
-		Date        string `json:"date"`
-		Time        string `json:"time"`
-		Region      string `json:"region"`
-		Provinsi    string `json:"provinsi"`
-		Kabupaten   string `json:"kabupaten"`
-		Kecamatan   string `json:"kecamatan"`
-		SystemDate  int64  `json:"system_date"` // epoch milliseconds, alias "Updated At"
-		DateFull    int64  `json:"date_full"`   // epoch milliseconds, alias "Origin Date"
+		ObjectID   int64   `json:"objectid"`
+		Longitude  float64 `json:"longitude"`
+		Latitude   float64 `json:"latitude"`
+		Date       string  `json:"date"`
+		Time       string  `json:"time"`
+		Region     string  `json:"region"`
+		Provinsi   string  `json:"provinsi"`
+		Kabupaten  string  `json:"kabupaten"`
+		Kecamatan  string  `json:"kecamatan"`
+		SystemDate int64   `json:"system_date"` // epoch milliseconds, alias "Updated At"
+		DateFull   int64   `json:"date_full"`   // epoch milliseconds, alias "Origin Date"
 	} `json:"properties"`
 }
 

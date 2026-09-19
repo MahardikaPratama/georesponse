@@ -21,9 +21,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/mahardika-pratama/georesponse-be/internal/hotspot"
 	platformbmkg "github.com/mahardika-pratama/georesponse-be/internal/platform/bmkg"
 	repobmkg "github.com/mahardika-pratama/georesponse-be/internal/repository/bmkg"
-	"github.com/mahardika-pratama/georesponse-be/internal/hotspot"
 )
 
 const cannedResponse = `{
