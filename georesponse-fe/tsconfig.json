@@ -1,0 +1,33 @@
+{
+	"compilerOptions": {
+		"target": "ES2020",
+		"lib": ["ES2020", "DOM", "DOM.Iterable"],
+		"module": "ESNext",
+		"moduleResolution": "bundler",
+		"jsx": "react-jsx",
+		"resolveJsonModule": true,
+		"isolatedModules": true,
+		"noEmit": true,
+		"esModuleInterop": true,
+		"forceConsistentCasingInFileNames": true,
+		"skipLibCheck": true,
+		"types": ["node"],
+
+		"strict": true,
+		"noFallthroughCasesInSwitch": true,
+
+		"paths": {
+			"@common/*": ["./src/common/*"],
+			"@components/*": ["./src/components/*"],
+			"@hooks/*": ["./src/hooks/*"],
+			"@store/*": ["./src/store/*"],
+			"@api/*": ["./src/api/*"],
+			"@types/*": ["./src/types/*"],
+			"@constants/*": ["./src/constants/*"],
+			"@utils/*": ["./src/utils/*"],
+			"@assets/*": ["./src/assets/*"]
+		}
+	},
+	"include": ["src", "vitest.config.ts", "vitest.setup.ts"],
+	"exclude": ["node_modules", "dist"]
+}
