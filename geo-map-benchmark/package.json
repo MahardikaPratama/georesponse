@@ -1,0 +1,41 @@
+{
+  "name": "geo-map-benchmark",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Frontend benchmark of Leaflet, OpenLayers, and MapLibre GL JS for the Resource Readiness for Disaster Response application.",
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "dev": "rspack serve",
+    "build": "npm run typecheck && rspack build",
+    "typecheck": "tsc --noEmit",
+    "test": "npm run test:unit && npm run test:components",
+    "test:unit": "node --test --experimental-strip-types \"src/**/*.test.ts\"",
+    "test:components": "vitest run"
+  },
+  "license": "ISC",
+  "dependencies": {
+    "leaflet": "^1.9.4",
+    "maplibre-gl": "^6.10.0",
+    "ol": "^10.10.0",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0"
+  },
+  "devDependencies": {
+    "@rspack/cli": "^2.2.6",
+    "@rspack/core": "^2.2.6",
+    "@rspack/dev-server": "^2.2.1",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.3",
+    "@types/leaflet": "^1.9.22",
+    "@types/node": "^24.13.6",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "jsdom": "^26.1.0",
+    "playwright": "^1.63.0",
+    "typescript": "^7.0.2",
+    "vitest": "^5.0.1"
+  }
+}

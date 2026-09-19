@@ -1,0 +1,111 @@
+{
+  "meta": {
+    "capturedAt": "2026-09-19T07:07:09.212Z",
+    "browserVersion": "153.0.8010.48",
+    "platform": "win32 10.0.19045",
+    "cpuModel": "Intel(R) Core(TM) i7-6500U CPU @ 2.50GHz",
+    "cpuCount": 4,
+    "totalMemoryGb": 7.88
+  },
+  "results": [
+    {
+      "scenarioId": "S01",
+      "libraryId": "leaflet",
+      "featureCount": 1000,
+      "warmupRuns": 3,
+      "measuredRuns": 10,
+      "raw": [
+        {
+          "runIndex": 0,
+          "durationMs": 31.69999998807907,
+          "fps": 61,
+          "memoryUsedMb": 4.412400245666504
+        },
+        {
+          "runIndex": 1,
+          "durationMs": 21,
+          "fps": 60.98760574463897,
+          "memoryUsedMb": 3.7509584426879883
+        },
+        {
+          "runIndex": 2,
+          "durationMs": 23.100000023841858,
+          "fps": 61,
+          "memoryUsedMb": 4.6696367263793945
+        },
+        {
+          "runIndex": 3,
+          "durationMs": 20.69999998807907,
+          "fps": 60.99999999999994,
+          "memoryUsedMb": 3.9810495376586914
+        },
+        {
+          "runIndex": 4,
+          "durationMs": 18.69999998807907,
+          "fps": 60.98760574463897,
+          "memoryUsedMb": 4.891724586486816
+        },
+        {
+          "runIndex": 5,
+          "durationMs": 23.30000001192093,
+          "fps": 61,
+          "memoryUsedMb": 4.195172309875488
+        },
+        {
+          "runIndex": 6,
+          "durationMs": 20.5,
+          "fps": 61,
+          "memoryUsedMb": 5.127560615539551
+        },
+        {
+          "runIndex": 7,
+          "durationMs": 23.200000017881393,
+          "fps": 61,
+          "memoryUsedMb": 4.388089179992676
+        },
+        {
+          "runIndex": 8,
+          "durationMs": 20.599999994039536,
+          "fps": 60.98760574463908,
+          "memoryUsedMb": 4.449624061584473
+        },
+        {
+          "runIndex": 9,
+          "durationMs": 18.599999994039536,
+          "fps": 61,
+          "memoryUsedMb": 4.49837589263916
+        }
+      ],
+      "duration": {
+        "mean": 22.140000000596046,
+        "median": 20.849999994039536,
+        "min": 18.599999994039536,
+        "max": 31.69999998807907,
+        "stdDev": 3.571890256717301,
+        "sampleCount": 10
+      },
+      "startedAt": "2026-09-19T07:06:54.479Z",
+      "finishedAt": "2026-09-19T07:07:08.810Z",
+      "failed": false,
+      "fps": {
+        "mean": 60.996281723391704,
+        "median": 61,
+        "min": 60.98760574463897,
+        "max": 61,
+        "stdDev": 0.0056797613374323895,
+        "sampleCount": 10
+      },
+      "memoryUsedMb": {
+        "mean": 4.436459159851074,
+        "median": 4.431012153625488,
+        "min": 3.7509584426879883,
+        "max": 5.127560615539551,
+        "stdDev": 0.384930330346197,
+        "sampleCount": 10
+      },
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ]
+    }
+  ]
+}
