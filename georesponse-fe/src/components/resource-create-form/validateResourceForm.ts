@@ -16,7 +16,12 @@
  *                        utils/validateResourceAttributes.ts, shared with
  *                        the update form's own validator (Phase 6 section
  *                        9.5), which needed the identical logic.
+ * - 1.2.0 (2026-09-19): Extracted the latitude/longitude checks into
+ *                        utils/validateLocation.ts, shared with the
+ *                        relocate control's own validation (Phase 6
+ *                        section 9.7), which needed the identical logic.
  */
+import { validateLocation } from "@utils/validateLocation";
 import { validateResourceAttributes } from "@utils/validateResourceAttributes";
 
 import { ResourceFormErrors, ResourceFormState } from "./ResourceCreateForm.types";
@@ -31,19 +36,9 @@ export function validateResourceForm(state: ResourceFormState): ResourceFormErro
 	if (isBlank(state.id)) errors.id = "ID is required.";
 	if (isBlank(state.name)) errors.name = "Name is required.";
 
-	const latitude = Number(state.latitude);
-	if (isBlank(state.latitude) || Number.isNaN(latitude)) {
-		errors.latitude = "Latitude is required.";
-	} else if (latitude < -90 || latitude > 90) {
-		errors.latitude = "Latitude must be between -90 and 90.";
-	}
-
-	const longitude = Number(state.longitude);
-	if (isBlank(state.longitude) || Number.isNaN(longitude)) {
-		errors.longitude = "Longitude is required.";
-	} else if (longitude < -180 || longitude > 180) {
-		errors.longitude = "Longitude must be between -180 and 180.";
-	}
-
-	return { ...errors, ...validateResourceAttributes(state.type, state.attributes) };
+	return {
+		...errors,
+		...validateLocation(state.latitude, state.longitude),
+		...validateResourceAttributes(state.type, state.attributes)
+	};
 }

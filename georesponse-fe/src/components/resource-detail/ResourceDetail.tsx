@@ -1,6 +1,6 @@
 /*
  * Author       : Mahardika Pratama
- * Version      : 1.2.0
+ * Version      : 1.3.0
  * Created Date : 2026-09-19
  * Description  : The resource detail panel (FR-003, FR-021, UC-02): shows
  *                the selected resource's identity, type, attributes,
@@ -26,6 +26,8 @@
  *                        resourceKeys.lists() and the map's shared
  *                        useResources call is what makes the status badge
  *                        update across list, detail, and map views.
+ * - 1.3.0 (2026-09-19): Added the relocate control (Phase 6 section 9.7)
+ *                        to the Location field.
  */
 import React from "react";
 
@@ -38,6 +40,7 @@ import {
 } from "@constants/resourceStatus.constants";
 import { useChangeResourceStatus } from "@hooks/useChangeResourceStatus";
 import { useResource } from "@hooks/useResource";
+import RelocateResourceControl from "@components/resource-relocate-form/RelocateResourceControl";
 import { getApiErrorMessage } from "@utils/apiErrorMessage";
 
 // See resourceApi.ts for why this is a relative import, not "@types/...".
@@ -151,9 +154,7 @@ function ResourceDetail({ resourceId, onClose, onEdit }: ResourceDetailProps) {
 				</div>
 				<div>
 					<p className="text-xs text-neutral-3">Location</p>
-					<p>
-						{resource.location.latitude.toFixed(4)}, {resource.location.longitude.toFixed(4)}
-					</p>
+					<RelocateResourceControl resourceId={resource.id} location={resource.location} />
 				</div>
 			</div>
 
