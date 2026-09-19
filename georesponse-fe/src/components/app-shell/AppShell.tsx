@@ -43,17 +43,20 @@ import React, { useMemo, useState } from "react";
 
 import { ResourceFilters } from "@api/resources/resourceApi.types";
 import { useCurrentUser } from "@hooks/useCurrentUser";
+import { useHotspots } from "@hooks/useHotspots";
 import { useLogout } from "@hooks/useLogout";
 import { useResources } from "@hooks/useResources";
 import CreateResourceModal from "@components/resource-create-form/CreateResourceModal";
 import DeleteResourceConfirmation from "@components/resource-delete-confirmation/DeleteResourceConfirmation";
 import ResourceDetail from "@components/resource-detail/ResourceDetail";
 import ResourceFilterBar from "@components/resource-filter-bar/ResourceFilterBar";
+import HotspotToggle from "@components/hotspot-toggle/HotspotToggle";
 import ResourceList from "@components/resource-list/ResourceList";
 import ResourceMap from "@components/resource-map/ResourceMap";
-import { MapMarker } from "@components/resource-map/map-adapter/MapAdapter.types";
+import { HotspotMarker, MapMarker } from "@components/resource-map/map-adapter/MapAdapter.types";
 import { RESOURCE_STATUS_CONFIG } from "@constants/resourceStatus.constants";
 import UpdateResourceModal from "@components/resource-update-form/UpdateResourceModal";
+import { getApiErrorMessage } from "@utils/apiErrorMessage";
 
 // See resourceApi.ts for why this is a relative import, not "@types/...".
 import { Resource } from "../../types/resource.types";
@@ -63,6 +66,7 @@ function AppShell() {
 	const logout = useLogout();
 	const [filters, setFilters] = useState<ResourceFilters>({});
 	const { data: resourcesPage } = useResources(filters);
+	const hotspotsQuery = useHotspots();
 	const [selectedResourceId, setSelectedResourceId] = useState<string | null>(null);
 	const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 	const [editingResourceId, setEditingResourceId] = useState<string | null>(null);
@@ -79,11 +83,33 @@ function AppShell() {
 		[resourcesPage]
 	);
 
+	const hotspots = useMemo<HotspotMarker[]>(
+		() =>
+			(hotspotsQuery.data?.data ?? []).map((hotspot) => ({
+				id: hotspot.id,
+				latitude: hotspot.latitude,
+				longitude: hotspot.longitude,
+				province: hotspot.province,
+				regency: hotspot.regency,
+				observedDate: hotspot.observedDate,
+				observedTime: hotspot.observedTime
+			})),
+		[hotspotsQuery.data]
+	);
+
 	return (
 		<div className="flex flex-col w-screen h-screen overflow-hidden text-white bg-background-100-1">
 			<header className="flex items-center justify-between p-4 border-b border-white/10">
 				<h1 className="text-xl font-bold">GeoResponse</h1>
 				<div className="flex items-center gap-4 text-sm">
+					<HotspotToggle
+						visible={hotspotLayerVisible}
+						onToggle={setHotspotLayerVisible}
+						status={hotspotsQuery.status}
+						count={hotspots.length}
+						error={hotspotsQuery.error}
+						getErrorMessage={getApiErrorMessage}
+					/>
 					{user && <span>{user.name}</span>}
 					<button
 						type="button"
@@ -122,6 +148,8 @@ function AppShell() {
 						markers={markers}
 						selectedResourceId={selectedResourceId}
 						onResourceSelect={setSelectedResourceId}
+						hotspots={hotspots}
+						hotspotLayerVisible={hotspotLayerVisible}
 					/>
 				</main>
 			</div>

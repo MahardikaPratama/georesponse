@@ -11,6 +11,8 @@
  *
  * Changelog:
  * - 1.0.0 (2026-09-19): Initial creation.
+ * - 1.1.0 (2026-09-19): Added HOTSPOT_UPSTREAM_UNAVAILABLE for the BMKG
+ *                        GeoHotspot overlay's unavailable state.
  */
 import { ApiError } from "@api/httpClient.types";
 
@@ -24,7 +26,8 @@ const MESSAGES_BY_CODE: Record<string, string> = {
 	AUTHORIZATION_DENIED: "You do not have permission to do that.",
 	RESOURCE_NOT_FOUND: "That resource could not be found.",
 	RESOURCE_ID_CONFLICT: "A resource with that ID already exists.",
-	PERSISTENCE_ERROR: "The server could not complete the operation. Please try again."
+	PERSISTENCE_ERROR: "The server could not complete the operation. Please try again.",
+	HOTSPOT_UPSTREAM_UNAVAILABLE: "BMKG hotspot data is temporarily unavailable."
 };
 
 const GENERIC_MESSAGE = "Something went wrong. Please try again.";

@@ -15,6 +15,8 @@ Changelog:
     repository, use case, and HTTP handler.
   - 2.1.0 (2026-09-19): Wires cfg.CORSAllowedOrigins into the router's
     CORS middleware.
+  - 2.2.0 (2026-09-19): Wires the BMKG GeoHotspot client/repository/
+    service/handler.
 */
 package main
 
@@ -32,14 +34,17 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	internalhttp "github.com/mahardika-pratama/georesponse-be/internal/http"
+	platformbmkg "github.com/mahardika-pratama/georesponse-be/internal/platform/bmkg"
 	"github.com/mahardika-pratama/georesponse-be/internal/platform/config"
 	"github.com/mahardika-pratama/georesponse-be/internal/platform/logging"
 	platformpostgres "github.com/mahardika-pratama/georesponse-be/internal/platform/postgres"
+	repobmkg "github.com/mahardika-pratama/georesponse-be/internal/repository/bmkg"
 	repopostgres "github.com/mahardika-pratama/georesponse-be/internal/repository/postgres"
 
 	"github.com/mahardika-pratama/georesponse-be/internal/audit"
 	"github.com/mahardika-pratama/georesponse-be/internal/auth"
 	"github.com/mahardika-pratama/georesponse-be/internal/authorization"
+	"github.com/mahardika-pratama/georesponse-be/internal/hotspot"
 	"github.com/mahardika-pratama/georesponse-be/internal/resource"
 	"github.com/mahardika-pratama/georesponse-be/internal/resourcehistory"
 )
@@ -133,6 +138,10 @@ func buildDependencies(pool *pgxpool.Pool, cfg *config.Config) internalhttp.Depe
 	resourceService := resource.NewService(resourceRepo, historyService, auditRepo, validators, authorizationService, tx)
 	auditService := audit.NewService(auditRepo, authorizationService)
 
+	bmkgClient := platformbmkg.NewClient(cfg.BMKGBaseURL, cfg.BMKGTimeout)
+	hotspotRepo := repobmkg.NewHotspotRepository(bmkgClient)
+	hotspotService := hotspot.NewService(hotspotRepo)
+
 	return internalhttp.Dependencies{
 		Pool:               pool,
 		Tokens:             tokens,
@@ -142,6 +151,7 @@ func buildDependencies(pool *pgxpool.Pool, cfg *config.Config) internalhttp.Depe
 		Auth:               internalhttp.NewAuthHandler(authService, cfg.TokenTTL, cfg.AppEnv == "production"),
 		Authorization:      internalhttp.NewAuthorizationHandler(authorizationService, authService),
 		Audit:              internalhttp.NewAuditHandler(auditService),
+		Hotspot:            internalhttp.NewHotspotHandler(hotspotService),
 		CORSAllowedOrigins: cfg.CORSAllowedOrigins,
 	}
 }
