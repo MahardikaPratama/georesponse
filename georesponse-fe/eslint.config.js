@@ -21,6 +21,27 @@ module.exports = tseslint.config(
 	js.configs.recommended,
 	...tseslint.configs.recommended,
 	{
+		// Root-level build/tooling config files are plain Node CommonJS
+		// (required by Rspack/PostCSS/Tailwind's own config-loading
+		// conventions), not TypeScript/React application source - give
+		// them a Node environment instead of flagging require()/module/
+		// process/__dirname as undefined browser globals.
+		files: ["*.config.js"],
+		languageOptions: {
+			sourceType: "commonjs",
+			globals: {
+				module: "writable",
+				exports: "writable",
+				require: "readonly",
+				process: "readonly",
+				__dirname: "readonly"
+			}
+		},
+		rules: {
+			"@typescript-eslint/no-require-imports": "off"
+		}
+	},
+	{
 		files: ["**/*.{ts,tsx}"],
 		plugins: {
 			react,
