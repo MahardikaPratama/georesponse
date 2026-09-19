@@ -2,8 +2,7 @@
  * Author       : Mahardika Pratama
  * Version      : 1.0.0
  * Created Date : 2026-09-19
- * Description  : Utility function to wait for a promise to settle with a
- *                timeout.
+ * Description  : Utility function to wait for a promise to settle with a timeout.
  *
  * Changelog:
  * - 1.0.0 (2026-09-19): Adapted from a prior personal project for

@@ -13,6 +13,8 @@ Changelog:
     logging, router with /health only.
   - 2.0.0 (2026-09-19): Phase 4: wires the database pool, every
     repository, use case, and HTTP handler.
+  - 2.1.0 (2026-09-19): Wires cfg.CORSAllowedOrigins into the router's
+    CORS middleware.
 */
 package main
 
@@ -132,13 +134,14 @@ func buildDependencies(pool *pgxpool.Pool, cfg *config.Config) internalhttp.Depe
 	auditService := audit.NewService(auditRepo, authorizationService)
 
 	return internalhttp.Dependencies{
-		Pool:            pool,
-		Tokens:          tokens,
-		Users:           userRepo,
-		Resource:        internalhttp.NewResourceHandler(resourceService),
-		ResourceHistory: internalhttp.NewResourceHistoryHandler(historyService),
-		Auth:            internalhttp.NewAuthHandler(authService, cfg.TokenTTL, cfg.AppEnv == "production"),
-		Authorization:   internalhttp.NewAuthorizationHandler(authorizationService, authService),
-		Audit:           internalhttp.NewAuditHandler(auditService),
+		Pool:               pool,
+		Tokens:             tokens,
+		Users:              userRepo,
+		Resource:           internalhttp.NewResourceHandler(resourceService),
+		ResourceHistory:    internalhttp.NewResourceHistoryHandler(historyService),
+		Auth:               internalhttp.NewAuthHandler(authService, cfg.TokenTTL, cfg.AppEnv == "production"),
+		Authorization:      internalhttp.NewAuthorizationHandler(authorizationService, authService),
+		Audit:              internalhttp.NewAuditHandler(auditService),
+		CORSAllowedOrigins: cfg.CORSAllowedOrigins,
 	}
 }

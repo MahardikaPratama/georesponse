@@ -13,6 +13,9 @@ Changelog:
   - 2.0.0 (2026-09-19): Phase 4: wired every /api/v1 handler; health
     check now reports real database connectivity instead of a static
     "OK".
+  - 2.1.0 (2026-09-19): Added the CORS middleware (SECURITY.md section
+    8.1) so the browser-facing frontend origin can call this API
+    cross-origin.
 */
 package http
 
@@ -38,14 +41,15 @@ const healthCheckTimeout = 2 * time.Second
 // every feature handler, plus the pieces RequireAuth needs to verify a
 // caller's token, and the pool healthHandler pings.
 type Dependencies struct {
-	Pool            *pgxpool.Pool
-	Tokens          auth.TokenSigner
-	Users           auth.Repository
-	Resource        *ResourceHandler
-	ResourceHistory *ResourceHistoryHandler
-	Auth            *AuthHandler
-	Authorization   *AuthorizationHandler
-	Audit           *AuditHandler
+	Pool               *pgxpool.Pool
+	Tokens             auth.TokenSigner
+	Users              auth.Repository
+	Resource           *ResourceHandler
+	ResourceHistory    *ResourceHistoryHandler
+	Auth               *AuthHandler
+	Authorization      *AuthorizationHandler
+	Audit              *AuditHandler
+	CORSAllowedOrigins []string
 }
 
 // New assembles the Chi router: the global middleware chain (request ID,
@@ -57,6 +61,7 @@ func New(logger *slog.Logger, deps Dependencies) nethttp.Handler {
 	r.Use(middleware.RequestID)
 	r.Use(middleware.Logging(logger))
 	r.Use(middleware.Recovery)
+	r.Use(middleware.CORS(deps.CORSAllowedOrigins))
 
 	r.Get("/health", healthHandler(deps.Pool))
 

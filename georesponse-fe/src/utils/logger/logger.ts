@@ -2,10 +2,8 @@
  * Author       : Mahardika Pratama
  * Version      : 1.0.0
  * Created Date : 2026-09-19
- * Description  : Logging utility with contextual metadata, level
- *                detection, and wrappers for error/debug logs. The
- *                established convention for client-side logging in this
- *                project.
+ * Description  : Logging utility with contextual metadata, level detection, and
+ *                wrappers for error/debug logs.
  *
  * Changelog:
  * - 1.0.0 (2026-09-19): Adapted from a prior personal project for

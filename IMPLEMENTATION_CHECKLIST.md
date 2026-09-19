@@ -757,23 +757,68 @@ before `AssignUserRoles` proceeds.
 
 **Branch:** `feature/phase-5-frontend-foundation` (see section 2.1)
 
-- [ ] Implement the API client module (`api/` or equivalent) wrapping
+**Gap found and resolved (confirmed against the actual, already-merged
+backend rather than the docs alone, since `SECURITY.md`/`API_CONTRACT.md`
+both explicitly leave the token transport undecided):** the backend
+(Phase 4) authenticates via an HttpOnly cookie set on
+`POST /api/v1/auth/login`, not a bearer token the frontend stores itself.
+`httpClient` sends `credentials: "include"` on every request so that
+cookie is always attached; there is nothing for the frontend to store,
+read, or attach to headers itself. No global 401-redirect interceptor was
+added — neither `API_CONTRACT.md` nor `SECURITY.md` prescribes one, and
+with only one authenticated view (`AppShell`) so far, `App.tsx` re-running
+its own `GET /auth/me` query after any mutation invalidation is sufficient
+(a dedicated interceptor would be revisited if/when more protected routes
+exist in Phase 6).
+
+- [x] Implement the API client module (`api/` or equivalent) wrapping
       `fetch`, base URL from `API_BASE_URL` env var, and the
       `{data}`/`{data, meta}`/`{error}` envelope parsing from
-      `API_CONTRACT.md` section 4.
-- [ ] Configure TanStack Query's `QueryClient` and provider at the app root.
-- [ ] Implement the Map Adapter boundary (`MapAdapter` interface + MapLibre
+      `API_CONTRACT.md` section 4. (`src/api/httpClient.ts` +
+      `httpClient.types.ts` — the only file in the codebase that calls
+      `fetch`; throws a typed `ApiError{code, status, message, details}`
+      on any non-2xx or network failure. Covered by
+      `httpClient.test.ts`.)
+- [x] Configure TanStack Query's `QueryClient` and provider at the app root.
+      (`src/main.tsx`.)
+- [x] Implement the Map Adapter boundary (`MapAdapter` interface + MapLibre
       GL JS implementation) per `FRONTEND_ARCHITECTURE.md` section on the
       Map Adapter — no other component may import MapLibre directly.
-- [ ] Implement the resource query-key factory (`resourceKeys.ts`) per
-      `FRONTEND_STATE.md`.
-- [ ] Implement the base app shell/layout (map-first layout per
-      `FRONTEND_UI_UX.md`).
-- [ ] Implement authentication state handling (login form, stored
+      (`src/components/resource-map/map-adapter/{MapAdapter.types.ts,
+      MapAdapter.ts}`; `ResourceMap.tsx` depends only on the interface.
+      `FRONTEND_ARCHITECTURE.md` describes the adapter's responsibilities
+      in prose, not a concrete TypeScript interface, so the exact method
+      set — `init`, `setMarkers`, `selectMarker`, `destroy` — is this
+      phase's own design, grounded in that prose.)
+- [x] Implement the resource query-key factory (`resourceKeys.ts`) per
+      `FRONTEND_STATE.md`. (`src/api/resources/resourceKeys.ts`, matching
+      that doc's example pattern verbatim; `resourceApi.ts` and
+      `resourceApi.types.ts` alongside it implement the actual
+      `/api/v1/resources` calls the keys will be used against in
+      Phase 6.)
+- [x] Implement the base app shell/layout (map-first layout per
+      `FRONTEND_UI_UX.md`). (`src/components/app-shell/AppShell.tsx` — top
+      bar, resource-list panel region, and the map region wired to a live
+      (if currently empty) `ResourceMap`; the detail-panel region and the
+      list panel's real content are Phase 6.)
+- [x] Implement authentication state handling (login form, stored
       authenticated context, route guarding for protected views) per
-      UC-11 and `SECURITY.md`.
+      UC-11 and `SECURITY.md`. The "stored authenticated context" is the
+      `GET /api/v1/auth/me` TanStack Query cache, not a client-side store
+      — the authenticated user is server state per `FRONTEND_STATE.md`'s
+      boundary, so `hooks/useCurrentUser.ts` is the single source of
+      truth `App.tsx` (route guarding), `AppShell.tsx` (top bar), and
+      Phase 6 code can all read. `components/login-form/` implements the
+      login screen (`LoginForm.tsx` + `useLoginForm.ts` container hook);
+      `hooks/useLogin.ts`/`useLogout.ts` implement the mutations. Covered
+      by `LoginForm.test.tsx` (submit flow, server error display).
 - [ ] Push, open a PR, confirm CI passes, merge into `main`, delete the
-      branch (workflow: section 2.1).
+      branch (workflow: section 2.1). **Not yet verified**: this
+      environment has no Node.js/npm available (confirmed absent, same as
+      every prior frontend check in this checklist), so
+      `typecheck`/`lint`/`build`/`test` could not be run locally before
+      this push — CI is the first real verification, matching how Phase 0
+      caught its three frontend bugs.
 
 ---
 
