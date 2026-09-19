@@ -13,6 +13,11 @@ Changelog:
 */
 package auth
 
+import "errors"
+
+// ErrNotFound reports that no user exists with the given identifier.
+var ErrNotFound = errors.New("auth: not found")
+
 // User is an account that can authenticate with GeoResponse and be
 // assigned roles. RoleNames holds the names of the roles currently
 // assigned to this user.
