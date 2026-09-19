@@ -34,3 +34,25 @@ type db interface {
 // uniqueViolationCode is the PostgreSQL SQLSTATE for a unique constraint
 // violation (e.g. a duplicate primary key or UNIQUE column).
 const uniqueViolationCode = "23505"
+
+// txContextKey is the context key an active transaction is stored under
+// by WithTx, so every repository method in this package can join it
+// instead of using its own pool connection (see conn).
+type txContextKey struct{}
+
+// WithTx returns a copy of ctx carrying tx. Repository calls made with the
+// returned context run inside tx rather than against the repository's own
+// pool, so several repository calls can be made atomic. See Transactor.
+func WithTx(ctx context.Context, tx pgx.Tx) context.Context {
+	return context.WithValue(ctx, txContextKey{}, tx)
+}
+
+// activeConn resolves the db a repository method should use for this
+// call: the transaction carried by ctx (via WithTx), if any, otherwise
+// fallback (the repository's own pool or test transaction).
+func activeConn(ctx context.Context, fallback db) db {
+	if tx, ok := ctx.Value(txContextKey{}).(pgx.Tx); ok {
+		return tx
+	}
+	return fallback
+}

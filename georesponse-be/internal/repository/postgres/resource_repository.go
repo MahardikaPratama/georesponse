@@ -84,7 +84,7 @@ func (r *ResourceRepository) Create(ctx context.Context, res resource.Resource) 
 		INSERT INTO resources (id, name, type, status, attributes, location)
 		VALUES ($1, $2, $3, $4, $5, ST_SetSRID(ST_MakePoint($6, $7), 4326)::geography)
 	`
-	_, err = r.db.Exec(ctx, query,
+	_, err = activeConn(ctx, r.db).Exec(ctx, query,
 		res.ID, res.Name, string(res.Type), string(res.Status), attrs,
 		res.Location.Longitude, res.Location.Latitude,
 	)
@@ -103,7 +103,7 @@ func (r *ResourceRepository) Create(ctx context.Context, res resource.Resource) 
 func (r *ResourceRepository) GetByID(ctx context.Context, id string) (*resource.Resource, error) {
 	query := fmt.Sprintf("SELECT %s FROM resources WHERE id = $1", selectResourceColumns)
 
-	res, err := scanResource(r.db.QueryRow(ctx, query, id))
+	res, err := scanResource(activeConn(ctx, r.db).QueryRow(ctx, query, id))
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, fmt.Errorf("get resource %q: %w", id, resource.ErrNotFound)
 	}
@@ -140,7 +140,7 @@ func (r *ResourceRepository) List(ctx context.Context, f resource.Filters) ([]re
 
 	var total int
 	countQuery := fmt.Sprintf("SELECT count(*) FROM resources %s", where)
-	if err := r.db.QueryRow(ctx, countQuery, args...).Scan(&total); err != nil {
+	if err := activeConn(ctx, r.db).QueryRow(ctx, countQuery, args...).Scan(&total); err != nil {
 		return nil, 0, fmt.Errorf("list resources: count: %w", err)
 	}
 
@@ -150,7 +150,7 @@ func (r *ResourceRepository) List(ctx context.Context, f resource.Filters) ([]re
 		selectResourceColumns, where, len(limitArgs)-1, len(limitArgs),
 	)
 
-	rows, err := r.db.Query(ctx, listQuery, limitArgs...)
+	rows, err := activeConn(ctx, r.db).Query(ctx, listQuery, limitArgs...)
 	if err != nil {
 		return nil, 0, fmt.Errorf("list resources: %w", err)
 	}
@@ -185,7 +185,7 @@ func (r *ResourceRepository) Update(ctx context.Context, res resource.Resource) 
 			updated_at = now()
 		WHERE id = $1
 	`
-	tag, err := r.db.Exec(ctx, query,
+	tag, err := activeConn(ctx, r.db).Exec(ctx, query,
 		res.ID, res.Name, string(res.Type), string(res.Status), attrs,
 		res.Location.Longitude, res.Location.Latitude,
 	)
@@ -203,7 +203,7 @@ func (r *ResourceRepository) Update(ctx context.Context, res resource.Resource) 
 func (r *ResourceRepository) UpdateStatus(ctx context.Context, id string, status resource.Status) error {
 	const query = `UPDATE resources SET status = $2, updated_at = now() WHERE id = $1`
 
-	tag, err := r.db.Exec(ctx, query, id, string(status))
+	tag, err := activeConn(ctx, r.db).Exec(ctx, query, id, string(status))
 	if err != nil {
 		return fmt.Errorf("update status of resource %q: %w", id, err)
 	}
@@ -223,7 +223,7 @@ func (r *ResourceRepository) UpdateLocation(ctx context.Context, id string, loca
 		WHERE id = $1
 	`
 
-	tag, err := r.db.Exec(ctx, query, id, location.Longitude, location.Latitude)
+	tag, err := activeConn(ctx, r.db).Exec(ctx, query, id, location.Longitude, location.Latitude)
 	if err != nil {
 		return fmt.Errorf("update location of resource %q: %w", id, err)
 	}
@@ -242,7 +242,7 @@ func (r *ResourceRepository) UpdateLocation(ctx context.Context, id string, loca
 func (r *ResourceRepository) Delete(ctx context.Context, id string) error {
 	const query = `DELETE FROM resources WHERE id = $1`
 
-	tag, err := r.db.Exec(ctx, query, id)
+	tag, err := activeConn(ctx, r.db).Exec(ctx, query, id)
 	if err != nil {
 		return fmt.Errorf("delete resource %q: %w", id, err)
 	}

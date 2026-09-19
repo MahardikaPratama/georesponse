@@ -429,49 +429,149 @@ merged to `main`, since later phases depend on earlier ones (section 1).
 
 **Branch:** `feature/phase-3-backend-usecase` (see section 2.1)
 
-- [ ] Implement `CreateResource` use case: validate → check ID uniqueness →
+**Two gaps found while starting this phase, resolved before implementing (user confirmed both):**
+
+1. **No credential storage existed.** `SECURITY.md`, `API_CONTRACT.md`, and
+   `DATABASE_SCHEMA.md` each explicitly deferred "where passwords live" to
+   "an implementation decision" made by one of the other two documents —
+   a closed loop, never actually landed. The merged `users` table
+   (migration `0002`) has no password column at all, by design. Resolved
+   by adding migration `0007_add_user_password_hash` (`users.password_hash
+   text NOT NULL DEFAULT ''`) and treating the login request's
+   `identifier` field as the user's own `id` (no separate username/email
+   column exists to use instead). `internal/auth/credentials.go` adds a
+   `Credentials` type kept deliberately separate from `User` (never
+   returned to API clients, matching the existing "no credentials in
+   User" comment from Phase 1).
+2. **No Unit-of-Work / cross-repository transaction pattern was
+   documented** beyond the one explicit case (`DATABASE_ARCHITECTURE.md`
+   section 6.4: resource delete + its audit record). Resolved with a
+   small `transaction.Runner` interface
+   (`internal/platform/transaction/transaction.go`) plus a context-based
+   PostgreSQL implementation (`internal/repository/postgres/transactor.go`):
+   `Transactor.WithinTx` begins a transaction and stores it on the
+   context; every Phase 2 repository method now resolves its connection
+   from the context first (`activeConn`), falling back to its own pool
+   otherwise — so several repository calls made through the same context
+   commit or roll back together, without any repository needing to know
+   whether it's in a transaction. Live-tested:
+   `TestTransactor_WithinTx_RollsBackOnFailure` proves a failure partway
+   through a unit of work rolls back an earlier write in the same one, not
+   just the failing call.
+
+- [x] Implement `CreateResource` use case: validate → check ID uniqueness →
       persist → write audit record (`RESOURCE_CREATED`) (FR-001, BR-001,
-      BR-016, BR-042, UC-06).
-- [ ] Implement `GetResource` use case (FR-003, UC-02).
-- [ ] Implement `ListResources` use case with search/filter/pagination
+      BR-016, BR-042, UC-06). (`georesponse-be/internal/resource/service.go`;
+      ID uniqueness is enforced by the repository, per Phase 2 —
+      `Create` returns `ErrIDConflict`, which the use case propagates
+      unchanged, per `BACKEND_ERROR_HANDLING.md`'s single-translation-point
+      rule.)
+- [x] Implement `GetResource` use case (FR-003, UC-02).
+- [x] Implement `ListResources` use case with search/filter/pagination
       (FR-002, FR-016–019, UC-01, UC-03, UC-04).
-- [ ] Implement `UpdateResource` use case: validate → persist → write
+- [x] Implement `UpdateResource` use case: validate → persist → write
       resource-change-history record → write audit record
-      (`RESOURCE_UPDATED`) (FR-004, BR-015, BR-017, UC-07).
-- [ ] Implement `DeleteResource` use case: check existence → delete → write
+      (`RESOURCE_UPDATED`) (FR-004, BR-015, BR-017, UC-07). Status and
+      location are always carried over from the current record rather
+      than taken from the update input — those go through
+      `ChangeResourceStatus`/`RelocateResource` instead, per the BR
+      symmetry note.
+- [x] Implement `DeleteResource` use case: check existence → delete → write
       audit record (`RESOURCE_DELETED`) (FR-005, BR-019, BR-021, UC-10).
-- [ ] Implement `ChangeResourceStatus` use case: validate status → persist →
+      Delete and its audit record run inside one `Transactor.WithinTx`
+      call, per `DATABASE_ARCHITECTURE.md` section 6.4.
+- [x] Implement `ChangeResourceStatus` use case: validate status → persist →
       write status-history record → write audit record
       (`RESOURCE_STATUS_CHANGED`) (FR-011, FR-012, BR-006, BR-008, UC-08).
-- [ ] Unit-test that `ChangeResourceStatus` does **not** modify `location`
+- [x] Unit-test that `ChangeResourceStatus` does **not** modify `location`
       (BR symmetry note in `API_CONTRACT.md` section 7.1).
-- [ ] Implement `RelocateResource` use case: validate coordinates → update
+      (`TestService_ChangeResourceStatus_DoesNotModifyLocation`, and
+      asserts `RecordLocationChange` is never called.)
+- [x] Implement `RelocateResource` use case: validate coordinates → update
       location → preserve identity/type/status → write location-history
       record → write audit record (`RESOURCE_RELOCATED`) (FR-023–026,
       BR-009–BR-014, UC-09).
-- [ ] Unit-test that `RelocateResource` preserves `id`, `type`, and `status`
+- [x] Unit-test that `RelocateResource` preserves `id`, `type`, and `status`
       unchanged (BR-012, UC-09 "Invariants").
-- [ ] Implement `GetResourceHistory` use case, merging status/location/change
+      (`TestService_RelocateResource_PreservesIdentityTypeStatus`.)
+- [x] Implement `GetResourceHistory` use case, merging status/location/change
       history with the `type` filter (FR-034–037, UC-13).
-- [ ] Implement `ListAuditRecords` use case with `userId`, `resourceId`,
+      (`georesponse-be/internal/resourcehistory/service.go` — also checks
+      the resource exists first, returning `resource.ErrNotFound` for a
+      resource that was never created, distinct from one that exists but
+      has no history yet.)
+- [x] Implement `ListAuditRecords` use case with `userId`, `resourceId`,
       `operation`, `startTime`, `endTime` filters (FR-038–040, UC-14).
-- [ ] Implement `Authenticate` (login) use case (FR-027–029, BR-022–024,
-      UC-11).
-- [ ] Implement `Logout` use case (`API_CONTRACT.md` section 5.2).
-- [ ] Implement `GetCurrentUser` use case (FR-029).
-- [ ] Implement `ListRoles`, `CreateRole`, `UpdateRole`, `DeleteRole` use
+      (`georesponse-be/internal/audit/service.go`.)
+- [x] Implement `Authenticate` (login) use case (FR-027–029, BR-022–024,
+      UC-11). (`georesponse-be/internal/auth/service.go`. Both "no such
+      user" and "wrong password" return the same `ErrInvalidCredentials`,
+      so a caller cannot enumerate valid identifiers by response
+      difference. On success, returns a token from `TokenSigner` — see
+      next paragraph. Live-tested end-to-end against the seeded demo
+      account, `database/seeds/0002_sample_auth.sql`: real login, wrong
+      password rejected, token verified, `GetCurrentUser` round-trip —
+      all via a throwaway `cmd/smoketest` binary, deleted after use.)
+      **Also resolved: the authenticated-context mechanism itself**
+      (BR-023) — `SECURITY.md` leaves "the exact token/session mechanism"
+      undecided too. Implemented `TokenSigner`
+      (`georesponse-be/internal/auth/token.go`) as a small interface with
+      one implementation, `HMACTokenSigner`: a stateless, self-verifying
+      signed token (user id + expiry + HMAC-SHA256 signature over a
+      server secret) rather than a server-side session table, so no
+      further schema change was needed. Chosen because it is the smallest
+      change consistent with "an implementation decision" — a session
+      table would need its own migration and cleanup story neither doc
+      asks for.
+- [x] Implement `Logout` use case (`API_CONTRACT.md` section 5.2).
+      Since tokens are stateless and self-verifying, there is no
+      server-side session record to delete; `Logout` is a documented
+      no-op at the use-case layer; discarding the client's copy of the
+      token (e.g. clearing a cookie) is the HTTP layer's responsibility
+      (Phase 4).
+- [x] Implement `GetCurrentUser` use case (FR-029).
+- [x] Implement `ListRoles`, `CreateRole`, `UpdateRole`, `DeleteRole` use
       cases (FR-030, FR-033, BR-025, UC-12).
-- [ ] Implement `ListPermissions` use case.
-- [ ] Implement `AssignRolePermissions` use case, writing an audit record
+      (`georesponse-be/internal/authorization/service.go`. The exact
+      permission codes required by each — `role.read`, `role.manage`,
+      `permission.read` — are an implementation decision:
+      `BUSINESS_RULES.md` fixes that authorization is role-based, BR-025,
+      not a concrete permission set. `CreateRole`/`UpdateRole`/`DeleteRole`
+      each record a `ROLE_CHANGED` audit entry, BR-028.)
+- [x] Implement `ListPermissions` use case.
+- [x] Implement `AssignRolePermissions` use case, writing an audit record
       (`PERMISSION_CHANGED`) (FR-033, BR-028).
-- [ ] Implement `AssignUserRoles` use case, writing an audit record
+- [x] Implement `AssignUserRoles` use case, writing an audit record
       (`ROLE_CHANGED`) (`API_CONTRACT.md` section 10.5, BR-028).
-- [ ] Implement the authorization check (permission enforcement) as
+      (`georesponse-be/internal/auth/service.go`.)
+- [x] Implement the authorization check (permission enforcement) as
       middleware or a use-case-level guard applied to every protected
-      operation (FR-031, FR-032, BR-026, BR-027).
-- [ ] Unit-test that every state-changing use case returns an error — and
+      operation (FR-031, FR-032, BR-026, BR-027). Implemented as a
+      use-case-level guard (`authorization.Service.Require`,
+      `georesponse-be/internal/authorization/guard.go`), called first by
+      every state-changing (and every read) use case in `resource`,
+      `audit`, and `authorization` itself — not only relied on as HTTP
+      middleware, so enforcement holds regardless of which layer a future
+      caller might bypass (BR-026, BR-027). Each feature package declares
+      its own narrow `PermissionChecker` interface rather than importing
+      `authorization` directly, so `authorization.Service` satisfies all
+      of them structurally without those packages depending on it (avoids
+      `resource` → `authorization` → ... → `resource` import risk and
+      keeps each package's tests independent of the others).
+- [x] Unit-test that every state-changing use case returns an error — and
       performs no persistence — when validation fails (BR-018, BR-030,
-      BR-042).
+      BR-042). Covered across
+      `internal/resource/service_test.go` (`CreateResource` with a
+      missing id, with invalid attributes, and with permission denied, all
+      assert the repository's `Create` was never called;
+      `ChangeResourceStatus`/`RelocateResource` with invalid input assert
+      neither the repository write nor history/audit were reached;
+      `DeleteResource` on a not-found id asserts no audit record was
+      written), `internal/auth/service_test.go` (wrong password/unknown
+      identifier never call `TokenSigner.Sign`; a failed `AssignUserRoles`
+      writes no audit record), and
+      `internal/authorization/service_test.go` (permission-denied
+      `CreateRole`/`AssignRolePermissions` never call the repository).
 - [ ] Push, open a PR, confirm CI passes, merge into `main`, delete the
       branch (workflow: section 2.1).
 

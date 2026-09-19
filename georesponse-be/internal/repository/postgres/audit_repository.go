@@ -39,7 +39,7 @@ func (r *AuditRepository) Insert(ctx context.Context, rec audit.AuditRecord) err
 		INSERT INTO audit_records (id, operation, user_id, resource_id, occurred_at, details)
 		VALUES ($1, $2, $3, $4, $5, $6)
 	`
-	if _, err := r.db.Exec(ctx, query, rec.ID, string(rec.Operation), rec.UserID, rec.ResourceID, rec.OccurredAt, details); err != nil {
+	if _, err := activeConn(ctx, r.db).Exec(ctx, query, rec.ID, string(rec.Operation), rec.UserID, rec.ResourceID, rec.OccurredAt, details); err != nil {
 		return fmt.Errorf("insert audit record %q: %w", rec.ID, err)
 	}
 	return nil
@@ -80,7 +80,7 @@ func (r *AuditRepository) List(ctx context.Context, f audit.Filters) ([]audit.Au
 
 	var total int
 	countQuery := fmt.Sprintf("SELECT count(*) FROM audit_records %s", where)
-	if err := r.db.QueryRow(ctx, countQuery, args...).Scan(&total); err != nil {
+	if err := activeConn(ctx, r.db).QueryRow(ctx, countQuery, args...).Scan(&total); err != nil {
 		return nil, 0, fmt.Errorf("list audit records: count: %w", err)
 	}
 
@@ -93,7 +93,7 @@ func (r *AuditRepository) List(ctx context.Context, f audit.Filters) ([]audit.Au
 		LIMIT $%d OFFSET $%d
 	`, where, len(limitArgs)-1, len(limitArgs))
 
-	rows, err := r.db.Query(ctx, listQuery, limitArgs...)
+	rows, err := activeConn(ctx, r.db).Query(ctx, listQuery, limitArgs...)
 	if err != nil {
 		return nil, 0, fmt.Errorf("list audit records: %w", err)
 	}
