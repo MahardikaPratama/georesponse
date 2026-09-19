@@ -1,12 +1,13 @@
 /*
  * Author       : Mahardika Pratama
- * Version      : 1.1.0
+ * Version      : 1.2.0
  * Created Date : 2026-09-19
  * Description  : Tests ResourceDetail's loading, "not found", generic
- *                error, and populated states, and the status-change
- *                control's interaction and error display, with
- *                useResource/useChangeResourceStatus mocked so no real
- *                network call is made.
+ *                error, and populated states, the status-change control's
+ *                interaction and error display, and the relocate
+ *                control's interaction and validation, with
+ *                useResource/useChangeResourceStatus/useRelocateResource
+ *                mocked so no real network call is made.
  *
  * Changelog:
  * - 1.0.0 (2026-09-19): Initial creation.
@@ -16,6 +17,10 @@
  *                        unconditionally, so every existing test needed a
  *                        default return value even where it isn't the
  *                        thing under test.
+ * - 1.2.0 (2026-09-19): Added the relocate control's tests (Phase 6
+ *                        section 9.7), with useRelocateResource now mocked
+ *                        too — RelocateResourceControl (rendered inside
+ *                        ResourceDetail) calls it unconditionally.
  */
 import React from "react";
 import { fireEvent, render, screen } from "@testing-library/react";
@@ -23,6 +28,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { ApiError } from "@api/httpClient.types";
 import { useChangeResourceStatus } from "@hooks/useChangeResourceStatus";
+import { useRelocateResource } from "@hooks/useRelocateResource";
 import { useResource } from "@hooks/useResource";
 
 import ResourceDetail from "./ResourceDetail";
@@ -35,8 +41,13 @@ vi.mock("@hooks/useChangeResourceStatus", () => ({
 	useChangeResourceStatus: vi.fn()
 }));
 
+vi.mock("@hooks/useRelocateResource", () => ({
+	useRelocateResource: vi.fn()
+}));
+
 const mockedUseResource = vi.mocked(useResource);
 const mockedUseChangeResourceStatus = vi.mocked(useChangeResourceStatus);
+const mockedUseRelocateResource = vi.mocked(useRelocateResource);
 
 describe("ResourceDetail", () => {
 	beforeEach(() => {
@@ -46,6 +57,12 @@ describe("ResourceDetail", () => {
 			isError: false,
 			error: null
 		} as unknown as ReturnType<typeof useChangeResourceStatus>);
+		mockedUseRelocateResource.mockReturnValue({
+			mutate: vi.fn(),
+			isPending: false,
+			isError: false,
+			error: null
+		} as unknown as ReturnType<typeof useRelocateResource>);
 	});
 
 	it("shows a loading placeholder while the query is pending", () => {
@@ -188,5 +205,74 @@ describe("ResourceDetail", () => {
 		expect(screen.getByRole("alert")).toHaveTextContent(
 			"The server could not complete the operation. Please try again."
 		);
+	});
+
+	it("relocates via the relocate control", () => {
+		const mutate = vi.fn();
+		mockedUseRelocateResource.mockReturnValue({
+			mutate,
+			isPending: false,
+			isError: false,
+			error: null
+		} as unknown as ReturnType<typeof useRelocateResource>);
+		mockedUseResource.mockReturnValue({
+			status: "success",
+			data: {
+				data: {
+					id: "res-001",
+					name: "Ambulance 12",
+					type: "VEHICLE",
+					status: "AVAILABLE",
+					attributes: { vehicleType: "Ambulance", capacity: 4 },
+					location: { latitude: -6.2, longitude: 106.8166 }
+				}
+			},
+			error: null
+		} as unknown as ReturnType<typeof useResource>);
+
+		render(<ResourceDetail resourceId="res-001" />);
+
+		fireEvent.click(screen.getByRole("button", { name: "Relocate" }));
+		fireEvent.change(screen.getByLabelText("Latitude"), { target: { value: "-6.3" } });
+		fireEvent.change(screen.getByLabelText("Longitude"), { target: { value: "106.9" } });
+		fireEvent.click(screen.getByRole("button", { name: "Save" }));
+
+		expect(mutate).toHaveBeenCalledWith(
+			{ latitude: -6.3, longitude: 106.9 },
+			expect.objectContaining({ onSuccess: expect.any(Function) })
+		);
+	});
+
+	it("blocks the relocate save and shows a field error for an out-of-range latitude", () => {
+		const mutate = vi.fn();
+		mockedUseRelocateResource.mockReturnValue({
+			mutate,
+			isPending: false,
+			isError: false,
+			error: null
+		} as unknown as ReturnType<typeof useRelocateResource>);
+		mockedUseResource.mockReturnValue({
+			status: "success",
+			data: {
+				data: {
+					id: "res-001",
+					name: "Ambulance 12",
+					type: "VEHICLE",
+					status: "AVAILABLE",
+					attributes: { vehicleType: "Ambulance", capacity: 4 },
+					location: { latitude: -6.2, longitude: 106.8166 }
+				}
+			},
+			error: null
+		} as unknown as ReturnType<typeof useResource>);
+
+		render(<ResourceDetail resourceId="res-001" />);
+
+		fireEvent.click(screen.getByRole("button", { name: "Relocate" }));
+		fireEvent.change(screen.getByLabelText("Latitude"), { target: { value: "91" } });
+		fireEvent.click(screen.getByRole("button", { name: "Save" }));
+
+		expect(mutate).not.toHaveBeenCalled();
+		expect(screen.getByText("Latitude must be between -90 and 90.")).toBeInTheDocument();
 	});
 });

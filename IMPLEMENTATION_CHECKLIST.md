@@ -1061,19 +1061,48 @@ individually as each feature completes (see section 2.1).
       panel's indicator dot uses, so the color can't disagree between
       views once the shared cache updates. Covered by
       `ResourceDetail.test.tsx`'s status-change tests.
+- [x] Push, open a PR, confirm CI passes, merge into `main`, delete the
+      branch (workflow: section 2.1). PR #16 (`feature/phase-6-change-status`)
+      merged into `main` (squash commit `2d4b7ae`); branch deleted (remote
+      and local). CI passed on the first push.
+
+### 9.7 Relocate Resource (FR-022–026, UC-09)
+
+- [x] Implement the relocation interaction (e.g., drag the marker on the
+      map, or a "set new location" control) per `FRONTEND_UI_UX.md`.
+      (`src/components/resource-relocate-form/RelocateResourceControl.tsx`
+      — a "set new location" control on the detail panel's Location field.
+      **Chose this over dragging the map marker**: `ResourceMap` renders
+      resources through a GeoJSON source + circle layer
+      (`map-adapter/MapAdapter.ts`), not `maplibregl.Marker` DOM elements,
+      so native drag support isn't available without substantial adapter
+      rework — out of scope for this sub-phase; gets the same UC-09
+      outcome without it. Extracted the latitude/longitude range checks
+      the create form already had into `src/utils/validateLocation.ts`,
+      shared by both forms, rather than duplicating them here.)
+- [x] Implement the `useRelocateResource` mutation.
+      (`src/hooks/useRelocateResource.ts` — applies an optimistic update
+      per `FRONTEND_STATE.md` section 7, which names relocation as
+      exactly this case ("dragging a marker should feel immediate"): the
+      cached detail and every matching list query move to the new
+      location on `onMutate`, roll back on error, and
+      `resourceKeys.detail(id)`/`lists()`/`history(id)` are invalidated
+      on `onSettled` either way so the cache converges with the backend.
+      Covered by `useRelocateResource.test.ts`.)
+- [x] Verify the marker moves to the new position on the map immediately
+      after a successful relocation (FR-022, UC-09 step 7). More than
+      "after" — the optimistic update above moves it before the backend
+      even confirms. The map's markers are derived from `AppShell`'s
+      `useResources(filters)` call, which shares the exact list cache
+      entries `useRelocateResource` optimistically updates, so there is
+      no separate map-specific wiring needed for this. Covered by
+      `useRelocateResource.test.ts`'s optimistic-update assertions and
+      `ResourceDetail.test.tsx`'s relocate-control tests.
 - [ ] Push, open a PR, confirm CI passes, merge into `main`, delete the
       branch (workflow: section 2.1). **Not yet verified**: this
       environment has no Node.js/npm available, so typecheck/lint/build/test
       could not be run locally before this push — CI is the first real
       verification.
-
-### 9.7 Relocate Resource (FR-022–026, UC-09)
-
-- [ ] Implement the relocation interaction (e.g., drag the marker on the
-      map, or a "set new location" control) per `FRONTEND_UI_UX.md`.
-- [ ] Implement the `useRelocateResource` mutation.
-- [ ] Verify the marker moves to the new position on the map immediately
-      after a successful relocation (FR-022, UC-09 step 7).
 
 ### 9.8 Delete Resource (FR-005, UC-10)
 
