@@ -1,20 +1,22 @@
--- Author       : Mahardika Pratama
--- Version      : 1.0.0
--- Created Date : 2026-09-19
--- Description  : Seed data for local development: a representative set of
---                disaster-response resources covering every resource type
---                (VEHICLE, FACILITY, EQUIPMENT, IOT_DEVICE) and a mix of
---                statuses (AVAILABLE, IN_USE, MAINTENANCE, UNAVAILABLE),
---                located at real Indonesian disaster-response-relevant
---                coordinates, per DATABASE_MIGRATIONS.md section 7 and
---                IMPLEMENTATION_CHECKLIST.md section 3.3. Attribute keys
---                match DOMAIN_MODEL.md section 6.2 / DATA_CONTRACT.md
---                section 3.4 exactly (vehicleType/capacity,
---                facilityType/capacity, equipmentType/quantity,
---                deviceType).
---
--- Changelog:
--- - 1.0.0 (2026-09-19): Initial creation.
+/*
+Author       : Mahardika Pratama
+Version      : 1.0.0
+Created Date : 2026-09-19
+Description  : Seed data for local development: a representative set of
+               disaster-response resources covering every resource type
+               (VEHICLE, FACILITY, EQUIPMENT, IOT_DEVICE) and a mix of
+               statuses (AVAILABLE, IN_USE, MAINTENANCE, UNAVAILABLE),
+               located at real Indonesian disaster-response-relevant
+               coordinates, per DATABASE_MIGRATIONS.md section 7 and
+               IMPLEMENTATION_CHECKLIST.md section 3.3. Attribute keys
+               match DOMAIN_MODEL.md section 6.2 / DATA_CONTRACT.md
+               section 3.4 exactly (vehicleType/capacity,
+               facilityType/capacity, equipmentType/quantity,
+               deviceType).
+
+Changelog:
+- 1.0.0 (2026-09-19): Initial creation.
+*/
 
 -- Idempotent: re-running seed.sh/seed.ps1 against a database that already
 -- has this seed data does not fail or duplicate rows.

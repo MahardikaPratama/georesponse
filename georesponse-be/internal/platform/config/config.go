@@ -1,15 +1,17 @@
-// Author       : Mahardika Pratama
-// Version      : 1.0.0
-// Created Date : 2026-09-19
-// Description  : Package config loads and validates process configuration
-//
-//	from environment variables, per
-//	docs/11_devops/ENVIRONMENT_MANAGEMENT.md section 5.2. It is
-//	the only package allowed to read these environment
-//	variables directly (BACKEND_ARCHITECTURE.md section 4).
-//
-// Changelog:
-// - 1.0.0 (2026-09-19): Initial creation.
+/*
+Author       : Mahardika Pratama
+Version      : 1.0.0
+Created Date : 2026-09-19
+Description  : Package config loads and validates process configuration
+
+	from environment variables, per
+	docs/11_devops/ENVIRONMENT_MANAGEMENT.md section 5.2. It is
+	the only package allowed to read these environment
+	variables directly (BACKEND_ARCHITECTURE.md section 4).
+
+Changelog:
+- 1.0.0 (2026-09-19): Initial creation.
+*/
 package config
 
 import (

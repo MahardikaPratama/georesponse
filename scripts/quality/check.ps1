@@ -1,17 +1,19 @@
-# Author       : Mahardika Pratama
-# Version      : 1.0.0
-# Created Date : 2026-09-19
-# Description  : Runs the full local quality gate mirroring CI_CD.md's
-#                pipeline stages and QUALITY_GATES.md's merge-gate
-#                criteria (G1-G7): frontend lint/type-check/build, backend
-#                gofmt/vet/build/test. Windows PowerShell equivalent of
-#                check.sh. Frontend gates are skipped with a clear message
-#                (not a hard failure) when npm is unavailable. Prints a
-#                pass/fail summary per gate and exits non-zero if any
-#                required gate fails.
-#
-# Changelog:
-# - 1.0.0 (2026-09-19): Initial creation.
+<#
+Author       : Mahardika Pratama
+Version      : 1.0.0
+Created Date : 2026-09-19
+Description  : Runs the full local quality gate mirroring CI_CD.md's
+               pipeline stages and QUALITY_GATES.md's merge-gate
+               criteria (G1-G7): frontend lint/type-check/build, backend
+               gofmt/vet/build/test. Windows PowerShell equivalent of
+               check.sh. Frontend gates are skipped with a clear message
+               (not a hard failure) when npm is unavailable. Prints a
+               pass/fail summary per gate and exits non-zero if any
+               required gate fails.
+
+Changelog:
+- 1.0.0 (2026-09-19): Initial creation.
+#>
 
 # Intentionally not using $ErrorActionPreference = "Stop" globally: this
 # script must keep running every gate even after one fails, so it can

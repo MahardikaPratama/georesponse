@@ -1,12 +1,14 @@
--- Author       : Mahardika Pratama
--- Version      : 1.0.0
--- Created Date : 2026-09-19
--- Description  : Creates the authentication/authorization tables (users,
---                roles, permissions, role_permissions, user_roles) backing
---                User/Role/Permission (DATA_CONTRACT.md sections 5-7).
---
--- Changelog:
--- - 1.0.0 (2026-09-19): Initial creation.
+/*
+Author       : Mahardika Pratama
+Version      : 1.0.0
+Created Date : 2026-09-19
+Description  : Creates the authentication/authorization tables (users,
+               roles, permissions, role_permissions, user_roles) backing
+               User/Role/Permission (DATA_CONTRACT.md sections 5-7).
+
+Changelog:
+- 1.0.0 (2026-09-19): Initial creation.
+*/
 
 CREATE TABLE IF NOT EXISTS roles (
     id    text PRIMARY KEY,
