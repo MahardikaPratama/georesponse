@@ -47,11 +47,19 @@ Set it to a PostgreSQL connection string, e.g.:
     exit 1
 }
 
+# See migrate.ps1 for why this runs from a relative "." path rather than
+# passing the absolute Windows path directly.
 Write-Host "Rolling back $Steps migration(s) using $MigrationsDir ..."
-& migrate -path $MigrationsDir -database $env:DATABASE_URL down $Steps
-if ($LASTEXITCODE -ne 0) {
-    Write-Error "migrate down failed with exit code $LASTEXITCODE."
-    exit $LASTEXITCODE
+Push-Location $MigrationsDir
+try {
+    & migrate -path . -database $env:DATABASE_URL down $Steps
+    if ($LASTEXITCODE -ne 0) {
+        Write-Error "migrate down failed with exit code $LASTEXITCODE."
+        exit $LASTEXITCODE
+    }
+}
+finally {
+    Pop-Location
 }
 
 Write-Host "Rollback complete."
