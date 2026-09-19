@@ -740,8 +740,16 @@ before `AssignUserRoles` proceeds.
       surfaced both real bugs described above; a REST client alone
       (without also running the actual server against a real database)
       would not have caught either one.
-- [ ] Push, open a PR, confirm CI passes, merge into `main`, delete the
-      branch (workflow: section 2.1).
+- [x] Push, open a PR, confirm CI passes, merge into `main`, delete the
+      branch (workflow: section 2.1). Branch `feature/phase-4-backend-http`.
+      CI initially failed `gofmt -l` on two files
+      (`internal/http/middleware/middleware.go`,
+      `internal/platform/config/config.go`) whose second Changelog entry
+      used inconsistent bullet indentation relative to the block comment's
+      tab-indented Description continuation — a real issue (reproducible
+      on CI's Linux runner), not the pre-existing Windows-checkout CRLF
+      artifact this repo otherwise tolerates. Fixed and pushed; CI passed;
+      merged into `main`, branch deleted (remote and local).
 
 ---
 
