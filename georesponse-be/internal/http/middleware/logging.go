@@ -24,17 +24,22 @@ import (
 	"time"
 
 	chimiddleware "github.com/go-chi/chi/v5/middleware"
+
+	"github.com/mahardika-pratama/georesponse-be/internal/platform/logging"
 )
 
 // Logging returns middleware that logs one structured line per request
-// using the given logger. It must be mounted after RequestID so the
-// request ID is available to include in the log line.
+// using the given logger, and attaches that logger to the request context
+// (via internal/platform/logging.WithContext) so handlers and error
+// translation can log with it too. It must be mounted after RequestID so
+// the request ID is available to include in the log line.
 func Logging(logger *slog.Logger) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			start := time.Now()
 			ww := chimiddleware.NewWrapResponseWriter(w, r.ProtoMajor)
 
+			r = r.WithContext(logging.WithContext(r.Context(), logger))
 			next.ServeHTTP(ww, r)
 
 			logger.Info("http_request",

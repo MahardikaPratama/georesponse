@@ -23,17 +23,32 @@ import (
 	"github.com/mahardika-pratama/georesponse-be/internal/platform/idgen"
 )
 
+// PermissionChecker enforces that the caller holds a given permission.
+// Implemented by authorization.Service; declared here, narrowly, to avoid
+// this package importing authorization directly (see the identical
+// pattern in internal/audit/service.go).
+type PermissionChecker interface {
+	Require(ctx context.Context, roleNames []string, permissionCode string) error
+}
+
+// PermissionUserRolesManage is the permission code required to assign a
+// user's roles. Reuses authorization's "manage roles" permission rather
+// than defining a separate code, since assigning roles is part of the
+// same role-management capability (BR-025).
+const PermissionUserRolesManage = "role.manage"
+
 // Service implements the authentication and user-role-assignment use
 // cases.
 type Service struct {
-	repo   Repository
-	audit  audit.Repository
-	tokens TokenSigner
+	repo    Repository
+	audit   audit.Repository
+	tokens  TokenSigner
+	checker PermissionChecker
 }
 
 // NewService constructs a Service.
-func NewService(repo Repository, auditRepo audit.Repository, tokens TokenSigner) *Service {
-	return &Service{repo: repo, audit: auditRepo, tokens: tokens}
+func NewService(repo Repository, auditRepo audit.Repository, tokens TokenSigner, checker PermissionChecker) *Service {
+	return &Service{repo: repo, audit: auditRepo, tokens: tokens, checker: checker}
 }
 
 // Authenticate validates identifier/password against stored credentials
@@ -87,7 +102,11 @@ func (s *Service) GetCurrentUser(ctx context.Context, userID string) (*User, err
 // entry (API_CONTRACT.md section 10.5, FR-033, BR-028). actingUserID is
 // the authenticated administrator performing the change; it is omitted
 // from the audit record when empty.
-func (s *Service) AssignUserRoles(ctx context.Context, actingUserID, userID string, roleNames []string) error {
+func (s *Service) AssignUserRoles(ctx context.Context, actingUserID string, actingRoleNames []string, userID string, roleNames []string) error {
+	if err := s.checker.Require(ctx, actingRoleNames, PermissionUserRolesManage); err != nil {
+		return err
+	}
+
 	if err := s.repo.SetRoles(ctx, userID, roleNames); err != nil {
 		return fmt.Errorf("assign roles to user %q: %w", userID, err)
 	}
