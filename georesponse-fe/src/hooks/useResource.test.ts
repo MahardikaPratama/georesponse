@@ -13,7 +13,7 @@
 import React from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { renderHook, waitFor } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { resourceApi } from "@api/resources/resourceApi";
 
@@ -22,6 +22,8 @@ import { useResource } from "./useResource";
 vi.mock("@api/resources/resourceApi", () => ({
 	resourceApi: { get: vi.fn() }
 }));
+
+beforeEach(() => vi.mocked(resourceApi.get).mockClear());
 
 function wrapper({ children }: { children: React.ReactNode }) {
 	const queryClient = new QueryClient({
