@@ -1,6 +1,6 @@
 /*
  * Author       : Mahardika Pratama
- * Version      : 1.0.0
+ * Version      : 1.1.0
  * Created Date : 2026-09-19
  * Description  : The Resource.status -> label/color mapping shared by every
  *                view that displays status (list row, map marker, detail
@@ -12,7 +12,15 @@
  *
  * Changelog:
  * - 1.0.0 (2026-09-19): Initial creation.
+ * - 1.1.0 (2026-09-19): Added RESOURCE_STATUS_OPTIONS/RESOURCE_TYPE_OPTIONS
+ *                        — the Dropdown-ready option lists ResourceFilterBar,
+ *                        ResourceCreateForm, ResourceUpdateForm, and now
+ *                        the status-change control in ResourceDetail
+ *                        (Phase 6 section 9.6) all need, each rebuilding
+ *                        the same `Object.keys(...).map(...)` before this.
  */
+import type { DropdownOption } from "@common/dropdowns/dropdown/Dropdown";
+
 import colors from "@utils/colors";
 
 // See resourceApi.ts for why this is a relative import, not "@types/...".
@@ -53,3 +61,11 @@ export const RESOURCE_TYPE_LABEL: Record<ResourceType, string> = {
 	EQUIPMENT: "Equipment",
 	IOT_DEVICE: "IoT Device"
 };
+
+export const RESOURCE_STATUS_OPTIONS: DropdownOption[] = (
+	Object.keys(RESOURCE_STATUS_CONFIG) as ResourceStatus[]
+).map((status) => ({ value: status, label: RESOURCE_STATUS_CONFIG[status].label }));
+
+export const RESOURCE_TYPE_OPTIONS: DropdownOption[] = (
+	Object.keys(RESOURCE_TYPE_LABEL) as ResourceType[]
+).map((type) => ({ value: type, label: RESOURCE_TYPE_LABEL[type] }));

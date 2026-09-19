@@ -1028,19 +1028,44 @@ individually as each feature completes (see section 2.1).
       change it; covered by `UpdateResourceModal.test.tsx`'s pre-fill test
       (asserts the id renders as text, not as any input's value) and its
       submit test (asserts the id is absent from the update payload).
+- [x] Push, open a PR, confirm CI passes, merge into `main`, delete the
+      branch (workflow: section 2.1). PR #15 (`feature/phase-6-update-resource`)
+      merged into `main` (squash commit `da1a863`); branch deleted (remote
+      and local). CI passed on the first push.
+
+### 9.6 Change Status (FR-010–012, UC-08)
+
+- [x] Implement the status-change control (e.g., a dropdown or
+      `StatusIndicator`-driven selector) on the detail panel.
+      (`ResourceDetail.tsx` — replaced the static status display with a
+      `Dropdown` constrained to the four valid statuses, next to the same
+      color indicator dot the list row uses. Also extracted
+      `RESOURCE_STATUS_OPTIONS`/`RESOURCE_TYPE_OPTIONS` into
+      `resourceStatus.constants.ts` and pointed `ResourceFilterBar`,
+      `ResourceCreateForm`, and `ResourceUpdateForm` at them, since all
+      three — now four, with this one — had been rebuilding the identical
+      `Object.keys(...).map(...)` independently.)
+- [x] Implement the `useChangeResourceStatus` mutation.
+      (`src/hooks/useChangeResourceStatus.ts` — invalidates
+      `resourceKeys.detail(id)`, `resourceKeys.lists()`, and
+      `resourceKeys.history(id)` per `FRONTEND_STATE.md` section 6's table.)
+- [x] Verify the status badge updates across list, detail, and map views
+      after a successful change. By construction rather than a live run
+      (no Node/npm locally, see below): the detail panel reads
+      `resource.status` straight from `useResource`'s cache entry, which
+      `useChangeResourceStatus`'s `resourceKeys.detail(id)` invalidation
+      refetches; the list and map both derive from `AppShell`'s
+      `useResources(filters)` call, which the same mutation's
+      `resourceKeys.lists()` invalidation refetches — and both read
+      `RESOURCE_STATUS_CONFIG` for their color, the same mapping the detail
+      panel's indicator dot uses, so the color can't disagree between
+      views once the shared cache updates. Covered by
+      `ResourceDetail.test.tsx`'s status-change tests.
 - [ ] Push, open a PR, confirm CI passes, merge into `main`, delete the
       branch (workflow: section 2.1). **Not yet verified**: this
       environment has no Node.js/npm available, so typecheck/lint/build/test
       could not be run locally before this push — CI is the first real
       verification.
-
-### 9.6 Change Status (FR-010–012, UC-08)
-
-- [ ] Implement the status-change control (e.g., a dropdown or
-      `StatusIndicator`-driven selector) on the detail panel.
-- [ ] Implement the `useChangeResourceStatus` mutation.
-- [ ] Verify the status badge updates across list, detail, and map views
-      after a successful change.
 
 ### 9.7 Relocate Resource (FR-022–026, UC-09)
 
