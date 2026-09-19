@@ -5,8 +5,7 @@
  * Description  : Vitest configuration for the GeoResponse frontend. Uses
  *                jsdom for component tests, mirrors the path aliases from
  *                tsconfig.json/rspack.config.js, and matches the colocated
- *                `*.test.ts(x)` convention from
- *                docs/06_frontend/FRONTEND_TESTING.md section 3.
+ *                `*.test.ts(x)` convention used throughout the project.
  *
  * Changelog:
  * - 1.0.0 (2026-09-19): Initial creation.

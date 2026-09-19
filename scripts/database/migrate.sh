@@ -5,7 +5,7 @@
 # Created Date : 2026-09-19
 # Description  : Applies all pending golang-migrate "up" migrations in
 #                database/migrations/ against the database identified by
-#                DATABASE_URL, per DATABASE_MIGRATIONS.md section 4.
+#                DATABASE_URL.
 #
 # Changelog:
 # - 1.0.0 (2026-09-19): Initial creation.

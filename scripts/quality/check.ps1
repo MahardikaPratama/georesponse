@@ -2,9 +2,9 @@
 Author       : Mahardika Pratama
 Version      : 1.0.0
 Created Date : 2026-09-19
-Description  : Runs the full local quality gate mirroring CI_CD.md's
-               pipeline stages and QUALITY_GATES.md's merge-gate
-               criteria (G1-G7): frontend lint/type-check/build, backend
+Description  : Runs the full local quality gate mirroring the CI
+               pipeline's stages and merge-gate criteria (G1-G7):
+               frontend lint/type-check/build, backend
                gofmt/vet/build/test. Windows PowerShell equivalent of
                check.sh. Frontend gates are skipped with a clear message
                (not a hard failure) when npm is unavailable. Prints a
@@ -111,7 +111,7 @@ if ($GoAvailable) {
     if (Get-Command golangci-lint -ErrorAction SilentlyContinue) {
         Invoke-Gate -Gate "G5c" -Label "Backend lint (golangci-lint run)" -WorkingDir $BeDir -Command "golangci-lint" -CommandArgs @("run")
     } else {
-        Write-Host "SKIP: G5c golangci-lint (not installed; optional per CODE_QUALITY.md section 4.2)"
+        Write-Host "SKIP: G5c golangci-lint (not installed; this gate is optional)"
     }
 } else {
     Write-Host "SKIP: G5 backend static checks (go unavailable or georesponse-be\go.mod missing)"
@@ -139,7 +139,7 @@ if ($NpmAvailable) {
 }
 
 Write-Host ""
-Write-Host "=== Quality Gate Summary (QUALITY_GATES.md section 3) ==="
+Write-Host "=== Quality Gate Summary ==="
 $OverallFail = $false
 foreach ($gate in $GateStatus.Keys) {
     $status = $GateStatus[$gate]

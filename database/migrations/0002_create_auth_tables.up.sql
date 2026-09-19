@@ -4,7 +4,7 @@ Version      : 1.0.0
 Created Date : 2026-09-19
 Description  : Creates the authentication/authorization tables (users,
                roles, permissions, role_permissions, user_roles) backing
-               User/Role/Permission (DATA_CONTRACT.md sections 5-7).
+               the User/Role/Permission domain model.
 
 Changelog:
 - 1.0.0 (2026-09-19): Initial creation.
@@ -31,8 +31,8 @@ CREATE TABLE IF NOT EXISTS users (
     id            text PRIMARY KEY,
     name          text NOT NULL,
     -- Authentication credentials (password hash, etc.) are deliberately
-    -- excluded from this schema; DATA_CONTRACT.md section 5 states
-    -- credentials are not part of general application data.
+    -- excluded from this schema; they are not part of the general
+    -- application data returned to clients.
     created_at    timestamptz NOT NULL DEFAULT now(),
     updated_at    timestamptz NOT NULL DEFAULT now()
 );

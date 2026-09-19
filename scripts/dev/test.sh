@@ -4,8 +4,7 @@
 # Version      : 1.0.0
 # Created Date : 2026-09-19
 # Description  : Runs frontend tests (npm test) then backend tests
-#                (go test ./...), per IMPLEMENTATION_CHECKLIST.md
-#                section 3.4. Frontend tests are skipped with a clear
+#                (go test ./...). Frontend tests are skipped with a clear
 #                message when npm is unavailable, rather than failing the
 #                whole script.
 #

@@ -3,11 +3,11 @@
 # Author       : Mahardika Pratama
 # Version      : 1.0.0
 # Created Date : 2026-09-19
-# Description  : Runs the full local quality gate mirroring CI_CD.md's
-#                pipeline stages and QUALITY_GATES.md's merge-gate
-#                criteria (G1-G7): frontend lint/type-check/build,
-#                backend gofmt/vet/build/test. Frontend gates are skipped
-#                with a clear message (not a hard failure) when npm is
+# Description  : Runs the full local quality gate mirroring the CI
+#                pipeline's stages and merge-gate criteria (G1-G7):
+#                frontend lint/type-check/build, backend
+#                gofmt/vet/build/test. Frontend gates are skipped with a
+#                clear message (not a hard failure) when npm is
 #                unavailable. Prints a pass/fail summary per gate and
 #                exits non-zero if any required gate fails.
 #
@@ -96,7 +96,7 @@ if [ "${GO_AVAILABLE}" -eq 1 ]; then
         run_gate "G5c" "Backend lint (golangci-lint run)" bash -c "cd '${BE_DIR}' && golangci-lint run"
     else
         record "G5c" "SKIP"
-        echo "SKIP: G5c golangci-lint (not installed; optional per CODE_QUALITY.md section 4.2)"
+        echo "SKIP: G5c golangci-lint (not installed; this gate is optional)"
     fi
 else
     record "G5a" "SKIP"
@@ -130,7 +130,7 @@ else
 fi
 
 echo ""
-echo "=== Quality Gate Summary (QUALITY_GATES.md section 3) ==="
+echo "=== Quality Gate Summary ==="
 OVERALL_FAIL=0
 for gate in G1 G2 G3 G4 G5a G5b G5c G6 G7; do
     status="${GATE_STATUS[${gate}]:-SKIP}"

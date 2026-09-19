@@ -4,8 +4,7 @@
  * Created Date : 2026-09-19
  * Description  : Root application component. Renders the GeoResponse shell.
  *                Resource management, search/filter, and map features are
- *                implemented incrementally per IMPLEMENTATION_CHECKLIST.md
- *                section 9 (Frontend Feature Implementation).
+ *                implemented incrementally on top of this.
  *
  * Changelog:
  * - 1.0.0 (2026-09-19): Reset to a clean GeoResponse shell, replacing the
