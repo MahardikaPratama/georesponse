@@ -1134,11 +1134,17 @@ individually as each feature completes (see section 2.1).
       (`setSelectedResourceId(null)`) once deletion succeeds, since the
       resource it was showing no longer exists. Covered by
       `DeleteResourceConfirmation.test.tsx`'s cancel/confirm cases.
-- [ ] Push, open a PR, confirm CI passes, merge into `main`, delete the
-      branch (workflow: section 2.1). **Not yet verified**: this
-      environment has no Node.js/npm available, so typecheck/lint/build/test
-      could not be run locally before this push — CI is the first real
-      verification.
+- [x] Push, open a PR, confirm CI passes, merge into `main`, delete the
+      branch (workflow: section 2.1). PR #19 (`feature/phase-6-delete-resource`)
+      merged into `main` (commit `7674f52`); branch deleted (remote and
+      local). Landed alongside an out-of-band contribution merged in
+      between (#18, a BMKG GeoHotspot situational-awareness overlay from
+      another session, rebased onto this phase's work and merged first).
+      CI failed twice before going green: PR #18's backend job caught
+      `gofmt` issues in 3 new files (fixed); this PR's frontend typecheck
+      then caught a `hotspotLayerVisible` state declaration dropped by a
+      `main`-into-branch merge (fixed with a follow-up commit) once #18
+      had landed on `main` ahead of it.
 
 ### 9.9 Resource History (FR-034–037, UC-13)
 
