@@ -1,6 +1,6 @@
 /*
  * Author       : Mahardika Pratama
- * Version      : 1.0.0
+ * Version      : 1.1.0
  * Created Date : 2026-09-19
  * Description  : MapLibre GL JS implementation of the MapAdapter
  *                interface (MapAdapter.types.ts). The only file outside
@@ -11,6 +11,11 @@
  *
  * Changelog:
  * - 1.0.0 (2026-09-19): Initial creation.
+ * - 1.1.0 (2026-09-19): Marker circles are now painted per-feature from
+ *                        MapMarker.color (data-driven "circle-color"),
+ *                        instead of one fixed color for every marker, so
+ *                        status is visible on the map per
+ *                        FRONTEND_UI_UX.md section 7.
  */
 import maplibregl, { GeoJSONSource, Map as MapLibreMap } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
@@ -34,7 +39,7 @@ function toFeatureCollection(
 				// reverse of the domain's Location{latitude, longitude}.
 				coordinates: [marker.longitude, marker.latitude]
 			},
-			properties: { id: marker.id }
+			properties: { id: marker.id, color: marker.color }
 		}))
 	};
 }
@@ -94,7 +99,7 @@ export function createMapLibreAdapter(): MapAdapter {
 					id: MARKER_LAYER_ID,
 					type: "circle",
 					source: SOURCE_ID,
-					paint: { "circle-radius": 6, "circle-color": "#3b82f6" }
+					paint: { "circle-radius": 6, "circle-color": ["get", "color"] }
 				});
 				map.addLayer({
 					id: SELECTED_LAYER_ID,
