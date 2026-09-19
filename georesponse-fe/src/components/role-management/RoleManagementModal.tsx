@@ -1,6 +1,6 @@
 /*
  * Author       : Mahardika Pratama
- * Version      : 1.0.0
+ * Version      : 1.1.0
  * Created Date : 2026-09-19
  * Description  : Wraps the role/permission management view and the
  *                user-role assignment control in the shared Modal
@@ -14,6 +14,11 @@
  *
  * Changelog:
  * - 1.0.0 (2026-09-19): Initial creation.
+ * - 1.1.0 (2026-09-19): Fixed the state priority: blocked/error are now
+ *                        checked before "loading" — previously, if one
+ *                        query had already errored while the other was
+ *                        still pending, isLoading stayed true forever and
+ *                        the error never surfaced. What CI's run caught.
  */
 import React from "react";
 
@@ -38,18 +43,13 @@ function RoleManagementModal({ onClose }: RoleManagementModalProps) {
 	const rolesQuery = useRoles();
 	const permissionsQuery = usePermissions();
 
-	const isLoading = rolesQuery.status === "pending" || permissionsQuery.status === "pending";
 	const isBlocked = isForbidden(rolesQuery.error) || isForbidden(permissionsQuery.error);
 	const isOtherError = rolesQuery.status === "error" || permissionsQuery.status === "error";
+	const isLoading = rolesQuery.status === "pending" || permissionsQuery.status === "pending";
 
-	if (isLoading) {
-		return (
-			<Modal handleClose={onClose} handleConfirm={onClose} label="Close" disabled>
-				<p className="px-6 text-sm text-white">Loading…</p>
-			</Modal>
-		);
-	}
-
+	// Checked in this order deliberately: an error on one query must
+	// surface even while the other is still pending, not get stuck behind
+	// an isLoading check that stays true until both settle.
 	if (isBlocked) {
 		return (
 			<Modal handleClose={onClose} handleConfirm={onClose} label="Close">
@@ -66,6 +66,14 @@ function RoleManagementModal({ onClose }: RoleManagementModalProps) {
 				<p role="alert" className="px-6 text-sm text-white">
 					{getApiErrorMessage(rolesQuery.error ?? permissionsQuery.error)}
 				</p>
+			</Modal>
+		);
+	}
+
+	if (isLoading) {
+		return (
+			<Modal handleClose={onClose} handleConfirm={onClose} label="Close" disabled>
+				<p className="px-6 text-sm text-white">Loading…</p>
 			</Modal>
 		);
 	}
