@@ -27,8 +27,8 @@ How to run the system locally is documented in the root
 [`README.md`](README.md) and in each application's own README
 ([`georesponse-fe/README.md`](georesponse-fe/README.md),
 [`georesponse-be/README.md`](georesponse-be/README.md)) — including the
-current implementation status, since the application code is not yet
-runnable (see [`README.md#implementation-status`](README.md#implementation-status)).
+current implementation status and what is intentionally out of scope (see
+[`README.md#implementation-status`](README.md#implementation-status)).
 
 ## 2. Domain
 
@@ -70,7 +70,7 @@ Also fixed by prior technical evaluation (not to be silently swapped):
 - HTTP routing: Chi + `net/http`
 - Server state: TanStack Query
 - Client state: React `useState` / `useReducer` (no Redux/Zustand)
-- Styling: plain CSS
+- Styling: CSS via Tailwind CSS v4 (utility classes in JSX; no component library)
 - Frontend tests: Vitest + React Testing Library
 - Backend tests: Go `testing`
 
@@ -110,11 +110,13 @@ and `docs/02_requirements/` (what the product must do) outrank
 `docs/03_architecture/` and `docs/04_contracts/` (how it's shaped), which
 outrank `docs/05_engineering/` onward (conventions), which outrank existing
 code, which outranks your own judgment. When none of the above resolves the
-question, make the smallest reasonable assumption and state it rather than
+question, make the smallest reasonable assumption and surface it rather than
 silently guessing.
 
 Never assume a requirement, contract, or architectural decision. Read the
-relevant `docs/` file first. Full precedence order: [`docs/13_ai/AI_OPERATION_RULES.md`](docs/13_ai/AI_OPERATION_RULES.md)
+relevant `docs/` file first — especially before touching anything under
+`docs/01_product/` through `docs/04_contracts/`. Full precedence order:
+[`docs/13_ai/AI_OPERATION_RULES.md`](docs/13_ai/AI_OPERATION_RULES.md)
 section 2.
 
 ## 6. Coding Standards and Naming
@@ -139,7 +141,8 @@ Key points worth repeating here because they're easy to violate accidentally:
 Follow [`docs/10_git/GIT_MANAGEMENT.md`](docs/10_git/GIT_MANAGEMENT.md) and,
 for pull requests, [`docs/10_git/PULL_REQUEST_GUIDELINES.md`](docs/10_git/PULL_REQUEST_GUIDELINES.md).
 Keep commits focused and scoped to one concern; do not mix unrelated
-refactoring with feature work.
+refactoring with feature work, and do not amend or force-push shared history
+without being explicitly asked.
 
 ## 8. Validation Rules
 
@@ -166,9 +169,9 @@ section 5.
 
 Before making a change: read the relevant `docs/` files → identify which
 layer/boundary owns the change → make the smallest correct change → validate
-(build, lint, tests — report only what actually ran) → update docs in the
-same change if a contract or documented behavior changed → report what
-changed, why, and what was verified.
+(build, lint, tests — never claim a check passed without actually running
+it) → update docs in the same change if a contract or documented behavior
+changed → report what changed, why, and what was verified.
 
 Full step-by-step procedure with a worked example: [`docs/13_ai/AI_WORKFLOW.md`](docs/13_ai/AI_WORKFLOW.md)
 section 2.
@@ -188,7 +191,16 @@ win. This file exists so an agent has enough context to act correctly without
 having to read the entire `docs/` tree first — it is not a replacement for
 it.
 
-## 12. CLAUDE.md
+## 12. Relationship to geo-map-benchmark
+
+`geo-map-benchmark/` is a separate, already-completed sub-project with its
+own `CLAUDE.md` and `AGENT.md`. When working inside that directory, its own
+instructions take precedence for benchmark-specific rules (benchmark
+integrity, scenario definitions, measurement methodology); this file's
+architecture and domain sections describe the main application, not the
+benchmark harness.
+
+## 13. CLAUDE.md
 
 [`CLAUDE.md`](CLAUDE.md) at the repository root covers the same ground as
 this file, scoped for Claude Code specifically. The two are kept in sync

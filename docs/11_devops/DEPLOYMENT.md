@@ -58,7 +58,13 @@ Deployment and health verification are intended to be performed through dedicate
 | `scripts/database/rollback.sh` / `rollback.ps1` | Revert the most recent migration if a rollback requires it |
 | `scripts/database/seed.sh` / `seed.ps1` | Populate reference/seed data (primarily for local/demo use) |
 
-All of these scripts currently exist in the repository as empty placeholders. This document defines the contract they are expected to implement; writing their actual contents is a remaining implementation task, not something already delivered.
+All of these scripts are implemented, each as a `.sh`/`.ps1` pair with the same behaviour:
+
+- `deploy.sh`/`deploy.ps1` — by default builds both images for the current commit (via `scripts/docker/build.sh`/`.ps1`, tagged with the git short SHA), then (re)starts only `georesponse-be` and `georesponse-fe` from `docker-compose.yml` with that tag (`IMAGE_TAG`), leaving `georesponse-db` running. `--tag <tag>` / `-Tag <tag>` skips the build and starts an already-built tag — the rollback path in section 7 — and refuses if that tag does not exist locally; `--no-build` / `-NoBuild` does the same for the current commit's tag (`IMAGE_TAG` is honoured as the default tag).
+- `health-check.sh`/`health-check.ps1` — polls `GET /health` on the backend until it returns `200` with `"database":"ok"`, then the frontend's root path until it returns `200`, and exits non-zero if either does not become healthy within the timeout (`--timeout`/`-TimeoutSeconds` or `HEALTH_TIMEOUT`, default 90 s). URLs default to the local compose ports and can be overridden with `--backend-url`/`--frontend-url` (`-BackendUrl`/`-FrontendUrl`, or `BACKEND_URL`/`FRONTEND_URL`).
+- `migrate`, `rollback`, and `seed` are documented in `docs/08_database/DATABASE_MIGRATIONS.md` section 4.
+
+Because the backend applies pending migrations itself when `APP_ENV=development` (`DOCKER_COMPOSE.md` section 6.5), step 2 of the sequence below is only a separate action for a non-development `APP_ENV`.
 
 ---
 
@@ -92,13 +98,13 @@ All of these scripts currently exist in the repository as empty placeholders. Th
 
 Migrations run before the new backend container starts serving traffic so that the backend never runs against a schema it does not expect. This satisfies NFR-REPRO-003 (the schema must be reproducible from version-controlled migrations) and avoids the failure mode where a new backend version queries columns or tables that do not exist yet.
 
-Migrations are additive-first where practical (new nullable columns, new tables) so that, if a rollback of the backend image is later needed, the previous backend version can generally keep running against the migrated schema without also requiring an immediate schema rollback. Destructive migrations (dropping/renaming columns in use) are called out for care in `scripts/database/migrate.sh`'s design, since they remove that safety margin.
+Migrations are additive-first where practical (new nullable columns, new tables) so that, if a rollback of the backend image is later needed, the previous backend version can generally keep running against the migrated schema without also requiring an immediate schema rollback. Destructive migrations (dropping/renaming columns in use) need explicit care, since they remove that safety margin (see the migration rules in `docs/08_database/DATABASE_MIGRATIONS.md` section 5).
 
 ---
 
 ## 6. Health Check Contract
 
-Per NFR-AVAIL-002 and NFR-DEP-005, the backend exposes a health endpoint, illustratively:
+Per NFR-AVAIL-002 and NFR-DEP-005, the backend exposes a health endpoint (`internal/http/router.go`, outside `/api/v1`):
 
 ```text
 GET /health
@@ -110,7 +116,7 @@ GET /health
 }
 ```
 
-The endpoint is expected to check, at minimum, that the process is running and that it can reach the configured PostgreSQL/PostGIS database (e.g. via a lightweight `SELECT 1` or connection ping). A non-2xx response, or a response where `database` is not `"ok"`, indicates the deployment is not ready to serve traffic.
+The endpoint checks that the process is running and that it can reach the configured PostgreSQL/PostGIS database (a connection-pool ping with a short timeout). If the ping fails it returns `503 Service Unavailable` with both fields set to `"unavailable"`. A non-2xx response, or a response where `database` is not `"ok"`, indicates the deployment is not ready to serve traffic.
 
 `scripts/deployment/health-check.sh` / `.ps1` are the intended entry point for checking this endpoint after a deploy, and the same endpoint is used as the Docker Compose healthcheck target in local development (`DOCKER_COMPOSE.md` section 6.2), so the health contract is identical in both contexts.
 
@@ -153,7 +159,7 @@ No automated rollback trigger exists (e.g. an automatic revert on failed health 
 
 To avoid overstating the maturity of this deployment story:
 
-- No claim is made that GeoResponse is currently deployed anywhere. This document describes the intended deployment approach and the scripts that would carry it out once implemented.
+- No claim is made that GeoResponse is currently deployed anywhere. This document describes the deployment approach and the scripts that carry it out; they have been exercised against a local Docker host only.
 - No load balancer, reverse proxy beyond the frontend's own nginx container, or TLS termination layer is described, since none is provisioned for this take-home. NFR-SEC-005 (secure transport) would apply if the system were exposed beyond a trusted local environment, but that exposure does not currently exist.
 - No multi-instance/HA database setup is described; a single PostgreSQL+PostGIS container is the documented target, consistent with `docs/05_engineering/TECHNOLOGY_SELECTION.md`'s decision boundaries (no premature infrastructure).
 

@@ -33,18 +33,28 @@ Within a feature package:
 
 | File | Contents |
 |---|---|
-| `<feature>.go` | Domain types and invariants (e.g. `resource.go`) |
+| `<feature>.go` | Domain types and invariants (e.g. `resource.go`, `audit.go`, `hotspot.go`; `history.go`, `user.go`, `role.go` where the domain noun differs from the package name) |
 | `service.go` | Application/use-case logic |
 | `repository.go` | Repository interface (defined by the feature, implemented elsewhere) |
-| `handler.go` | HTTP handlers for the feature |
-| `dto.go` | Request/response DTOs |
-| `middleware.go` | Feature-specific middleware, if any (e.g. `auth/middleware.go`) |
 | `<file>_test.go` | Tests for the corresponding file |
+
+HTTP handlers and their DTOs do **not** live in the feature package. They
+live in `internal/http/<feature>_handler.go` (e.g.
+`internal/http/resource_handler.go`), one file per feature holding both
+the handler struct and its unexported request/response DTOs, because a
+feature package importing `internal/http/httpresponse` would create an
+import cycle (`BACKEND_ARCHITECTURE.md` section 3). HTTP middleware,
+including authentication, lives in `internal/http/middleware/<concern>.go`
+(`auth.go`, `cors.go`, `logging.go`, `recovery.go`).
 
 Repository implementations live under `internal/repository/postgres/` as
 `<feature>_repository.go` (e.g. `resource_repository.go`), not inside the
 feature package itself — this keeps the database driver import out of the
-feature package (`BACKEND_DEPENDENCIES.md` section 4).
+feature package (`BACKEND_DEPENDENCIES.md` section 4). The exception is
+`user_repository.go` (implementing `auth.Repository`) and
+`authorization_repository.go` (holding both `RoleRepository` and
+`PermissionRepository`), named after the table/domain noun rather than the
+package.
 
 File names use `snake_case.go`, consistent with standard Go tooling
 conventions (`gofmt`/`go vet` do not enforce this, but it is the prevailing
@@ -58,20 +68,24 @@ convention across the Go ecosystem and this project follows it).
   API, per `CODING_STANDARDS.md` section 14.
 - A repository **interface** is exported (`resource.Repository`) because the
   application layer and tests depend on it.
-- A repository **implementation** struct may be unexported when it is only
-  ever constructed through an exported constructor:
+- A repository **implementation** struct is exported (`ResourceRepository`)
+  so `main.go` and the repository tests can name it; it is still only
+  constructed through its constructor, which takes the package's small
+  `db` interface (satisfied by both `*pgxpool.Pool` and a transaction) so
+  the same implementation runs inside or outside a transaction:
 
 ```go
 // internal/repository/postgres/resource_repository.go
 
-type resourceRepository struct {
-    pool *pgxpool.Pool
+// ResourceRepository is the PostgreSQL/PostGIS implementation of
+// resource.Repository.
+type ResourceRepository struct {
+    db db
 }
 
-// NewResourceRepository creates a PostgreSQL-backed implementation of
-// resource.Repository.
-func NewResourceRepository(pool *pgxpool.Pool) resource.Repository {
-    return &resourceRepository{pool: pool}
+// NewResourceRepository constructs a ResourceRepository over conn.
+func NewResourceRepository(conn db) *ResourceRepository {
+    return &ResourceRepository{db: conn}
 }
 ```
 
@@ -86,24 +100,29 @@ func NewResourceRepository(pool *pgxpool.Pool) resource.Repository {
 
 | Concept | Pattern | Example |
 |---|---|---|
-| HTTP handler struct | `<Feature>Handler` | `resource.Handler` (package already scopes it, so within `resource` it is just `Handler`; referenced externally as `resource.Handler`) |
-| Application/use-case struct | `<Feature>Service` | `resource.Service` |
-| Repository interface | `<Feature>Repository` | `resource.Repository` |
-| Repository implementation | `<feature>Repository` (unexported) or `postgres<Feature>Repository` if exported is needed | `resourceRepository` in `internal/repository/postgres` |
-| Constructor | `New<Type>` | `resource.NewService(...)`, `postgres.NewResourceRepository(...)` |
+| HTTP handler struct | `<Feature>Handler` in package `internal/http` | `http.ResourceHandler`, `http.AuthHandler`, `http.HotspotHandler` |
+| Application/use-case struct | `Service` (package already scopes it) | `resource.Service`, `audit.Service` |
+| Repository interface | `Repository` (package-scoped), or `<Noun>Repository` when a package has more than one | `resource.Repository`; `authorization.RoleRepository`, `authorization.PermissionRepository` |
+| Repository implementation | `<Feature>Repository` (exported) in package `postgres` | `postgres.ResourceRepository`, `postgres.UserRepository` |
+| Constructor | `New<Type>` | `resource.NewService(...)`, `postgres.NewResourceRepository(...)`, `http.NewResourceHandler(...)` |
 
 Handler methods are named after the operation, matching the API action, not
 the HTTP verb alone: `List`, `Get`, `Create`, `Update`, `Delete`,
-`ChangeStatus`, `Relocate`, `History` — mirroring the endpoints in
-`API_CONTRACT.md` sections 6–9.
+`ChangeStatus`, `Relocate` on `ResourceHandler`, and `Get` on
+`ResourceHistoryHandler` — mirroring the endpoints in `API_CONTRACT.md`
+sections 6–9.
 
-Service methods use the same verbs so the mapping from handler to use case
-is immediately traceable:
+Service methods use the same verbs, qualified with the domain noun, so the
+mapping from handler to use case is immediately traceable:
 
 ```go
-func (h *Handler) Relocate(w http.ResponseWriter, r *http.Request) { /* ... */ }
-func (s *Service) Relocate(ctx context.Context, id string, loc Location) (*Resource, error) { /* ... */ }
+func (h *ResourceHandler) Relocate(w http.ResponseWriter, r *http.Request) { /* ... */ }
+func (s *Service) RelocateResource(ctx context.Context, actingUserID string, actingRoleNames []string, id string, location Location) (*Resource, error) { /* ... */ }
 ```
+
+Every protected use case takes the acting user's id and role names as its
+first arguments after `ctx`, so it can enforce permissions and attribute
+the resulting history/audit records without reaching into HTTP context.
 
 ---
 
@@ -128,35 +147,39 @@ type Resource struct {
 ```
 
 ```go
-// internal/resource/dto.go — transport types
-type CreateResourceRequest struct {
+// internal/http/resource_handler.go — transport types (unexported: only
+// the handler in the same package ever names them)
+type createResourceRequest struct {
     ID         string         `json:"id"`
     Name       string         `json:"name"`
     Type       string         `json:"type"`
     Status     string         `json:"status"`
     Attributes map[string]any `json:"attributes"`
-    Location   LocationDTO    `json:"location"`
+    Location   locationDTO    `json:"location"`
 }
 
-type ResourceResponse struct {
+type resourceResponse struct {
     ID         string         `json:"id"`
     Name       string         `json:"name"`
     Type       string         `json:"type"`
     Status     string         `json:"status"`
     Attributes map[string]any `json:"attributes"`
-    Location   LocationDTO    `json:"location"`
-    UpdatedAt  time.Time      `json:"updatedAt"`
+    Location   locationDTO    `json:"location"`
 }
 ```
 
 Naming rules:
 
 - DTOs are suffixed `Request` / `Response` (or `DTO` for nested shapes used
-  in both directions, e.g. `LocationDTO`).
-- Domain types carry no `json` struct tags beyond what is unavoidable;
-  preferably none, with mapping handled explicitly in `dto.go` conversion
-  functions (`ToResponse()`, `(r CreateResourceRequest) ToDomain()`), so
-  wire format changes do not ripple into the domain type.
+  in both directions, e.g. `locationDTO`), and are unexported because they
+  are only referenced from the handler file that declares them.
+- Domain types carry no `json` struct tags; mapping is handled explicitly
+  by conversion functions next to the DTOs (`resourceToResponse(r)`,
+  `(req createResourceRequest) toDomain()`), so wire format changes do not
+  ripple into the domain type.
+- Timestamps are formatted with the shared `timeFormat` constant in
+  `internal/http/common.go` (RFC 3339 / ISO 8601), never with ad hoc
+  layouts per handler.
 - Field names in DTOs mirror `DATA_CONTRACT.md`'s `camelCase` JSON naming
   exactly.
 

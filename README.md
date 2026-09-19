@@ -4,42 +4,45 @@ A geospatial resource management application for disaster response.
 
 ## Implementation Status
 
-This repository currently contains the full specification and documentation
-set for GeoResponse — `docs/01_product/` through `docs/13_ai/`, plus this
-README, `AGENTS.md`, and `CLAUDE.md` — covering product scope, requirements,
-architecture, API/data contracts, engineering standards, and AI-assisted
-workflow.
+GeoResponse is implemented end to end and runs with one command
+(`./run.sh` / `.\run.ps1`, see [Running the System](#running-the-system)):
 
-**Phase 0 (Repository & Tooling Setup, per `IMPLEMENTATION_CHECKLIST.md`
-section 3) is done; the actual resource-management features are not yet
-implemented:**
+- **Backend** (`georesponse-be/`) — the full `/api/v1` surface in
+  `docs/04_contracts/API_CONTRACT.md`: resource CRUD, status change,
+  relocation, history, search/filter/pagination, cookie-based
+  authentication, role/permission management, audit trail, the BMKG
+  GeoHotspot overlay endpoint, and `GET /health`. Configuration is
+  validated at start-up (the process refuses to start on a missing or
+  malformed variable), and in `APP_ENV=development` pending migrations are
+  applied automatically before the port is bound.
+- **Frontend** (`georesponse-fe/`) — login, resource list + MapLibre map
+  (behind the Map Adapter), search/filter, detail card, create (form or
+  double-click on the map), update, status change, relocate, delete,
+  history view, role management, audit trail view, and the hotspot overlay.
+- **Database** (`database/`) — seven migration pairs and three seed files
+  (sample resources plus two demo accounts, see `AKUN.md`).
+- **Containerization** — real multi-stage `Dockerfile`s for both apps, a
+  root `docker-compose.yml` (PostGIS with first-run migration + seeding,
+  backend with healthcheck, nginx-served frontend), `run.sh`/`run.ps1`, and
+  the `scripts/docker/` and `scripts/deployment/` script pairs.
+- **Tests** — unit tests colocated with the code (Go `testing`; Vitest +
+  React Testing Library), an API integration suite under
+  `tests/integration/` (runs in CI against a PostGIS service container),
+  and a Playwright golden-path e2e test under `tests/e2e/` (run locally
+  against the composed stack; see `tests/README.md`).
+- **CI** — `.github/workflows/ci.yml`: frontend lint/type-check/build/test,
+  backend fmt/vet/build/test, the integration job, and Docker image build
+  verification for both images.
 
-- `georesponse-be/` has a real `go.mod`, a minimal `net/http`/Chi server
-  (`cmd/api/main.go`), config loading, structured logging, and a working
-  `GET /health` endpoint — verified with `go build`/`go vet`/`gofmt` and a
-  live smoke test. No feature packages (`resource`, `auth`, etc.) exist
-  yet; the API only has `/health`, not the surface in `API_CONTRACT.md`.
-- `georesponse-fe/` has a complete `package.json`, Rspack/TypeScript/
-  ESLint/Prettier/Tailwind CSS v4/Vitest configuration wired to the
-  existing `src/` files — **not yet verified**, since Node.js/npm are not
-  available in the environment that built it. Run `npm install && npm run
-  build` to confirm before trusting it.
-- `database/migrations/` has 5 migration pairs and `database/seeds/` has a
-  sample dataset, matching `DATABASE_SCHEMA.md` — **not yet applied**
-  against a real database (none was available to test against).
-- `scripts/database/`, `scripts/dev/`, and `scripts/quality/` (including
-  real lint config and a working `sonar-project.properties` +
-  `sonar.sh`/`.ps1`) have real content — **not yet run end-to-end**
-  (requires Node.js, Go — available — a live PostgreSQL+PostGIS instance,
-  and optionally the `migrate`/`sonar-scanner` CLIs).
-- `docker/`, both applications' `Dockerfile`s, and `scripts/docker/`/
-  `scripts/deployment/` remain placeholders — that's Phase 8, not started.
-
-See `QUICK_START.md` for the short version of how to run what exists today,
-and `IMPLEMENTATION_CHECKLIST.md` for the exact, checkbox-level state of
-every phase. This status is disclosed here, consistent with the take-home
-brief's requirement to document any incomplete feature, rather than left
-implicit.
+Intentionally not implemented at this scope, per
+`docs/01_product/SCOPE.md` and `docs/05_engineering/TECHNOLOGY_SELECTION.md`
+section 17: any deployment to a hosted environment, continuous deployment,
+TLS termination, a container registry, and the e2e suite as a CI stage. The
+exact, checkbox-level state of every phase — including which verification
+steps were run in which environment — is tracked in
+`IMPLEMENTATION_CHECKLIST.md`. This status is disclosed here, consistent
+with the take-home brief's requirement to document any incomplete feature,
+rather than left implicit.
 
 ## Overview
 
@@ -89,7 +92,7 @@ concrete user-facing flows.
 | Map | MapLibre GL JS | Selected via a controlled benchmark against Leaflet and OpenLayers — see `geo-map-benchmark/` |
 | Server State | TanStack Query | Caching, refetching, and mutation lifecycle for API data |
 | Client State | React `useState` / `useReducer` | Sufficient for local UI state; no global store needed |
-| Styling | CSS | Low dependency overhead, sufficient for the app's scope |
+| Styling | CSS (Tailwind CSS v4) | Low dependency overhead, sufficient for the app's scope |
 | Frontend Testing | Vitest + React Testing Library | Component and behavior testing |
 | Backend | Go | Mandatory requirement |
 | HTTP Routing | Chi + `net/http` | Lightweight routing on top of the Go standard library |
@@ -112,6 +115,7 @@ georesponse/
 │   ├── migrations/
 │   └── seeds/
 ├── docker/                # Container and local-orchestration assets
+│   └── postgres/init/     # First-run migration + seed hook for the compose database
 ├── scripts/               # Dev, database, deployment, docker, and quality scripts (.sh + .ps1 pairs)
 │   ├── dev/
 │   ├── database/
@@ -124,15 +128,23 @@ georesponse/
 ├── geo-map-benchmark/     # Standalone sub-project: benchmarks Leaflet, OpenLayers,
 │                          # and MapLibre GL JS; its result is consumed by georesponse-fe
 ├── docs/                  # Authoritative, spec-driven project documentation (01_product … 13_ai)
+├── .github/workflows/     # CI pipeline (ci.yml)
+├── docker-compose.yml     # Local orchestration: PostGIS + backend + nginx-served frontend
+├── run.sh, run.ps1        # One-command build-and-start of the whole stack
+├── .env.example           # Compose-level variables (copied to .env by run.sh/run.ps1)
+├── AKUN.md                # Seeded demo accounts (local development only)
+├── QUICK_START.md         # One-page: how to run, why these libraries, how AI was used
+├── IMPLEMENTATION_CHECKLIST.md  # Checkbox-level implementation status per phase
 ├── AGENTS.md              # Tool-agnostic operating rules for AI coding agents
 ├── CLAUDE.md              # Claude Code entry point (mirrors AGENTS.md)
-└── README.md               # This file
+└── README.md              # This file
 ```
 
 ## Running the System
 
-Once implementation is complete, the intended way to run the whole stack
-locally is a single command from the repository root:
+The whole stack runs locally with a single command from the repository
+root (Docker Desktop or Docker Engine + Compose v2 is the only
+prerequisite):
 
 ```bash
 ./run.sh        # macOS/Linux
@@ -143,9 +155,14 @@ locally is a single command from the repository root:
 ```
 
 `run.sh`/`run.ps1` copy each `.env.example` to `.env` if one doesn't already
-exist, then start the full stack (frontend, backend, PostGIS) via
-`docker compose`, with the database schema migrated automatically before the
-backend starts serving. No other setup step is required. See
+exist, then build and start the full stack (frontend, backend, PostGIS) via
+`docker compose`, waiting until every service is healthy; on a brand-new
+database volume the schema is migrated and seeded automatically, and the
+backend applies any newer migration itself on every start. The frontend is
+then at `http://localhost:5173` (demo login `user-001` / `ChangeMe123!`,
+see `AKUN.md`), the API at `http://localhost:8080/api/v1`, and the health
+check at `http://localhost:8080/health`. No other setup step is required.
+See
 [`docs/11_devops/DOCKER_COMPOSE.md`](docs/11_devops/DOCKER_COMPOSE.md) for
 exactly what that script does under the hood, and
 [`docs/11_devops/ENVIRONMENT_MANAGEMENT.md`](docs/11_devops/ENVIRONMENT_MANAGEMENT.md)
@@ -166,12 +183,13 @@ prerequisites, install, and run instructions for running it directly
 The database schema and seed data live in `database/migrations/` and
 `database/seeds/`; the `scripts/database/` folder has paired `.sh`/`.ps1`
 helpers to run migrations, rollbacks, and seeding. The `scripts/dev/` folder
-has similar helpers for day-to-day setup. Container definitions for running
-the full stack locally are under `docker/`.
+has similar helpers for day-to-day setup. The compose file's first-run
+database initialization hook lives under `docker/postgres/init/`.
 
 End-to-end and cross-application integration tests live in `tests/e2e/` and
 `tests/integration/`, separate from each application's own unit/component
-tests.
+tests; both need a running stack, and `tests/README.md` explains how to run
+them.
 
 ### geo-map-benchmark
 

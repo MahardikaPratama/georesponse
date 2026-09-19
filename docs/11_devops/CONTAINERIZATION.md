@@ -27,12 +27,12 @@ Out of scope:
 
 ## 3. Current State
 
-Both Dockerfiles exist in the repository as empty scaffolding, to be filled in as implementation artifacts:
+Both Dockerfiles are implemented and are what `docker-compose.yml`, `scripts/docker/build.sh`/`.ps1`, and the CI `docker-build` job build:
 
-- `georesponse-fe/Dockerfile` — empty, intended to build the React + TypeScript frontend.
-- `georesponse-be/Dockerfile` — empty, intended to build the Go backend.
+- `georesponse-fe/Dockerfile` — two-stage build of the React + TypeScript frontend (Node build → nginx runtime), with `georesponse-fe/nginx.conf` as the runtime server block and `georesponse-fe/.dockerignore` excluding `node_modules`, `dist`, `.env*`, and test artifacts.
+- `georesponse-be/Dockerfile` — two-stage build of the Go backend (Go build → Alpine runtime), with `georesponse-be/.dockerignore` excluding `.env*`, local binaries, and test artifacts.
 
-This document describes the intended content and structure of those files. Nothing below should be read as "already implemented" — it is the target design these Dockerfiles should be written to.
+The sections below describe the design those files implement; where the real file deviates from the illustrative sketch, the deviation is called out.
 
 ---
 
@@ -68,18 +68,21 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci
 COPY . .
-RUN npm run build
+ARG API_BASE_URL=http://localhost:8080/api/v1
+ARG MAP_TILE_URL=
+ARG LOG_LEVEL=info
+RUN NODE_ENV=production API_BASE_URL="${API_BASE_URL}" MAP_TILE_URL="${MAP_TILE_URL}" LOG_LEVEL="${LOG_LEVEL}" npm run build
 
 # ---- Runtime stage ----
 FROM nginx:1.27-alpine AS runtime
 COPY --from=build /app/dist /usr/share/nginx/html
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 EXPOSE 80
-HEALTHCHECK --interval=30s --timeout=3s CMD wget -qO- http://localhost:80/ || exit 1
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 CMD wget -qO- http://localhost:80/ >/dev/null || exit 1
 CMD ["nginx", "-g", "daemon off;"]
 ```
 
-The `API base URL` the frontend calls is injected at runtime (see `ENVIRONMENT_MANAGEMENT.md`), not baked into the built JS bundle, so the same image can be reused across environments where the backend address differs.
+The frontend is a static SPA whose configuration (`API_BASE_URL`, `MAP_TILE_URL`, `LOG_LEVEL`) is inlined by Rspack's `DefinePlugin` at build time (see `ENVIRONMENT_MANAGEMENT.md` section 5.1). The real Dockerfile therefore takes those three values as `ARG`s in the build stage — `docker-compose.yml` passes them from the root `.env` through `build.args`, and `scripts/docker/build.sh`/`.ps1` pass them as `--build-arg` — so a frontend image is fixed to the backend address it was built for. Reusing one frontend image across environments with different backend addresses would require a runtime-injected config file served next to the assets, which this scope does not need.
 
 ---
 
@@ -95,7 +98,7 @@ Go compiles to a single static binary, which makes a minimal runtime image strai
 ```text
 ┌─────────────────────────┐      ┌─────────────────────────┐
 │  Stage 1: build          │      │  Stage 2: runtime        │
-│  golang:1.22-alpine       │      │  gcr.io/distroless/static │
+│  golang:1.26-alpine       │      │  gcr.io/distroless/static │
 │                           │      │  (or alpine)               │
 │  COPY go.mod go.sum        │      │                           │
 │  RUN go mod download        │ ──▶ │  COPY --from=build         │
@@ -110,7 +113,7 @@ Go compiles to a single static binary, which makes a minimal runtime image strai
 # georesponse-be/Dockerfile (illustrative target design)
 
 # ---- Build stage ----
-FROM golang:1.22-alpine AS build
+FROM golang:1.26-alpine AS build
 WORKDIR /app
 COPY go.mod go.sum ./
 RUN go mod download
@@ -125,7 +128,7 @@ USER nonroot:nonroot
 ENTRYPOINT ["/georesponse-be"]
 ```
 
-A `HEALTHCHECK` instruction is omitted from the distroless runtime stage because distroless images have no shell/`wget`/`curl` to run it with; instead, container orchestration (docker-compose) performs the health check externally against the backend's HTTP `/health` endpoint (see `DEPLOYMENT.md`).
+The real `georesponse-be/Dockerfile` uses the `alpine` option for the runtime stage rather than distroless, for one concrete reason: `docker-compose.yml`'s backend healthcheck runs `wget` *inside* the container against `/health`, and distroless has no shell or `wget` to run it with. Alpine's busybox provides `wget`, the image also installs `ca-certificates` (outbound HTTPS to BMKG), and the binary runs as a dedicated non-root user. Migration files are not bundled into the image; the compose file bind-mounts `database/migrations` read-only at `/migrations` and sets `MIGRATIONS_DIR` (see `DOCKER_COMPOSE.md` section 6.5).
 
 ---
 
@@ -133,8 +136,8 @@ A `HEALTHCHECK` instruction is omitted from the distroless runtime stage because
 
 | Component | Image Name (illustrative) | Tag Convention |
 |---|---|---|
-| Frontend | `georesponse-fe` | `latest` for local dev; `<git-short-sha>` for CI-built verification images |
-| Backend | `georesponse-be` | `latest` for local dev; `<git-short-sha>` for CI-built verification images |
+| Frontend | `georesponse-fe` | `latest` for local dev (`docker compose up --build`); `<git-short-sha>` from `scripts/docker/build.sh` / `deploy.sh`; `ci` for the CI `docker-build` verification job |
+| Backend | `georesponse-be` | `latest` for local dev (`docker compose up --build`); `<git-short-sha>` from `scripts/docker/build.sh` / `deploy.sh`; `ci` for the CI `docker-build` verification job |
 
 Since this take-home does not push images to a registry, no registry namespace prefix (e.g. `ghcr.io/<org>/`) is defined yet. If a registry were introduced, images would be namespaced as `ghcr.io/<org>/georesponse-fe:<tag>` and `ghcr.io/<org>/georesponse-be:<tag>` following standard convention, but this is not implemented.
 
@@ -151,18 +154,18 @@ Per NFR-SEC-004 (credential protection) and NFR-DEP-003 (configuration separatio
 - **`.env` files** — local `.env` files are excluded from the build context via `.dockerignore` so they can never accidentally end up inside an image layer.
 - **Development-only files** — test files, `node_modules` dev dependencies, Go build cache, and local tooling configuration are left out of the final runtime stage by virtue of the multi-stage build only copying the compiled output forward.
 
-A `.dockerignore` file in each application directory (frontend and backend) is part of the intended implementation, excluding at minimum: `node_modules`, `.env*`, `dist`, `*.log`, `.git`, and test artifacts.
+A `.dockerignore` file exists in each application directory (`georesponse-fe/.dockerignore`, `georesponse-be/.dockerignore`), excluding `node_modules`, `.env`/`.env.*`, `dist`/`build`, `coverage`, `*.log`, `.git`, local binaries, and test artifacts.
 
 ---
 
 ## 8. Local Build Entry Points
 
-Two placeholder script pairs exist to standardize image builds without requiring each developer to remember raw `docker build` invocations:
+Two script pairs standardize image builds so nobody has to remember raw `docker build` invocations:
 
-- `scripts/docker/build.sh` / `scripts/docker/build.ps1` — intended to build both the frontend and backend images with the naming convention above.
-- `scripts/docker/clean.sh` / `scripts/docker/clean.ps1` — intended to remove locally built GeoResponse images and dangling build cache.
+- `scripts/docker/build.sh` / `scripts/docker/build.ps1` — build both images (or one, with `--fe-only`/`--be-only`, `-FeOnly`/`-BeOnly`) tagged `<name>:<tag>` **and** `<name>:latest`, where `<tag>` defaults to the current git short SHA (immutable per build, per section 6) and can be overridden with `--tag`/`-Tag` or `IMAGE_TAG`. Frontend build arguments are read from the environment or the root `.env`.
+- `scripts/docker/clean.sh` / `scripts/docker/clean.ps1` — stop the compose stack's containers, remove every `georesponse-fe:*` / `georesponse-be:*` image, and prune dangling build layers — nothing else on the machine is touched. The database volume is kept unless `--volumes`/`-Volumes` is passed.
 
-These scripts are currently empty placeholders and are implementation artifacts still to be written; this document defines the contract they are expected to fulfill (build both images consistently; clean them up without touching unrelated Docker resources on the developer's machine).
+`docker compose up --build` (and therefore `./run.sh`) builds the same Dockerfiles directly; the scripts exist for building/tagging outside compose, e.g. ahead of `scripts/deployment/deploy.sh`.
 
 ---
 

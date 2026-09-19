@@ -83,7 +83,7 @@ Copy `.env.example` to `.env` (not committed) and adjust, or set these through y
 | Map | MapLibre GL JS |
 | Server state | TanStack Query |
 | Client state | React `useState` / `useReducer` only — no Redux/Zustand or other global state library |
-| Styling | Plain CSS |
+| Styling | CSS (Tailwind CSS v4 via PostCSS; utility classes in JSX, palette in `src/utils/colors.ts` + `tailwind.config.js`) |
 | Testing | Vitest + React Testing Library |
 
 Each decision, and why it was made, is documented in `../docs/05_engineering/TECHNOLOGY_SELECTION.md`. The map library specifically was chosen through a dedicated performance benchmark against Leaflet and OpenLayers — see `../geo-map-benchmark`.
@@ -114,4 +114,21 @@ For the full architecture and data-flow explanation, see `../docs/06_frontend/FR
 
 ## Docker
 
-A `Dockerfile` is provided for containerized builds/serving. See `Dockerfile` in this directory.
+The `Dockerfile` in this directory is a two-stage build: `node:20-alpine`
+runs `npm ci` and the Rspack production build, then `nginx:1.27-alpine`
+serves only the built static assets using `nginx.conf` (SPA fallback to
+`index.html`, long-lived caching for content-hashed bundles). Because the
+frontend is a static SPA, `API_BASE_URL`, `MAP_TILE_URL`, and `LOG_LEVEL`
+are inlined at build time and are passed as build arguments — the root
+`docker-compose.yml` feeds them from the root `.env`, and
+`scripts/docker/build.sh`/`.ps1` pass them as `--build-arg`. `.env` itself
+never enters the image (`.dockerignore`).
+
+```sh
+../scripts/docker/build.sh --fe-only
+# Windows: ..\scripts\docker\build.ps1 -FeOnly
+```
+
+Or run the whole stack from the repository root with `./run.sh` /
+`.\run.ps1`; the frontend is then served at `http://localhost:5173`. See
+`../docs/11_devops/CONTAINERIZATION.md` and `../docs/11_devops/DOCKER_COMPOSE.md`.

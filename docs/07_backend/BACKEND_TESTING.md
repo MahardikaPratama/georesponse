@@ -87,14 +87,15 @@ status-change side effects) against a **fake or mocked repository**, so the
 test stays isolated from PostgreSQL:
 
 ```go
-// internal/resource/service_test.go
+// internal/resource/service_test.go (abridged — the file also defines
+// fakeHistoryRecorder, fakeAuditRepository, fakePermissionChecker, and a
+// pass-through TxRunner, one per Service dependency)
 
 type fakeRepository struct {
     resources map[string]resource.Resource
-    histories []resource.LocationHistory
 }
 
-func (f *fakeRepository) FindByID(_ context.Context, id string) (*resource.Resource, error) {
+func (f *fakeRepository) GetByID(_ context.Context, id string) (*resource.Resource, error) {
     r, ok := f.resources[id]
     if !ok {
         return nil, resource.ErrNotFound
@@ -102,20 +103,17 @@ func (f *fakeRepository) FindByID(_ context.Context, id string) (*resource.Resou
     return &r, nil
 }
 
-func (f *fakeRepository) SaveLocationHistory(_ context.Context, h resource.LocationHistory) error {
-    f.histories = append(f.histories, h)
-    return nil
-}
-
 // ... remaining Repository methods
 
-func TestService_Relocate_PreservesIdentityAndStatus(t *testing.T) {
+func TestService_RelocateResource_PreservesIdentityTypeStatus(t *testing.T) {
     repo := &fakeRepository{resources: map[string]resource.Resource{
         "resource-001": {ID: "resource-001", Type: resource.TypeVehicle, Status: resource.StatusInUse},
     }}
-    svc := resource.NewService(repo)
+    history := &fakeHistoryRecorder{}
+    auditRepo := &fakeAuditRepository{}
+    svc := newTestService(repo, history, auditRepo, &fakePermissionChecker{})
 
-    got, err := svc.Relocate(context.Background(), "resource-001", resource.Location{Latitude: -6.915, Longitude: 107.6102})
+    got, err := svc.RelocateResource(context.Background(), "user-001", nil, "resource-001", resource.Location{Latitude: -6.915, Longitude: 107.6102})
     if err != nil {
         t.Fatalf("unexpected error: %v", err)
     }
@@ -129,11 +127,19 @@ func TestService_Relocate_PreservesIdentityAndStatus(t *testing.T) {
     if got.Status != resource.StatusInUse {
         t.Errorf("status changed unexpectedly: got %q", got.Status)
     }
-    if len(repo.histories) != 1 {
-        t.Errorf("expected 1 location history record, got %d", len(repo.histories))
+    if history.locationCalls != 1 {
+        t.Errorf("RecordLocationChange called %d times, want 1", history.locationCalls)
+    }
+    if len(auditRepo.records) != 1 || auditRepo.records[0].Operation != audit.OperationResourceRelocated {
+        t.Errorf("audit records = %+v, want one RESOURCE_RELOCATED entry", auditRepo.records)
     }
 }
 ```
+
+Because every cross-feature collaborator is a narrow interface declared by
+the consumer (`resource.HistoryRecorder`, `resource.PermissionChecker`,
+`resource.TxRunner` — `BACKEND_ARCHITECTURE.md` section 3), each can be
+faked in a few lines without importing the real implementation.
 
 Required coverage in this layer includes the business rules with observable
 side effects:
@@ -157,18 +163,16 @@ decoding, status codes, and the response envelope — using the same fake
 repository or a fake service, not a real database.
 
 ```go
-// internal/resource/handler_test.go
+// internal/http/resource_handler_test.go (fakes shared across handler
+// tests live in internal/http/testhelpers_test.go; requests are sent
+// through the real router so RequireAuth and Chi URL params are exercised)
 
-func TestHandler_Relocate_InvalidLocation(t *testing.T) {
-    svc := resource.NewService(&fakeRepository{ /* ... */ })
-    h := resource.NewHandler(svc)
+func TestResourceHandler_Relocate_InvalidLocation(t *testing.T) {
+    f := newResourceTestFixture(t)   // fakes + real router; f.do adds a
+                                     // signed auth cookie for f.userID
 
-    body := strings.NewReader(`{"latitude": 95.0, "longitude": 107.6}`)
-    req := httptest.NewRequest(http.MethodPatch, "/api/v1/resources/resource-001/location", body)
-    req = withURLParam(req, "id", "resource-001")
-    rec := httptest.NewRecorder()
-
-    h.Relocate(rec, req)
+    rec := f.do(t, http.MethodPatch, "/api/v1/resources/resource-001/location",
+        map[string]any{"latitude": 95.0, "longitude": 107.6})
 
     if rec.Code != http.StatusBadRequest {
         t.Fatalf("status = %d, want %d", rec.Code, http.StatusBadRequest)
@@ -202,7 +206,9 @@ correctly — something a mock cannot verify. They run against a real
 PostgreSQL + PostGIS instance rather than being mocked.
 
 ```text
-scripts/database/migrate.sh   → applies schema to the test database
+scripts/database/migrate.sh   → applies schema to the database DATABASE_URL
+                                  points at (or start the API once with
+                                  APP_ENV=development, which auto-migrates)
 scripts/database/seed.sh      → optional: seed baseline data for scenarios
                                   that need existing rows
 ```
@@ -210,34 +216,35 @@ scripts/database/seed.sh      → optional: seed baseline data for scenarios
 ```go
 // internal/repository/postgres/resource_repository_test.go
 
-func TestResourceRepository_FindByFilters_MatchesTypeAndStatus(t *testing.T) {
-    pool := testPool(t) // connects to a disposable test database, migrated via
-                         // the same migrations scripts/database/migrate.sh applies
+func TestResourceRepository_List_Filters(t *testing.T) {
+    tx := testTx(t) // testhelpers_test.go: connects to DATABASE_URL, opens a
+                    // transaction, rolls it back in t.Cleanup
 
-    repo := postgres.NewResourceRepository(pool)
-    seedResource(t, pool, resource.Resource{ID: "r1", Type: resource.TypeVehicle, Status: resource.StatusAvailable})
-    seedResource(t, pool, resource.Resource{ID: "r2", Type: resource.TypeFacility, Status: resource.StatusAvailable})
+    repo := NewResourceRepository(tx)
+    mustCreate(t, repo, resource.Resource{ID: "r1", Type: resource.TypeVehicle, Status: resource.StatusAvailable, /* ... */})
+    mustCreate(t, repo, resource.Resource{ID: "r2", Type: resource.TypeFacility, Status: resource.StatusAvailable, /* ... */})
 
-    got, err := repo.FindByFilters(context.Background(), resource.Filters{Type: resource.TypeVehicle})
+    vehicle := resource.TypeVehicle
+    got, total, err := repo.List(context.Background(), resource.Filters{Type: &vehicle})
     if err != nil {
         t.Fatalf("unexpected error: %v", err)
     }
-    if len(got) != 1 || got[0].ID != "r1" {
-        t.Fatalf("FindByFilters(type=Vehicle) = %v, want only r1", got)
+    if total != 1 || len(got) != 1 || got[0].ID != "r1" {
+        t.Fatalf("List(type=VEHICLE) = %v (total %d), want only r1", got, total)
     }
 }
 ```
 
 Guidelines:
 
-- Each test uses an isolated schema/transaction (e.g. wrap in a transaction
-  and roll back at the end, or truncate relevant tables in test setup) so
-  tests remain independent and repeatable.
-- Repository tests are skipped (via `t.Skip` or a build tag, e.g.
-  `//go:build integration`) when no test database is configured, so `go test
-  ./...` remains runnable without PostgreSQL for quick local iteration; the
-  full suite (including repository tests) runs where PostgreSQL is
-  available, such as in CI or via `scripts/dev/test.sh`.
+- Each test runs inside its own transaction (`testTx`) that is rolled back
+  in `t.Cleanup`, so tests remain independent and repeatable and never
+  modify shared seed data. The repositories accept the package's `db`
+  interface precisely so a `pgx.Tx` can stand in for the pool here.
+- Repository tests self-skip with `t.Skip` when `DATABASE_URL` is unset
+  (no build tag), so `go test ./...` remains runnable without PostgreSQL
+  for quick local iteration; they run wherever `DATABASE_URL` points at a
+  migrated PostGIS database.
 - Cover at least: filter combinations (BR-045), PostGIS coordinate
   round-tripping, and the not-found path (`resource.ErrNotFound`).
 
@@ -247,30 +254,42 @@ Guidelines:
 
 | Concern | Layer | Example |
 |---|---|---|
-| Field/enum/coordinate validation | Domain | `TestValidateLocation`, `TestValidateResourceType` |
-| Relocation side effects (identity, type, status preserved; history + audit written) | Application | `TestService_Relocate_*` |
-| Status-change side effects (history + audit written) | Application | `TestService_ChangeStatus_*` |
-| Authorization enforcement | Application / Handler | `TestService_Delete_RequiresPermission` |
-| Error → HTTP status/code mapping | Handler | `TestHandler_*_InvalidX` |
-| Response envelope shape | Handler | `TestHandler_List_ReturnsEnvelope` |
-| Filter/query correctness | Repository | `TestResourceRepository_FindByFilters_*` |
-| Not-found propagation | Repository + Application | `TestResourceRepository_FindByID_NotFound` |
+| Field/enum/coordinate validation | Domain | `TestValidateLocation`, `TestLocation_Validate`, `TestResource_Validate` |
+| Relocation side effects (identity, type, status preserved; history + audit written) | Application | `TestService_RelocateResource_*` |
+| Status-change side effects (history + audit written) | Application | `TestService_ChangeResourceStatus_*` |
+| Authorization enforcement | Application / Handler | `TestService_CreateResource_PermissionDenied` |
+| Error → HTTP status/code mapping | Handler | `TestResourceHandler_*_InvalidX`, `TestResourceHandler_Get_NotFound` |
+| Response envelope shape | Handler | `TestResourceHandler_List_Success` |
+| Filter/query correctness | Repository | `TestResourceRepository_List_Filters` |
+| Not-found propagation | Repository + Application | `TestResourceRepository_GetByID_NotFound` |
 
 ---
 
 ## 8. Running Tests
 
 ```text
-go test ./...                     # unit + application tests (repository
-                                   # tests self-skip without a test DB)
+go test ./...                     # unit + application + handler tests
+                                   # (repository tests self-skip without
+                                   # DATABASE_URL)
 
-scripts/dev/test.sh / test.ps1    # project-standard entry point; provisions
-                                   # what is needed and runs the full suite,
-                                   # including repository tests
+DATABASE_URL=postgres://... go test ./...
+                                   # same, plus repository tests against a
+                                   # migrated PostGIS database
+
+scripts/dev/test.sh / test.ps1    # project-standard entry point: frontend
+                                   # tests, `go test ./...` in georesponse-be,
+                                   # and — only when GEORESPONSE_API_URL is
+                                   # set — the black-box API suite in
+                                   # tests/integration/ against a running
+                                   # stack (see tests/README.md)
 ```
 
-Refer to `georesponse-be/README.md` for the exact local commands, including
-how the test database is provisioned via `scripts/database/migrate.sh`.
+CI (`.github/workflows/ci.yml`) runs `gofmt`, `go vet`, `go build`, and
+`go test ./... -cover` without a database, then a separate job starts the
+API against a PostGIS service container, loads the seeds, and runs
+`tests/integration`. Refer to `georesponse-be/README.md` for the exact
+local commands, including how a database is migrated via
+`scripts/database/migrate.sh`.
 
 ---
 

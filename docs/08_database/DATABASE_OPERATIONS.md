@@ -29,38 +29,49 @@ added here rather than assumed in advance, consistent with
 
 ## 3. Local Development Setup
 
-PostgreSQL with PostGIS runs locally via Docker, using a PostGIS-enabled
-image (e.g. `postgis/postgis:16-3.4`) rather than requiring a native
+PostgreSQL with PostGIS runs locally via Docker, using the PostGIS-enabled
+image `postgis/postgis:16-3.4` rather than requiring a native
 PostgreSQL + PostGIS install on each contributor's machine.
 
-Conceptually (see the `docker/` directory for the actual compose
-definition):
+Conceptually (the actual compose definition is the root
+`docker-compose.yml`, service `georesponse-db`; `docker/postgres/init/`
+holds its first-run initialization hook):
 
 ```text
-docker compose up -d db
+docker compose up -d georesponse-db
         │
         ▼
 PostgreSQL 16 + PostGIS 3.4 container
   - exposed on localhost:5432
-  - named volume for data persistence across restarts
+  - named volume (georesponse-db-data) for persistence across restarts
   - POSTGIS extension available, enabled by migration 0001
+  - on a brand-new volume, docker/postgres/init applies every migration
+    and seed file once (DATABASE_MIGRATIONS.md section 4)
 ```
 
-Typical local workflow:
+Typical local workflow against a natively installed database, or against
+the container when adding a migration after its volume already exists:
 
 ```text
-1. docker compose up -d db          # start the database container
-2. scripts/database/migrate.sh      # apply schema migrations
+1. docker compose up -d georesponse-db   # start the database container
+2. scripts/database/migrate.sh           # apply schema migrations
    (or migrate.ps1 on Windows)
-3. scripts/database/seed.sh         # load local sample data
+3. scripts/database/seed.sh              # load local sample data
    (or seed.ps1 on Windows)
 4. run the Go backend against the local database
 ```
 
-The backend reads its connection string from environment configuration
-(e.g. `DATABASE_URL`), so the same binary can point at a locally
-Dockerized database or, if a contributor prefers, a natively installed
-PostgreSQL + PostGIS instance, without code changes.
+With `APP_ENV=development` the backend also applies any pending migration
+itself at start-up, so step 2 is only needed when running the migration
+scripts or seeds by hand.
+
+The backend and every script read the connection string from the
+`DATABASE_URL` environment variable (required; format
+`postgres://user:password@host:5432/dbname?sslmode=disable`, e.g.
+`postgres://georesponse:georesponse_dev_password@localhost:5432/georesponse?sslmode=disable`
+for the compose defaults in `.env.example`), so the same binary can point
+at a locally Dockerized database or, if a contributor prefers, a natively
+installed PostgreSQL + PostGIS instance, without code changes.
 
 ---
 
@@ -71,9 +82,11 @@ one `pgxpool` connection pool per process.
 
 Operationally, for the scale of a take-home application:
 
-- Pool size defaults are modest (e.g. max 10 connections) — there is no
-  expectation of concurrent load that would require tuning beyond
-  Postgres/pgxpool defaults.
+- Pool size is left at `pgxpool`'s defaults (max connections = the greater
+  of 4 and the CPU count) — there is no expectation of concurrent load
+  that would require tuning. If it ever does, `pgxpool` reads
+  `pool_max_conns` / `pool_min_conns` as query parameters on
+  `DATABASE_URL`; no separate configuration variable exists.
 - The pool is created once at startup and reused for the life of the
   process; it is not recreated per request.
 - No external pooler (PgBouncer) is introduced. A single backend process
@@ -110,7 +123,11 @@ CREATE INDEX idx_resources_location
 ```
 
 Example combined-filter query this supports (type + status + viewport,
-matching BR-045's requirement that combined filters narrow the result set):
+matching BR-045's requirement that combined filters narrow the result set).
+The viewport predicate is illustrative of what the GIST index enables; the
+current `GET /api/v1/resources` filters on `type`, `status`, and a
+case-insensitive name `search` only, and the map view renders the full
+result set client-side:
 
 ```sql
 SELECT id, name, type, status, attributes,
@@ -160,9 +177,10 @@ this take-home project does not have.
 At take-home scope, "monitoring" means the backend can answer whether the
 database is reachable, not a metrics/alerting stack.
 
-- The backend exposes a basic health endpoint (e.g. `GET /health`) that
-  performs a lightweight query (`SELECT 1`) against the pool and reports
-  database connectivity as part of overall service health.
+- The backend exposes a basic health endpoint (`GET /health`) that pings
+  the pool (`pgxpool.Pool.Ping`) and reports database connectivity as part
+  of overall service health; the compose file uses it as the backend's
+  health check.
 - Startup fails fast (see `DATABASE_ARCHITECTURE.md` section 4) rather than
   serving traffic against a database it cannot reach.
 - Slow-query logging is left to PostgreSQL's own configuration

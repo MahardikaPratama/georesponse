@@ -25,10 +25,12 @@ Out of scope:
 
 ## 3. Current State
 
-The repository has an empty `docker/` directory (`docker/.gitkeep`) reserved for shared Docker configuration, and no `docker-compose.yml` exists yet at the repository root. This document defines the intended location and content of that file as an implementation artifact still to be created:
+The compose file and its supporting assets are implemented:
 
-- `docker-compose.yml` — intended to live at the repository root (or inside `docker/`, referenced from the root via a short wrapper, if the team prefers to keep root-level clutter down). This document assumes the root-level location, since that is what `docker compose up` looks for by default without extra flags.
-- `docker/` — intended to hold any shared configuration the compose file references, such as an `nginx.conf` for the frontend runtime image, or a `postgres/init/` directory for one-time database initialization scripts.
+- `docker-compose.yml` — at the repository root (what `docker compose up` looks for by default), defining `georesponse-db`, `georesponse-be`, and `georesponse-fe` as sketched in section 5.
+- `docker/postgres/init/01-init-schema-and-seeds.sh` — the one-time database initialization script the compose file mounts into the PostGIS container's `docker-entrypoint-initdb.d` (see section 6.1).
+- `georesponse-fe/nginx.conf` — the frontend runtime image's nginx server block, kept next to its Dockerfile because that Dockerfile's build context is `georesponse-fe/`.
+- `run.sh` / `run.ps1` — the one-command wrapper described in section 7.1.
 
 ---
 
@@ -57,8 +59,10 @@ The repository has an empty `docker/` directory (`docker/.gitkeep`) reserved for
 
 ## 5. Illustrative `docker-compose.yml`
 
+The sketch below shows the shape of the real root-level `docker-compose.yml`; the real file is the source of truth and adds a few things the sketch omits for brevity: `TOKEN_SECRET`/`TOKEN_TTL`/`CORS_ALLOWED_ORIGINS` passed to the backend, `MIGRATIONS_DIR=/migrations` with `database/migrations` bind-mounted read-only (section 6.5), `image: georesponse-<app>:${IMAGE_TAG:-latest}` on both built services (so `scripts/deployment/deploy.sh --tag` can start a specific tag), the frontend's `build.args` (`API_BASE_URL`, `MAP_TILE_URL`, `LOG_LEVEL` — inlined at build time, see `CONTAINERIZATION.md` section 4.2), `georesponse-fe` waiting for `georesponse-be` to be *healthy* rather than merely started, and the database initialization mounts described in section 6.1.
+
 ```yaml
-# docker-compose.yml (illustrative — intended root-level file, not yet created)
+# docker-compose.yml (illustrative sketch of the real root-level file)
 # Reads ./.env automatically (docker compose's default behavior for a file
 # named ".env" next to the compose file) — see section 6.4 and
 # ENVIRONMENT_MANAGEMENT.md section 6 for the root .env/.env.example pair
@@ -139,7 +143,8 @@ volumes:
 ### 6.1 Database Volume and Migrations
 
 - `georesponse-db-data` is a named volume providing persistence across `docker compose down`/`up` cycles (data is only lost on an explicit `docker compose down -v`).
-- `database/migrations` and `database/seeds` are mounted read-only into Postgres's `docker-entrypoint-initdb.d`, which the official Postgres/PostGIS image runs automatically **only on first container initialization** (an empty data volume) — this is a convenience for a brand-new volume, not the primary migration mechanism. On every subsequent `georesponse-be` startup, the backend itself applies any pending migrations before it starts serving requests (section 6.5), so the schema is always current without a manual step. `scripts/database/migrate.sh`/`.ps1` remain available for running migrations independently of starting the server (see `DATABASE_MIGRATIONS.md`).
+- On **first initialization only** (an empty data volume), the official Postgres/PostGIS image runs the scripts in `docker-entrypoint-initdb.d`. The compose file mounts `docker/postgres/init/` there, and `database/migrations` / `database/seeds` read-only at `/georesponse/migrations` and `/georesponse/seeds`; the init script applies every `*.up.sql` in ascending order, records the resulting version in the same `schema_migrations(version, dirty)` bookkeeping table the golang-migrate CLI uses, then loads every seed file — so a brand-new stack starts with demo resources and the demo login accounts. (Mounting the migration directories *directly* into `docker-entrypoint-initdb.d`, as an earlier sketch did, would not work: the entrypoint only executes files at the top level of that directory, and it would have tried to run the `.down.sql` files too.)
+- This first-run hook is a convenience for a brand-new volume, not the primary migration mechanism. On every `georesponse-be` startup in `APP_ENV=development`, the backend itself applies any migration newer than the database's recorded version before it starts serving requests (section 6.5), so the schema is always current without a manual step. `scripts/database/migrate.sh`/`.ps1` remain available for running migrations independently of starting the server (see `DATABASE_MIGRATIONS.md`).
 
 ### 6.2 Health Checks
 
@@ -160,7 +165,7 @@ The compose file no longer hardcodes any value — every variable is substituted
 
 ### 6.5 Automatic Migration on Backend Startup
 
-When `APP_ENV=development` (the value set for `georesponse-be` in section 5), the backend's entrypoint applies pending database migrations before it binds its HTTP port. This is what lets `./run.sh` / `docker compose up` bring up a fully migrated, ready-to-use stack with no separate migration step for local development.
+When `APP_ENV=development` (the value set for `georesponse-be` in section 5), the backend applies pending database migrations before it binds its HTTP port — `cmd/api/main.go` calls `internal/platform/postgres.Migrate`, which reads `NNNN_*.up.sql` files from `MIGRATIONS_DIR` (`/migrations` in the container, bind-mounted from `database/migrations`; `../database/migrations` by default when run with `go run` from `georesponse-be/`) and applies each one newer than the database's recorded version in its own transaction, using golang-migrate's single-row `schema_migrations(version, dirty)` table so the CLI-driven `scripts/database/migrate.sh` and the start-up runner can be mixed freely against one database. A `dirty` row (a previous run failed part-way) makes the backend refuse to start with a clear error rather than guess at the schema's state. This is what lets `./run.sh` / `docker compose up` bring up a fully migrated, ready-to-use stack with no separate migration step for local development.
 
 This behavior is intentionally scoped to local/dev: `DEPLOYMENT.md` keeps migration as an explicit, separate step ahead of a real deployment, since auto-migrating on every process start is a reasonable local-development convenience but not a safe default for an environment with real data.
 
@@ -170,8 +175,8 @@ This behavior is intentionally scoped to local/dev: `DEPLOYMENT.md` keeps migrat
 
 ### 7.1 Recommended: `run.sh` / `run.ps1`
 
-Once implemented, a single wrapper script at the repository root is the
-recommended entry point:
+A single wrapper script at the repository root is the recommended entry
+point:
 
 ```bash
 ./run.sh        # macOS/Linux
@@ -181,10 +186,15 @@ recommended entry point:
 .\run.ps1       # Windows
 ```
 
-The script performs steps 1–3 and 5 below automatically (env setup, build,
-start, and schema migration), so a developer only runs one command. Section
-7.2 documents what it does under the hood — useful for debugging or for
-running the stack without the wrapper.
+The script checks that Docker is installed and its daemon is running,
+performs steps 1–3 and 5 below automatically (env setup, build, start —
+detached, waiting until every service reports healthy — and schema
+migration/seeding), then prints the access URLs from step 4 and the demo
+login, so a developer only runs one command. `./run.sh --foreground`
+(`.\run.ps1 -Foreground`) stays attached to the compose logs instead, and
+`./run.sh --down` (`.\run.ps1 -Down`) stops the stack while keeping the
+database volume. Section 7.2 documents what it does under the hood — useful
+for debugging or for running the stack without the wrapper.
 
 ### 7.2 Manual / Under-the-Hood Steps
 

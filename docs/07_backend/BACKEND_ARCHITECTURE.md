@@ -45,20 +45,31 @@ Database (PostgreSQL + PostGIS)
 georesponse-be/
 ├── cmd/
 │   └── api/
-│       └── main.go            # wiring: config, DB pool, repositories,
-│                               # use cases, router, HTTP server start-up
+│       └── main.go            # wiring: config, DB pool, dev auto-migrate,
+│                               # repositories, use cases, handlers, router,
+│                               # HTTP server start-up + graceful shutdown
 │
 ├── internal/
 │   ├── platform/
+│   │   ├── bmkg/               # HTTP client for BMKG's GeoHotspot ArcGIS layer
 │   │   ├── config/             # env var loading, validation of config
-│   │   ├── httpserver/         # server bootstrap, graceful shutdown
-│   │   ├── logging/            # structured logger setup
-│   │   └── postgres/           # DB connection pool, PostGIS-aware helpers
+│   │   ├── idgen/              # server-side UUID v4 ids (history, audit)
+│   │   ├── logging/            # structured slog logger, request-scoped logger
+│   │   ├── postgres/           # pgx pool (pool.go), dev-only migrator (migrate.go)
+│   │   └── transaction/        # TxRunner: run repository writes atomically
 │   │
 │   ├── http/
-│   │   ├── router.go           # Chi router assembly, route table
-│   │   ├── middleware/         # logging, recovery, auth, request ID
-│   │   └── httpresponse/       # envelope + error response helpers
+│   │   ├── router.go           # Chi router assembly, route table, /health
+│   │   ├── common.go           # shared constants (timestamp format)
+│   │   ├── resource_handler.go         # handlers + DTOs for /resources
+│   │   ├── resourcehistory_handler.go  # GET /resources/{id}/history
+│   │   ├── auth_handler.go             # /auth/login, /auth/logout, /auth/me
+│   │   ├── authorization_handler.go    # /roles, /permissions, /users/{id}/roles
+│   │   ├── audit_handler.go            # GET /audit-logs
+│   │   ├── hotspot_handler.go          # GET /hotspots
+│   │   ├── middleware/         # request ID, logging, recovery, CORS, auth
+│   │   └── httpresponse/       # envelope, error translation, JSON decoding,
+│   │                           # ValidationError
 │   │
 │   ├── resource/
 │   │   ├── resource.go         # domain type: Resource, Type, Status
@@ -66,65 +77,93 @@ georesponse-be/
 │   │   ├── attribute_validator.go            # AttributeValidator interface +
 │   │   │                                     # AttributeValidatorRegistry (Strategy
 │   │   │                                     # pattern, see section 8.2)
-│   │   ├── attribute_validator_vehicle.go    # one file per ResourceType —
+│   │   ├── attribute_validator_vehicle.go    # one file per resource Type —
 │   │   ├── attribute_validator_facility.go   # adding a new type means adding a
 │   │   ├── attribute_validator_equipment.go  # file here, not editing these ones
 │   │   ├── attribute_validator_iotdevice.go  # (Open/Closed Principle)
-│   │   ├── service.go          # use case: CreateResource, Relocate, ...
-│   │   ├── repository.go       # repository interface (domain-owned)
-│   │   ├── handler.go          # HTTP handlers for /resources
-│   │   └── dto.go              # request/response DTOs for this feature
+│   │   ├── service.go          # use cases: CreateResource, RelocateResource, ...
+│   │   └── repository.go       # repository interface + Filters (domain-owned)
 │   │
 │   ├── resourcehistory/
-│   │   ├── history.go          # domain types: StatusHistory, LocationHistory
-│   │   ├── service.go
-│   │   ├── repository.go
-│   │   └── handler.go
+│   │   ├── history.go          # domain types: StatusHistory, LocationHistory,
+│   │   │                       # ResourceChangeHistory
+│   │   ├── service.go          # HistoryRecorder impl + GetResourceHistory
+│   │   └── repository.go
 │   │
 │   ├── auth/
-│   │   ├── auth.go             # domain: credentials, session/token concept
-│   │   ├── service.go          # login, current-user use cases
-│   │   ├── repository.go
-│   │   ├── handler.go
-│   │   └── middleware.go       # authentication middleware
+│   │   ├── user.go             # domain: User, sentinel errors
+│   │   ├── credentials.go      # domain: Credentials (password hash lookup)
+│   │   ├── token.go            # TokenSigner interface + HMACTokenSigner
+│   │   ├── service.go          # Authenticate, Logout, GetCurrentUser,
+│   │   │                       # AssignUserRoles
+│   │   └── repository.go
 │   │
 │   ├── authorization/
-│   │   ├── role.go             # domain: Role, Permission
-│   │   ├── service.go
-│   │   ├── repository.go
-│   │   └── handler.go
+│   │   ├── role.go             # domain: Role, Permission, sentinel errors
+│   │   ├── guard.go            # HasPermission / Require (permission check)
+│   │   ├── service.go          # role + permission management use cases
+│   │   └── repository.go
 │   │
 │   ├── audit/
-│   │   ├── audit.go            # domain: AuditRecord
-│   │   ├── service.go          # recording + querying audit entries
-│   │   ├── repository.go
-│   │   └── handler.go
+│   │   ├── audit.go            # domain: AuditRecord, Operation enum
+│   │   ├── service.go          # ListAuditRecords use case
+│   │   └── repository.go
+│   │
+│   ├── hotspot/
+│   │   ├── hotspot.go          # domain: Hotspot (BMKG detection), Filters
+│   │   ├── service.go          # ListHotspots + last-good-result fallback
+│   │   └── repository.go
 │   │
 │   └── repository/
+│       ├── bmkg/
+│       │   └── hotspot_repository.go   # hotspot.Repository over platform/bmkg
 │       └── postgres/
+│           ├── db.go                   # db interface shared by pool and tx
+│           ├── transactor.go           # resource.TxRunner over pgx
 │           ├── resource_repository.go
 │           ├── resourcehistory_repository.go
-│           ├── auth_repository.go
-│           ├── authorization_repository.go
+│           ├── user_repository.go
+│           ├── authorization_repository.go   # RoleRepository, PermissionRepository
 │           └── audit_repository.go
 │
+├── scripts/
+│   └── hashpw/                 # dev tool: bcrypt-hash a password for seeds
 └── go.mod
 ```
 
 Each feature package (`resource`, `resourcehistory`, `auth`, `authorization`,
-`audit`) owns its domain types, its use cases, its repository interface, and
-its handlers. This is a **feature-oriented** variant of the layered
+`audit`, `hotspot`) owns its domain types, its use cases, and its repository
+interface. This is a **feature-oriented** variant of the layered
 architecture: layering is enforced inside each package rather than by
 splitting the whole codebase into `domain/`, `usecase/`, `handler/` top-level
 folders. Either arrangement satisfies `DEPENDENCY_RULES.md`; this project
 uses the feature-oriented form because the feature set is small enough that
 top-level layer folders would mostly contain one file each.
 
+HTTP handlers (and their request/response DTOs) are the one layer that does
+**not** live in the feature package: they sit in `internal/http/<feature>_handler.go`.
+The reason is an import cycle — `internal/http/httpresponse.WriteError`
+must import every feature package to translate its sentinel errors, so a
+feature package importing `httpresponse` back to write responses would be
+circular. `internal/http` is the top of the dependency chain (HTTP → use
+case → domain) and is free to import everything below it. The same
+reasoning places the authentication middleware in
+`internal/http/middleware/auth.go` rather than `internal/auth`.
+
 The repository **interface** lives with the feature (e.g.
 `internal/resource/repository.go`) because it is part of the contract the
 application layer depends on. The repository **implementation** lives in
-`internal/repository/postgres` because it is infrastructure and depends on
-the PostgreSQL/PostGIS driver.
+`internal/repository/postgres` (or `internal/repository/bmkg` for the
+external hotspot feed) because it is infrastructure and depends on the
+PostgreSQL/PostGIS driver or an external HTTP API.
+
+Where a feature package needs a collaborator from another feature that
+would create a cycle (e.g. `resource` needs `resourcehistory` to record
+history, but `resourcehistory` already imports `resource` for its
+`Status`/`Location` types), the consumer declares a narrow local interface
+(`resource.HistoryRecorder`, `resource.PermissionChecker`,
+`resource.TxRunner`, `audit.PermissionChecker`, ...) that the real
+collaborator satisfies structurally. `main.go` wires the concrete types.
 
 ---
 
@@ -134,38 +173,66 @@ the PostgreSQL/PostGIS driver.
 once. It is composition, not business logic:
 
 ```go
-// cmd/api/main.go
+// cmd/api/main.go (abridged; see the file for the full wiring)
 func main() {
-    cfg := config.Load()
-
-    pool := postgres.MustConnect(cfg.DatabaseURL)
+    cfg, err := config.Load()          // fails fast on missing/malformed env
+    // ...
+    pool, err := platformpostgres.NewPool(ctx, cfg.DatabaseURL)
     defer pool.Close()
 
-    resourceRepo := postgresrepo.NewResourceRepository(pool)
-    historyRepo := postgresrepo.NewResourceHistoryRepository(pool)
-    auditRepo := postgresrepo.NewAuditRepository(pool)
+    if cfg.AutoMigrate {               // APP_ENV=development only
+        platformpostgres.Migrate(ctx, pool, cfg.MigrationsDir, logger)
+    }
+
+    router := internalhttp.New(logger, buildDependencies(pool, cfg))
+    srv := &http.Server{Addr: cfg.Addr(), Handler: router, ReadHeaderTimeout: 5 * time.Second}
+    // ListenAndServe in a goroutine; SIGINT/SIGTERM → srv.Shutdown with a timeout
+}
+
+func buildDependencies(pool *pgxpool.Pool, cfg *config.Config) internalhttp.Dependencies {
+    tx := repopostgres.NewTransactor(pool)
+    resourceRepo := repopostgres.NewResourceRepository(pool)
+    historyRepo := repopostgres.NewResourceHistoryRepository(pool)
+    auditRepo := repopostgres.NewAuditRepository(pool)
+    roleRepo := repopostgres.NewRoleRepository(pool)
+    permissionRepo := repopostgres.NewPermissionRepository(pool)
+    userRepo := repopostgres.NewUserRepository(pool)
+
+    authorizationService := authorization.NewService(roleRepo, permissionRepo, auditRepo)
+    tokens := auth.NewHMACTokenSigner(cfg.TokenSecret, cfg.TokenTTL)
+    authService := auth.NewService(userRepo, auditRepo, tokens, authorizationService)
 
     // Strategy pattern: each resource type's attribute rules are an
     // independent AttributeValidator, composed here rather than branched on
     // inside resource.Service (section 8.2).
-    attributeValidators := resource.NewAttributeValidatorRegistry(
+    validators := resource.NewAttributeValidatorRegistry(
         resource.NewVehicleAttributeValidator(),
         resource.NewFacilityAttributeValidator(),
         resource.NewEquipmentAttributeValidator(),
         resource.NewIoTDeviceAttributeValidator(),
     )
+    historyService := resourcehistory.NewService(historyRepo, resourceRepo)
+    resourceService := resource.NewService(resourceRepo, historyService, auditRepo, validators, authorizationService, tx)
+    auditService := audit.NewService(auditRepo, authorizationService)
 
-    resourceService := resource.NewService(resourceRepo, historyRepo, auditRepo, attributeValidators)
-    resourceHandler := resource.NewHandler(resourceService)
+    bmkgClient := platformbmkg.NewClient(cfg.BMKGBaseURL, cfg.BMKGTimeout)
+    hotspotService := hotspot.NewService(repobmkg.NewHotspotRepository(bmkgClient))
 
-    router := httprouter.New(httprouter.Dependencies{
-        Resource: resourceHandler,
-        // ... other feature handlers
-    })
-
-    httpserver.Run(cfg.Addr, router)
+    return internalhttp.Dependencies{
+        Pool: pool, Tokens: tokens, Users: userRepo,
+        Resource:        internalhttp.NewResourceHandler(resourceService),
+        ResourceHistory: internalhttp.NewResourceHistoryHandler(historyService),
+        Auth:            internalhttp.NewAuthHandler(authService, cfg.TokenTTL, cfg.AppEnv == "production"),
+        Authorization:   internalhttp.NewAuthorizationHandler(authorizationService, authService),
+        Audit:           internalhttp.NewAuditHandler(auditService),
+        Hotspot:         internalhttp.NewHotspotHandler(hotspotService),
+        CORSAllowedOrigins: cfg.CORSAllowedOrigins,
+    }
 }
 ```
+
+There is no separate `httpserver` package: the `http.Server` construction
+and graceful shutdown are a few lines in `main.go` itself.
 
 Nothing outside `main.go` and `internal/platform` should construct a database
 connection or read an environment variable directly.
@@ -180,19 +247,27 @@ router is assembled in one place, `internal/http/router.go`, mapping the
 
 ```go
 // internal/http/router.go
-func New(deps Dependencies) http.Handler {
+func New(logger *slog.Logger, deps Dependencies) http.Handler {
     r := chi.NewRouter()
 
     r.Use(middleware.RequestID)
-    r.Use(middleware.Logging)
+    r.Use(middleware.Logging(logger))
     r.Use(middleware.Recovery)
+    r.Use(middleware.CORS(deps.CORSAllowedOrigins))
+
+    r.Get("/health", healthHandler(deps.Pool))   // pings the DB; 200 or 503
+
+    requireAuth := middleware.RequireAuth(deps.Tokens, deps.Users)
 
     r.Route("/api/v1", func(r chi.Router) {
-        r.Post("/auth/login", deps.Auth.Login)
-        r.With(deps.Auth.RequireAuth).Get("/auth/me", deps.Auth.Me)
+        r.Route("/auth", func(r chi.Router) {
+            r.Post("/login", deps.Auth.Login)
+            r.With(requireAuth).Post("/logout", deps.Auth.Logout)
+            r.With(requireAuth).Get("/me", deps.Auth.Me)
+        })
 
         r.Route("/resources", func(r chi.Router) {
-            r.Use(deps.Auth.RequireAuth)
+            r.Use(requireAuth)
             r.Get("/", deps.Resource.List)
             r.Post("/", deps.Resource.Create)
             r.Get("/{id}", deps.Resource.Get)
@@ -203,9 +278,18 @@ func New(deps Dependencies) http.Handler {
             r.Get("/{id}/history", deps.ResourceHistory.Get)
         })
 
-        r.Route("/roles", func(r chi.Router) { /* ... */ })
-        r.Get("/permissions", deps.Authorization.ListPermissions)
-        r.Get("/audit-logs", deps.Audit.List)
+        r.Route("/roles", func(r chi.Router) {
+            r.Use(requireAuth)
+            r.Get("/", deps.Authorization.ListRoles)
+            r.Post("/", deps.Authorization.CreateRole)
+            r.Put("/{id}", deps.Authorization.UpdateRole)
+            r.Delete("/{id}", deps.Authorization.DeleteRole)
+            r.Put("/{id}/permissions", deps.Authorization.SetRolePermissions)
+        })
+        r.With(requireAuth).Get("/permissions", deps.Authorization.ListPermissions)
+        r.With(requireAuth).Put("/users/{id}/roles", deps.Authorization.SetUserRoles)
+        r.With(requireAuth).Get("/audit-logs", deps.Audit.List)
+        r.With(requireAuth).Get("/hotspots", deps.Hotspot.List)
     })
 
     return r
@@ -213,8 +297,9 @@ func New(deps Dependencies) http.Handler {
 ```
 
 Route grouping mirrors the resource-oriented structure of `API_CONTRACT.md`
-sections 5–11. No handler registers its own sub-router outside this file;
-this keeps the full route table discoverable in one place.
+sections 5–11 and 18. No handler registers its own sub-router outside this
+file; this keeps the full route table discoverable in one place. Every
+`/api/v1` route except `POST /auth/login` is behind `RequireAuth`.
 
 ---
 
@@ -229,11 +314,13 @@ Logging
    ↓
 Panic Recovery
    ↓
-Authentication (route-scoped)
+CORS
    ↓
-Authorization (handler-scoped, permission check)
+Authentication (route-scoped: RequireAuth)
    ↓
 Handler
+   ↓
+Use case → Authorization (permission check: authorization.Service.Require)
 ```
 
 - **Request ID / Logging** apply globally and are cheap; they support
@@ -241,13 +328,20 @@ Handler
   cross-referencing (`DATA_CONTRACT.md` section 9).
 - **Recovery** is global and converts an unexpected panic into a `500`
   response instead of crashing the process. See `BACKEND_ERROR_HANDLING.md`.
-- **Authentication** is applied per route group (e.g. everything under
-  `/resources`, `/roles`, `/audit-logs`) rather than globally, because
-  `/auth/login` must remain reachable without a session.
-- **Authorization** (permission checks) happens closer to the handler,
-  because the required permission is operation-specific (e.g.
-  `resource.delete` vs `resource.read`). It is still middleware or a thin
-  wrapper, not inline logic scattered through handler bodies.
+- **CORS** is global and allows only the origins listed in
+  `CORS_ALLOWED_ORIGINS` (never a wildcard), with credentials, so the
+  browser sends the auth cookie cross-origin.
+- **Authentication** (`middleware.RequireAuth`) is applied per route or
+  route group rather than globally, because `/auth/login` and `/health`
+  must remain reachable without a session. It reads the auth cookie,
+  verifies the token, loads the user, and attaches
+  `middleware.AuthContext{UserID, RoleNames}` to the request context.
+- **Authorization** (permission checks) is **not** middleware: each use
+  case calls `authorization.Service.Require(ctx, roleNames, permissionCode)`
+  as its first step, because the required permission is
+  operation-specific (e.g. `resource.delete` vs `resource.read`) and the
+  check must apply regardless of which client calls the API (BR-027).
+  Handlers only pass the role names from `AuthContext` through.
 
 This chain is the **Decorator pattern**: each middleware wraps the next
 `http.Handler` and adds one cross-cutting concern without the handler or the
@@ -274,13 +368,13 @@ PostgreSQL + PostGIS
 ```
 
 The `resource.Repository` interface exposes domain-level operations (e.g.
-`FindByFilters(ctx, filters) ([]Resource, error)`), never PostGIS types or
-raw SQL fragments. This keeps `ST_MakePoint`, `ST_DWithin`, and similar
+`List(ctx, filters) ([]Resource, int, error)`), never PostGIS types or
+raw SQL fragments. This keeps `ST_MakePoint`, `ST_Y`/`ST_X`, and similar
 PostGIS calls out of the application and domain layers, consistent with
 `DEPENDENCY_RULES.md` section 4 (external libraries are isolated behind a
 boundary when they represent an infrastructure concern).
 
-This is the **Adapter pattern**: `postgresResourceRepository` adapts the
+This is the **Adapter pattern**: `postgres.ResourceRepository` adapts the
 PostGIS/`pgx` API to the plain-Go `resource.Repository` interface the rest
 of the application already depends on. A future alternative
 implementation — an in-memory fake for tests, or a different database —
@@ -301,7 +395,7 @@ requirement that the architecture "can be extended in the future" and
 
 | Principle | How it's applied here |
 |---|---|
-| **S — Single Responsibility** | Each file in a feature package has one job: `service.go` holds use-case orchestration, `handler.go` only translates HTTP ↔ use case, `repository.go` only declares the data-access contract, `*_repository.go` under `internal/repository/postgres` only implements it. No file mixes HTTP parsing with SQL. |
+| **S — Single Responsibility** | Each file has one job: `service.go` holds use-case orchestration, `internal/http/<feature>_handler.go` only translates HTTP ↔ use case, `repository.go` only declares the data-access contract, `*_repository.go` under `internal/repository/postgres` only implements it. No file mixes HTTP parsing with SQL. |
 | **O — Open/Closed** | Adding a fifth resource type (or a new business rule that only applies to one type) means adding a new `AttributeValidator` implementation (section 8.2) and registering it — existing validators, the service, and the handler are not modified. The same applies to middleware (section 6) and repository implementations (section 7). |
 | **L — Liskov Substitution** | Any type satisfying `resource.Repository` — the real Postgres implementation, or an in-memory fake used in a use-case test (`BACKEND_TESTING.md`) — must be usable wherever the interface is expected, with no special-casing in `resource.Service`. The same holds for every other feature's repository interface. |
 | **I — Interface Segregation** | There is no single god-sized `Repository` interface. Each feature declares its own narrow interface (`resource.Repository`, `resourcehistory.Repository`, `audit.Repository`, ...) exposing only the operations that feature's use cases actually call. |
@@ -317,31 +411,33 @@ resource model." A single function with a `switch` statement over
 every new type would mean editing shared code. Instead:
 
 ```go
+// internal/resource/attribute_validator.go
+
 // AttributeValidator validates the type-specific attributes of one
-// ResourceType. Each ResourceType has exactly one implementation.
+// resource Type. Each Type has exactly one implementation.
 type AttributeValidator interface {
-    ResourceType() ResourceType
+    ResourceType() Type
     Validate(attributes map[string]any) error
 }
 
 // AttributeValidatorRegistry dispatches to the AttributeValidator
-// registered for a given ResourceType.
+// registered for a given resource Type.
 type AttributeValidatorRegistry struct {
-    validators map[ResourceType]AttributeValidator
+    validators map[Type]AttributeValidator
 }
 
 func NewAttributeValidatorRegistry(validators ...AttributeValidator) *AttributeValidatorRegistry {
-    r := &AttributeValidatorRegistry{validators: make(map[ResourceType]AttributeValidator, len(validators))}
+    r := &AttributeValidatorRegistry{validators: make(map[Type]AttributeValidator, len(validators))}
     for _, v := range validators {
         r.validators[v.ResourceType()] = v
     }
     return r
 }
 
-func (r *AttributeValidatorRegistry) Validate(t ResourceType, attributes map[string]any) error {
+func (r *AttributeValidatorRegistry) Validate(t Type, attributes map[string]any) error {
     v, ok := r.validators[t]
     if !ok {
-        return fmt.Errorf("no attribute validator registered for resource type %q", t)
+        return fmt.Errorf("resource: no attribute validator registered for resource type %q", t)
     }
     return v.Validate(attributes)
 }

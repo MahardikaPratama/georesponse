@@ -14,6 +14,8 @@ The use cases describe:
 
 This document focuses on **user and business behavior**. It does not define API endpoints, database implementation, frontend components, backend modules, or deployment mechanisms.
 
+The implementation status of these use cases at submission time — including any use case that is only partially implemented — is recorded in `SCOPE.md` section 11.
+
 ---
 
 ## 2. Actors

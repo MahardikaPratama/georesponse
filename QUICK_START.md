@@ -5,57 +5,71 @@ the documentation to cover: how to run the program, why these libraries
 were chosen, and how Agentic AI was used. For full detail, follow the links
 in each section — this file is deliberately short.
 
-See `README.md` section **Implementation Status** before anything below:
-Phase 0 (repository scaffolding) is done and verified where this
-environment's tooling allowed; the resource-management features
-themselves are not yet implemented.
+See `README.md` section **Implementation Status** for what is and is not
+implemented; in short, the application is complete and runnable, and this
+page tells you how.
 
 ---
 
 ## 1. How to Run the Program
 
-### Backend — works today
+### The single command (Docker)
+
+The only prerequisite is Docker (Docker Desktop, or Docker Engine with the
+Compose v2 plugin), running.
 
 ```bash
+./run.sh        # macOS/Linux
+```
+
+```powershell
+.\run.ps1       # Windows
+```
+
+This creates the three `.env` files from their `.env.example` (only if
+missing), builds both images, starts PostgreSQL + PostGIS, the Go backend,
+and the nginx-served frontend, waits until all three are healthy, and prints
+the URLs:
+
+| What | URL |
+|---|---|
+| Frontend | http://localhost:5173 |
+| Backend API | http://localhost:8080/api/v1 |
+| Health check | http://localhost:8080/health |
+
+On a brand-new database volume the schema is migrated and the demo data
+seeded automatically. Log in with `user-001` / `ChangeMe123!` (administrator)
+or `user-002` / `ChangeMe123!` (coordinator, read-only) — local-development placeholders,
+see `AKUN.md`. Stop with `./run.sh --down` (`.\run.ps1 -Down`); reset the
+database with `docker compose down -v`.
+
+### Running each application directly (day-to-day development)
+
+```bash
+# database only, from the repository root
+docker compose up -d georesponse-db
+
+# backend
 cd georesponse-be
-set -a && source .env && set +a   # load .env into the shell (copy from .env.example first)
-go run ./cmd/api
-```
+cp .env.example .env                  # first time only
+set -a && source .env && set +a       # load .env into the shell
+go run ./cmd/api                      # applies pending migrations, then serves on :8080
 
-Env vars (all optional in `APP_ENV=development`, defaults shown):
-`HTTP_PORT=8080`, `APP_ENV=development`, `LOG_LEVEL=info`, `DATABASE_URL`
-(unused until Phase 2 wires a repository). Verify it's up:
-
-```bash
-curl http://localhost:8080/health   # → 200 OK
-```
-
-Full detail: `georesponse-be/README.md`.
-
-### Frontend — configured, not yet verified
-
-```bash
+# frontend (separate terminal)
 cd georesponse-fe
+cp .env.example .env                  # first time only
 npm install
-npm run dev      # or: npm run build
+npm run dev                           # http://localhost:5173
 ```
 
-Node.js/npm were not available in the environment this was built in, so
-this has not been run end to end yet — treat it as untested until you run
-it. Full detail: `georesponse-fe/README.md`.
+Full detail: `georesponse-be/README.md`, `georesponse-fe/README.md`.
 
-### Database — scripted, not yet applied
+### Tests
 
 ```bash
-# once a local PostgreSQL + PostGIS instance is running (see DOCKER_COMPOSE.md):
-scripts/database/migrate.sh    # or migrate.ps1 on Windows
-scripts/database/seed.sh       # or seed.ps1
-```
-
-### The intended single command (once Phase 8 lands)
-
-```bash
-./run.sh        # or run.ps1 — not implemented yet
+scripts/dev/test.sh                   # frontend + backend unit tests (test.ps1 on Windows)
+GEORESPONSE_API_URL=http://localhost:8080 scripts/dev/test.sh   # …plus tests/integration/
+cd tests/e2e && npm install && npm run install-browsers && npm test   # browser golden path
 ```
 
 Full checkbox-level status of what's done vs. pending:
@@ -90,7 +104,7 @@ methodology and raw results: `geo-map-benchmark/docs/`.
 
 Claude Code (an Agentic AI coding tool) was used extensively on this
 project, under the direction and review of the human operator, Mahardika
-Pratama, in two stages so far:
+Pratama, across every stage:
 
 1. **The entire `docs/` specification** (`docs/01_product` through
    `docs/13_ai`, plus this repository's root `README.md`, `AGENTS.md`,
@@ -98,20 +112,19 @@ Pratama, in two stages so far:
    then reviewed, corrected, and iterated with the operator — including
    several rounds of cross-document consistency audits to remove
    redundancy and fix contradictions between documents.
-2. **Phase 0 repository scaffolding** — the backend's minimal Go server,
-   the frontend's build/lint/format configuration, the database migrations
-   and seed data, and the dev/quality tooling scripts — was likewise
+2. **The implementation**, phase by phase per `IMPLEMENTATION_CHECKLIST.md`
+   — backend domain/repository/use-case/HTTP layers, frontend foundation and
+   features, the map-library benchmark harness, database migrations and
+   seeds, containerization, CI, and the integration/e2e suites — was
    AI-drafted against the specs above, with the operator making the
-   concrete decisions (module path, migration tool, dependency choices)
-   and reviewing the output. Verification that the environment allowed
-   (`go build`/`go vet`/`gofmt`, a live health-check smoke test) was
-   actually run and reported; verification that required unavailable
-   tooling (Node.js/npm, a live database, `sonar-scanner`) was explicitly
-   left unrun rather than assumed.
-
-Application feature code (the resource CRUD/map behavior itself) has not
-been built yet; when it is, it's expected to follow the same
-read-first, smallest-correct-change, verify-and-report discipline.
+   concrete decisions (module path, migration tool, dependency choices,
+   UI behaviour, what to defer) and reviewing every change. Each phase was
+   verified with whatever the environment allowed (`go build`/`vet`/
+   `gofmt`/`go test`, `npm run lint`/`typecheck`/`build`/`test`, live
+   database runs, `docker compose up --build`, the integration suite
+   against the running stack, CI on `main`); where a check could not be
+   run locally, the checklist says so explicitly rather than assuming it
+   passed.
 
 The durable rules an AI agent must follow on this repository, and the
 step-by-step working procedure behind the summary above, are the canonical

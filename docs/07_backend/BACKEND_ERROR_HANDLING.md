@@ -40,20 +40,24 @@ up through the use case.
 ```go
 // internal/repository/postgres/resource_repository.go
 
-func (r *ResourceRepository) FindByID(ctx context.Context, id string) (*resource.Resource, error) {
-    row := r.pool.QueryRow(ctx, findResourceByIDQuery, id)
+func (r *ResourceRepository) GetByID(ctx context.Context, id string) (*resource.Resource, error) {
+    query := fmt.Sprintf("SELECT %s FROM resources WHERE id = $1", selectResourceColumns)
 
-    res, err := scanResource(row)
+    res, err := scanResource(activeConn(ctx, r.db).QueryRow(ctx, query, id))
     if errors.Is(err, pgx.ErrNoRows) {
-        return nil, fmt.Errorf("find resource %q: %w", id, resource.ErrNotFound)
+        return nil, fmt.Errorf("get resource %q: %w", id, resource.ErrNotFound)
     }
     if err != nil {
-        return nil, fmt.Errorf("find resource %q: %w", id, err)
+        return nil, fmt.Errorf("get resource %q: %w", id, err)
     }
 
     return res, nil
 }
 ```
+
+A unique-constraint violation on insert is classified the same way, into
+`resource.ErrIDConflict` (→ `409 RESOURCE_ID_CONFLICT`) or
+`authorization.ErrNameConflict` (→ `400 VALIDATION_ERROR`).
 
 Unclassified persistence failures (connection errors, unexpected driver
 errors) are wrapped and returned as-is; the application/handler layer treats
@@ -68,15 +72,25 @@ The domain package defines sentinel errors for conditions the application
 must react to distinctly:
 
 ```go
-// internal/resource/resource.go
+// internal/resource/resource.go, location.go, attribute_validator.go
 
 var (
-    ErrNotFound         = errors.New("resource not found")
-    ErrInvalidType       = errors.New("invalid resource type")
-    ErrInvalidStatus     = errors.New("invalid resource status")
-    ErrInvalidLocation   = errors.New("invalid geographic location")
+    ErrMissingID        = errors.New("resource: id must not be empty")
+    ErrMissingName      = errors.New("resource: name must not be empty")
+    ErrInvalidType      = errors.New("resource: type is not a recognized resource type")
+    ErrInvalidStatus    = errors.New("resource: status is not a recognized resource status")
+    ErrInvalidLocation  = errors.New("resource: location coordinates are out of valid range")
+    ErrMissingAttribute = errors.New("resource: required attribute is missing")
+    ErrInvalidAttribute = errors.New("resource: attribute has an invalid value")
+    ErrNotFound         = errors.New("resource: not found")
+    ErrIDConflict       = errors.New("resource: id already in use")
 )
 ```
+
+Other packages follow the same `<package>: ...` message convention
+(`auth.ErrInvalidCredentials`, `auth.ErrInvalidToken`, `auth.ErrNotFound`,
+`authorization.ErrPermissionDenied`, `authorization.ErrNotFound`,
+`authorization.ErrNameConflict`, `hotspot.ErrUpstreamUnavailable`).
 
 The application/use-case layer wraps errors with operation context as they
 cross its boundary, and does not discard the underlying cause:
@@ -84,18 +98,22 @@ cross its boundary, and does not discard the underlying cause:
 ```go
 // internal/resource/service.go
 
-func (s *Service) Relocate(ctx context.Context, id string, loc Location) (*Resource, error) {
-    if err := loc.Validate(); err != nil {
-        return nil, fmt.Errorf("relocate resource %q: %w", id, err)
+func (s *Service) RelocateResource(ctx context.Context, actingUserID string, actingRoleNames []string, id string, location Location) (*Resource, error) {
+    if err := s.checker.Require(ctx, actingRoleNames, PermissionResourceUpdate); err != nil {
+        return nil, err
+    }
+    if err := location.Validate(); err != nil {
+        return nil, err
     }
 
-    res, err := s.repo.FindByID(ctx, id)
+    current, err := s.repo.GetByID(ctx, id)
     if err != nil {
         return nil, fmt.Errorf("relocate resource %q: %w", id, err)
     }
 
-    // ... apply relocation, persist history + audit record
-    return res, nil
+    // ... within one transaction: update location, record location
+    // history, record RESOURCE_RELOCATED audit entry
+    return current, nil
 }
 ```
 
@@ -112,61 +130,67 @@ translation function in `internal/http/httpresponse` maps known domain
 errors to the `API_CONTRACT.md` error contract:
 
 ```go
-// internal/http/httpresponse/error.go
+// internal/http/httpresponse/error.go (abridged)
 
-func WriteError(w http.ResponseWriter, err error) {
+func WriteError(w http.ResponseWriter, r *http.Request, err error) {
+    var validationErr *ValidationError
+
     switch {
-    case errors.Is(err, resource.ErrNotFound):
-        writeJSONError(w, http.StatusNotFound, "RESOURCE_NOT_FOUND", "Resource not found", nil)
-
+    case errors.Is(err, resource.ErrNotFound), errors.Is(err, auth.ErrNotFound), errors.Is(err, authorization.ErrNotFound):
+        writeError(w, http.StatusNotFound, "RESOURCE_NOT_FOUND", "The requested resource does not exist", nil)
+    case errors.Is(err, resource.ErrIDConflict):
+        writeError(w, http.StatusConflict, "RESOURCE_ID_CONFLICT", "A resource with this id already exists", nil)
     case errors.Is(err, resource.ErrInvalidType):
-        writeJSONError(w, http.StatusBadRequest, "INVALID_RESOURCE_TYPE", "Invalid resource type", nil)
-
+        writeError(w, http.StatusBadRequest, "INVALID_RESOURCE_TYPE", "Resource type is missing or not recognized", nil)
     case errors.Is(err, resource.ErrInvalidStatus):
-        writeJSONError(w, http.StatusBadRequest, "INVALID_RESOURCE_STATUS", "Invalid resource status", nil)
-
+        writeError(w, http.StatusBadRequest, "INVALID_RESOURCE_STATUS", "Resource status is missing or not recognized", nil)
     case errors.Is(err, resource.ErrInvalidLocation):
-        writeJSONError(w, http.StatusBadRequest, "INVALID_LOCATION", "Invalid geographic coordinates", nil)
-
+        writeError(w, http.StatusBadRequest, "INVALID_LOCATION", "Geographic coordinates are missing or out of range", nil)
     case errors.As(err, &validationErr):
-        writeJSONError(w, http.StatusBadRequest, "VALIDATION_ERROR", "Invalid resource data", validationErr.Details())
-
-    case errors.Is(err, auth.ErrInvalidCredentials):
-        writeJSONError(w, http.StatusUnauthorized, "AUTHENTICATION_FAILED", "Invalid credentials", nil)
-
+        writeError(w, http.StatusBadRequest, "VALIDATION_ERROR", "Request data does not satisfy validation rules", validationErr.Details())
+    case errors.Is(err, resource.ErrMissingID), errors.Is(err, resource.ErrMissingName),
+        errors.Is(err, resource.ErrMissingAttribute), errors.Is(err, resource.ErrInvalidAttribute),
+        errors.Is(err, authorization.ErrNameConflict):
+        writeError(w, http.StatusBadRequest, "VALIDATION_ERROR", "Request data does not satisfy validation rules", nil)
+    case errors.Is(err, auth.ErrInvalidCredentials), errors.Is(err, auth.ErrInvalidToken):
+        writeError(w, http.StatusUnauthorized, "AUTHENTICATION_FAILED", "Authentication failed", nil)
     case errors.Is(err, authorization.ErrPermissionDenied):
-        writeJSONError(w, http.StatusForbidden, "AUTHORIZATION_DENIED", "Permission denied", nil)
-
+        writeError(w, http.StatusForbidden, "AUTHORIZATION_DENIED", "You do not have permission to perform this operation", nil)
+    case errors.Is(err, hotspot.ErrUpstreamUnavailable):
+        writeError(w, http.StatusBadGateway, "HOTSPOT_UPSTREAM_UNAVAILABLE", "BMKG hotspot data is temporarily unavailable", nil)
     default:
         // Unrecognized error: log with full detail, return a generic
         // persistence/server error without leaking internals.
         logging.FromContext(r.Context()).Error("unhandled error", "error", err)
-        writeJSONError(w, http.StatusInternalServerError, "PERSISTENCE_ERROR", "Unexpected server error", nil)
+        writeError(w, http.StatusInternalServerError, "PERSISTENCE_ERROR", "The operation could not be completed", nil)
     }
 }
 ```
 
-Handlers call this at their single error-return point:
+`WriteError` takes the request so it can reach the request-scoped logger
+(request ID included) for the `default` branch. Handlers call it at their
+single error-return point, and decode bodies through
+`httpresponse.DecodeJSON`, which already returns a `*ValidationError`:
 
 ```go
-// internal/resource/handler.go
+// internal/http/resource_handler.go
 
-func (h *Handler) Relocate(w http.ResponseWriter, r *http.Request) {
+func (h *ResourceHandler) Relocate(w http.ResponseWriter, r *http.Request) {
+    userID, roleNames := actorFromRequest(r)
     id := chi.URLParam(r, "id")
 
-    var req RelocateRequest
-    if err := decodeJSON(r, &req); err != nil {
-        httpresponse.WriteError(w, fmt.Errorf("decode relocate request: %w", validationError(err)))
+    var req relocateRequest
+    if err := httpresponse.DecodeJSON(r, &req); err != nil {
+        httpresponse.WriteError(w, r, err)
         return
     }
 
-    res, err := h.service.Relocate(r.Context(), id, req.ToLocation())
+    res, err := h.service.RelocateResource(r.Context(), userID, roleNames, id, resource.Location{Latitude: req.Latitude, Longitude: req.Longitude})
     if err != nil {
-        httpresponse.WriteError(w, err)
+        httpresponse.WriteError(w, r, err)
         return
     }
-
-    httpresponse.WriteData(w, http.StatusOK, res.ToResponse())
+    httpresponse.WriteData(w, http.StatusOK, resourceToResponse(*res))
 }
 ```
 
@@ -177,16 +201,19 @@ instead of duplicated across every handler.
 
 ## 6. Error Code Mapping Reference
 
-| Domain condition | Error code | HTTP status |
-|---|---|---|
-| Structural/field validation failure | `VALIDATION_ERROR` | 400 |
-| Invalid resource type | `INVALID_RESOURCE_TYPE` | 400 |
-| Invalid resource status | `INVALID_RESOURCE_STATUS` | 400 |
-| Invalid latitude/longitude | `INVALID_LOCATION` | 400 |
-| No/invalid credentials | `AUTHENTICATION_FAILED` | 401 |
-| Authenticated but not permitted | `AUTHORIZATION_DENIED` | 403 |
-| Resource/entity does not exist | `RESOURCE_NOT_FOUND` | 404 |
-| Unrecognized/persistence failure | `PERSISTENCE_ERROR` | 500 |
+| Domain condition | Go error value(s) | Error code | HTTP status |
+|---|---|---|---|
+| Malformed body / unknown field (with `details`) | `*httpresponse.ValidationError` | `VALIDATION_ERROR` | 400 |
+| Missing id/name, bad attribute, role name conflict (no `details`) | `resource.ErrMissingID`, `ErrMissingName`, `ErrMissingAttribute`, `ErrInvalidAttribute`, `authorization.ErrNameConflict` | `VALIDATION_ERROR` | 400 |
+| Invalid resource type | `resource.ErrInvalidType` | `INVALID_RESOURCE_TYPE` | 400 |
+| Invalid resource status | `resource.ErrInvalidStatus` | `INVALID_RESOURCE_STATUS` | 400 |
+| Invalid latitude/longitude | `resource.ErrInvalidLocation` | `INVALID_LOCATION` | 400 |
+| No/invalid credentials, missing/invalid/expired token | `auth.ErrInvalidCredentials`, `auth.ErrInvalidToken` | `AUTHENTICATION_FAILED` | 401 |
+| Authenticated but not permitted | `authorization.ErrPermissionDenied` | `AUTHORIZATION_DENIED` | 403 |
+| Resource, user, role, or permission does not exist | `resource.ErrNotFound`, `auth.ErrNotFound`, `authorization.ErrNotFound` | `RESOURCE_NOT_FOUND` | 404 |
+| Duplicate resource id | `resource.ErrIDConflict` | `RESOURCE_ID_CONFLICT` | 409 |
+| Unrecognized/persistence failure, recovered panic | anything else | `PERSISTENCE_ERROR` | 500 |
+| BMKG unreachable and nothing cached | `hotspot.ErrUpstreamUnavailable` | `HOTSPOT_UPSTREAM_UNAVAILABLE` | 502 |
 
 The full code list is owned by `API_CONTRACT.md` section 13; this table only
 records the mapping to Go error values and HTTP statuses used in the handler
@@ -242,8 +269,8 @@ func Recovery(next http.Handler) http.Handler {
     return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
         defer func() {
             if rec := recover(); rec != nil {
-                logging.FromContext(r.Context()).Error("panic recovered", "panic", rec)
-                httpresponse.WriteError(w, fmt.Errorf("unexpected failure: %v", rec))
+                logging.FromContext(r.Context()).Error("panic recovered", "panic", fmt.Sprintf("%v", rec))
+                httpresponse.WriteError(w, r, fmt.Errorf("unexpected failure: %v", rec))
             }
         }()
         next.ServeHTTP(w, r)

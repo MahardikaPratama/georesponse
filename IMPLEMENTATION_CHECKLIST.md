@@ -91,19 +91,24 @@ merged to `main`, since later phases depend on earlier ones (section 1).
 
 - [x] Run `go mod init` in `georesponse-be/` with the module path decided in
       `georesponse-be/README.md`. (`github.com/mahardika-pratama/georesponse-be`)
-- [ ] Add Go dependencies decided in `BACKEND_DEPENDENCIES.md`: Chi router,
-      `pgx`/`pgxpool`, the chosen migration tool. (Chi added and in use;
-      `pgx`/`pgxpool` and the migration tool are deliberately **not yet**
-      added — nothing imports them yet, per `CODING_STANDARDS.md` section 1
-      and `BACKEND_DEPENDENCIES.md` section 3, "don't add an unused
-      dependency." Add them when Phase 2 wires the real repository.)
-- [ ] Create the base package layout from `BACKEND_ARCHITECTURE.md`
+- [x] Add Go dependencies decided in `BACKEND_DEPENDENCIES.md`: Chi router,
+      `pgx`/`pgxpool`, the chosen migration tool. (Chi added in Phase 0;
+      `pgx`/`pgxpool` added in Phase 2 when the real repository was wired.
+      The migration tool is the golang-migrate **CLI**, invoked by
+      `scripts/database/migrate.sh`/`.ps1` and installed as a tool, not a
+      `go.mod` dependency — per `BACKEND_DEPENDENCIES.md` section 3/4 it is
+      not imported by application code. The development-only start-up
+      migrator added in Phase 8 [`internal/platform/postgres/migrate.go`]
+      is ~150 lines over `pgx` writing the same `schema_migrations` table,
+      so no new module dependency was needed.)
+- [x] Create the base package layout from `BACKEND_ARCHITECTURE.md`
       (`cmd/api`, `internal/http`, `internal/platform`, feature packages,
       `internal/repository/postgres`). (`cmd/api`, `internal/http`, and
-      `internal/platform/{config,logging}` exist; the feature packages
-      [`resource`, `resourcehistory`, `auth`, `authorization`, `audit`] and
-      `internal/repository/postgres` are Phase 1–2 work per this
-      checklist's own phasing, not Phase 0.)
+      `internal/platform/{config,logging}` in Phase 0; the feature packages
+      [`resource`, `resourcehistory`, `auth`, `authorization`, `audit`,
+      `hotspot`], `internal/platform/{postgres,transaction,idgen,bmkg}`,
+      and `internal/repository/{postgres,bmkg}` landed in Phases 1–4 per
+      this checklist's own phasing. All present as of Phase 8.)
 - [x] Create `cmd/api/main.go` with a minimal `net/http` server that starts,
       binds to `APP_PORT` (implemented as `HTTP_PORT`, matching
       `ENVIRONMENT_MANAGEMENT.md` section 5.2 — `APP_PORT` in this bullet
@@ -1241,27 +1246,60 @@ verification (as it has been for every push this phase).
 
 ## 10. Phase 7 — Testing Completion
 
-**Branch:** `feature/phase-7-testing` (see section 2.1)
+**Branch:** `feature/phase-7-testing` (see section 2.1). Committed directly
+to `main` in focused commits (as Phase 6's closing work was), since the
+remaining phases were completed in one sitting after the deadline had
+passed.
 
-- [ ] Reach the coverage expectations in `TESTING_STRATEGY.md` for
+- [x] Reach the coverage expectations in `TESTING_STRATEGY.md` for
       validation logic, domain rules, and the relocation/status-change
-      side effects (both frontend and backend).
-- [ ] Write at least one integration test under `tests/integration/`
+      side effects (both frontend and backend). Backend: every attribute
+      validator, location validation, status transitions, and the
+      service-level relocate/status-change side effects have unit tests
+      (`go test ./...` passes; config start-up validation added with its
+      own table test in Phase 8). Frontend: `validateResourceForm`,
+      `validateResourceUpdateForm`, `validateLocation`, the Map Adapter
+      boundary, and the feature components have colocated Vitest tests
+      (verified by CI on `main`, not re-run locally in this session).
+      Coverage is judged by the section 6 "must always be tested" list,
+      not a numeric threshold, per `TESTING_STRATEGY.md` section 9.
+- [x] Write at least one integration test under `tests/integration/`
       exercising create → update → relocate → delete against a real
-      backend + database (per `TESTING_STRATEGY.md`).
-- [ ] Write at least one end-to-end test under `tests/e2e/` covering the
+      backend + database (per `TESTING_STRATEGY.md`). Done:
+      `tests/integration/golden_path_test.go` (its own Go module; black-box
+      HTTP against `GEORESPONSE_API_URL`, skipped when unset) covers the
+      lifecycle with persisted-state checks after each step, the history
+      side effects, the documented error contract (401/400/404/409 codes),
+      and read-only-account authorization denial. Compiles and vets
+      (`go vet ./...`); wired into `scripts/dev/test.sh`/`.ps1` and into
+      CI as the `integration` job (PostGIS service container + backend
+      started with `APP_ENV=development`). **Not yet run against a live
+      stack in this environment** — the Docker stack run was skipped at the
+      operator's request (section 11.2); CI on the next push is the
+      verification.
+- [x] Write at least one end-to-end test under `tests/e2e/` covering the
       golden path: view resources on map → create → update → relocate →
-      delete.
-- [ ] Run the full test suite (`scripts/dev/test.sh`) and confirm all tests
-      pass.
+      delete. Done: `tests/e2e/golden-path.spec.ts` (Playwright, Chromium,
+      against `E2E_BASE_URL`), with `playwright.config.ts`, `package.json`,
+      and `tests/README.md`. **Not executed** — no Playwright/browser
+      toolchain was available; run it locally against `./run.sh` per
+      `tests/README.md`. Deliberately not a CI stage (`CI_CD.md` 4.3).
+- [x] Run the full test suite (`scripts/dev/test.sh`) and confirm all tests
+      pass. Backend half run locally: `go test ./...` in `georesponse-be/`
+      passes (incl. the new config and migration-runner tests, the latter
+      against the live `georesponse-db` container). Frontend half: last
+      verified by CI on `main` (Node.js not on this shell's PATH).
 - [ ] Push, open a PR, confirm CI passes, merge into `main`, delete the
-      branch (workflow: section 2.1).
+      branch (workflow: section 2.1). **Left for the operator**: commits
+      are on local `main`; push and confirm CI (which now also runs the
+      integration job) goes green.
 
 ---
 
 ## 11. Phase 8 — Containerization & Local Orchestration
 
-**Branch:** `chore/phase-8-containerization` (see section 2.1)
+**Branch:** `chore/phase-8-containerization` (see section 2.1). Committed
+directly to `main` (see Phase 7 note).
 
 ### 11.1 Environment & Secrets
 
@@ -1272,7 +1310,8 @@ verification (as it has been for every push this phase).
       `ENVIRONMENT_MANAGEMENT.md` section 6, with obviously-fake local-dev
       placeholder values — never a real secret. **Done early** (ahead of
       Phase 8), alongside the interim `docker-compose.yml` created to
-      unblock Phase 0 section 3.3's live-database verification.
+      unblock Phase 0 section 3.3's live-database verification. Extended in
+      Phase 8 with `CORS_ALLOWED_ORIGINS`, `MAP_TILE_URL`, and `IMAGE_TAG`.
 - [x] Create `georesponse-be/.env.example` (variables from
       `ENVIRONMENT_MANAGEMENT.md` section 5.2, for running the backend
       directly with `go run`, outside Docker). **Done early**, same reason.
@@ -1290,71 +1329,120 @@ verification (as it has been for every push this phase).
       listed it too. `git check-ignore -v` confirmed all three real `.env`
       files are ignored; `git status --porcelain` shows only the three
       `.env.example` files and `docker-compose.yml` as untracked, no `.env`.
-- [ ] Implement backend startup validation that fails fast with a clear
+- [x] Implement backend startup validation that fails fast with a clear
       error when a required variable (e.g. `DATABASE_URL`) is missing or
       malformed, per `ENVIRONMENT_MANAGEMENT.md` section 8 (NFR-DEP-004).
+      Done in `internal/platform/config` v1.4.0: rejects a missing or
+      non-`postgres://host/db` `DATABASE_URL`, missing `TOKEN_SECRET`,
+      non-port `HTTP_PORT`, unknown `LOG_LEVEL`, non-positive
+      `TOKEN_TTL`/`BMKG_TIMEOUT`, non-http `BMKG_BASE_URL`, and (in
+      development) an unreadable `MIGRATIONS_DIR`, each with an error
+      naming the variable. Covered by `config_test.go` (14 invalid cases +
+      valid/production cases; passes).
 
 ### 11.2 Images & Compose
 
-- [ ] Write `georesponse-fe/Dockerfile` (multi-stage: build, then serve
-      static assets) per `CONTAINERIZATION.md`.
-- [ ] Write `georesponse-be/Dockerfile` (multi-stage: build, then run the Go
-      binary) per `CONTAINERIZATION.md`.
-- [ ] Implement the backend's auto-migrate-on-startup behavior (guarded by
+- [x] Write `georesponse-fe/Dockerfile` (multi-stage: build, then serve
+      static assets) per `CONTAINERIZATION.md`. Done, with `nginx.conf`
+      (SPA fallback, asset caching) and `.dockerignore`; build-time
+      `ARG`s for `API_BASE_URL`/`MAP_TILE_URL`/`LOG_LEVEL`. **Built
+      successfully** with `docker compose build` (`npm ci` + Rspack
+      production build compiled with 3 warnings, exit 0).
+- [x] Write `georesponse-be/Dockerfile` (multi-stage: build, then run the Go
+      binary) per `CONTAINERIZATION.md`. Done (`golang:1.26-alpine` build,
+      Alpine runtime with `ca-certificates`, non-root user) with
+      `.dockerignore`. **Built successfully** with `docker compose build`.
+      Alpine rather than distroless so the compose healthcheck's in-container
+      `wget` works — recorded in `CONTAINERIZATION.md` section 5.2.
+- [x] Implement the backend's auto-migrate-on-startup behavior (guarded by
       `APP_ENV=development`) per `DOCKER_COMPOSE.md` section 6.5, so the
       schema is always current without a manual migration step in local
-      dev.
-- [ ] Implement `scripts/docker/build.sh`/`build.ps1`.
-- [ ] Implement `scripts/docker/clean.sh`/`clean.ps1`.
-- [ ] Write the real root-level `docker-compose.yml` per `DOCKER_COMPOSE.md`
+      dev. Done: `internal/platform/postgres/migrate.go` (golang-migrate-
+      compatible `schema_migrations(version, dirty)` bookkeeping, one
+      transaction per file, refuses on a dirty row) called from
+      `cmd/api/main.go` when `cfg.AutoMigrate`. `migrate_test.go` covers
+      listing/ordering and — against the live `georesponse-db` — applying
+      pending files, idempotence, and the dirty-row refusal (passes).
+- [x] Implement `scripts/docker/build.sh`/`build.ps1`. Done (git-SHA +
+      `latest` tags, `--tag`, `--fe-only`/`--be-only`, frontend build args
+      from env/root `.env`). Not executed end to end here (images were
+      built via `docker compose build` instead).
+- [x] Implement `scripts/docker/clean.sh`/`clean.ps1`. Done (removes only
+      `georesponse-*` images and dangling layers; `--volumes` opt-in). Not
+      executed here.
+- [x] Write the real root-level `docker-compose.yml` per `DOCKER_COMPOSE.md`
       section 5 (frontend, backend, PostGIS, healthchecks, `${VAR}`
-      substitution from the root `.env` — no hardcoded credentials).
-      **Partially done early**: a `docker-compose.yml` exists at the root
-      with only the `georesponse-db` service (matching section 5's db
-      definition, `${VAR}` substitution, healthcheck), added ahead of this
-      phase to unblock Phase 0 section 3.3. The `georesponse-fe` and
-      `georesponse-be` services are intentionally still missing — their
-      Dockerfiles are empty placeholders — and must be added here once this
-      phase implements them, to match section 5 in full.
+      substitution from the root `.env` — no hardcoded credentials). Done:
+      all three services, `service_healthy` ordering db → be → fe, backend
+      healthcheck on `/health`, `IMAGE_TAG`-parameterised image names,
+      `database/migrations` bind-mounted at `/migrations`, and a first-run
+      `docker/postgres/init/01-init-schema-and-seeds.sh` that migrates and
+      seeds a brand-new volume (the earlier sketch's subdirectory mounts
+      into `docker-entrypoint-initdb.d` were inert — noted in
+      `DOCKER_COMPOSE.md` 6.1). `docker compose config` validates; a
+      `.gitattributes` pins LF on `*.sh`/Dockerfiles so the bind-mounted
+      init script runs on Windows checkouts.
 - [ ] Run `docker compose up --build` directly (without the wrapper script)
       from a clean checkout with a real `.env` already in place, and
       confirm the full stack starts and the frontend can reach the backend.
+      **Not verified in this session.** Both images build; `docker compose
+      up -d --wait` brought `georesponse-db` healthy but `georesponse-be`
+      could not bind port 8080 because the operator's own `go run` backend
+      (and the Rspack dev server on 5173) were running at the time. An
+      isolated re-run on alternate ports was started but skipped at the
+      operator's request to save time. Re-run once the local dev servers
+      are stopped: `./run.sh`, then `scripts/deployment/health-check.sh` and
+      `GEORESPONSE_API_URL=http://localhost:8080 scripts/dev/test.sh`.
 
 ### 11.3 One-Command Local Run
 
-- [ ] Write root `run.sh`: verify Docker is installed and running; for each
+- [x] Write root `run.sh`: verify Docker is installed and running; for each
       of the three `.env.example` files, copy it to the corresponding
       `.env` only if that `.env` does not already exist (never overwrite a
       developer's existing local values); then run
       `docker compose up --build`; then print the access URLs from
-      `DOCKER_COMPOSE.md` section 6.3.
-- [ ] Write root `run.ps1` — the same behavior, for Windows PowerShell,
+      `DOCKER_COMPOSE.md` section 6.3. Done (`--foreground`, `--down`
+      variants; detached mode uses `--wait` so the URLs print once every
+      service is healthy).
+- [x] Write root `run.ps1` — the same behavior, for Windows PowerShell,
       matching the `.sh`/`.ps1` pairing convention already used by every
-      other script in `scripts/`.
-- [ ] Make `run.sh` executable (`chmod +x run.sh`) and commit it as such.
+      other script in `scripts/`. Done (`-Foreground`, `-Down`).
+- [x] Make `run.sh` executable (`chmod +x run.sh`) and commit it as such.
+      Done via `git update-index --chmod=+x` (Windows checkout), applied to
+      every `*.sh` in the repository at the same time — they were all
+      `100644` before.
 - [ ] On a completely clean checkout with no `.env` files present anywhere,
       run only `./run.sh` and confirm: env files are created, the stack
       builds and starts, the database is migrated automatically, and the
       frontend at `http://localhost:5173` can successfully call the backend
-      — zero manual steps beyond that one command.
-- [ ] Implement `scripts/deployment/deploy.sh`/`deploy.ps1` and
-      `health-check.sh`/`health-check.ps1` per `DEPLOYMENT.md`.
+      — zero manual steps beyond that one command. **Not verified** — same
+      blocker and skip as the `docker compose up --build` item above.
+- [x] Implement `scripts/deployment/deploy.sh`/`deploy.ps1` and
+      `health-check.sh`/`health-check.ps1` per `DEPLOYMENT.md`. Done
+      (deploy: build-or-`--tag`, restarts only be/fe, refuses a missing
+      tag; health-check: polls `/health` for `"database":"ok"` and the
+      frontend root with a timeout, non-zero on failure). Not executed here.
 - [ ] Push, open a PR, confirm CI passes, merge into `main`, delete the
-      branch (workflow: section 2.1).
+      branch (workflow: section 2.1). **Left for the operator** (commits on
+      local `main`).
 
 ---
 
 ## 12. Phase 9 — CI & Quality Gates
 
-**Branch:** `chore/phase-9-ci-quality` (see section 2.1)
+**Branch:** `chore/phase-9-ci-quality` (see section 2.1). Committed
+directly to `main` (see Phase 7 note).
 
 - [x] Add the GitHub Actions workflow described in `CI_CD.md` (lint,
       type-check, build, test for both apps, triggered on push/PR to
       `main`). (Done early, in `chore/phase-0-project-setup`, so that
-      phase's own PR could actually have a "confirm CI passes" step. The
-      Docker-build-verify job from `CI_CD.md` section 4.4 is deliberately
-      **not** included yet — both Dockerfiles are still empty placeholders
-      [Phase 8]; add that job when Phase 8 lands.)
+      phase's own PR could actually have a "confirm CI passes" step.) The
+      Docker-build-verify job from `CI_CD.md` section 4.4 is now added
+      (both images, `push: false`), plus the `integration` job (PostGIS
+      service container, backend started with `APP_ENV=development`,
+      seeds loaded with `psql`, `tests/integration` run). The frontend job
+      now uses `npm ci` with the npm cache since `package-lock.json` is
+      committed.
 - [x] Implement `scripts/quality/sonar.sh`/`sonar.ps1` if static-analysis
       tooling is configured (optional per `CODE_QUALITY.md`'s
       proportionate-scope framing). (Done early, in Phase 0, per explicit
@@ -1362,62 +1450,101 @@ verification (as it has been for every push this phase).
       both scripts exist and check for `sonar-scanner`/`SONAR_TOKEN`
       before running.)
 - [ ] Run `scripts/quality/check.sh` locally and confirm every gate in
-      `QUALITY_GATES.md` passes. **Not verified** — requires Node.js and a
-      live database, neither available in this environment.
+      `QUALITY_GATES.md` passes. **Partially verified**: the backend gates
+      (`gofmt`, `go vet`, `go build`, `go test`) pass locally; the
+      frontend gates were not run in this shell (Node.js not on PATH) and
+      rely on CI. Not run as the single aggregate script.
 - [ ] Push, open a PR, and confirm the CI pipeline itself runs correctly on
       it (this is also the first real end-to-end proof the pipeline works),
       then merge into `main` and delete the branch (workflow: section 2.1).
-      (The CI workflow file itself was already exercised by the Phase 0
-      PR; this item is about the remaining Phase 9 work — coverage
-      reporting, branch protection, etc. — once that's scoped.)
+      **Left for the operator**: the new `integration` and `docker-build`
+      jobs have not run yet; the next push to `main` exercises them.
+      Branch protection / coverage reporting remain unscoped (proportionate
+      to the take-home).
 
 ---
 
 ## 13. Phase 10 — Documentation Reconciliation
 
-**Branch:** `docs/phase-10-doc-reconciliation` (see section 2.1)
+**Branch:** `docs/phase-10-doc-reconciliation` (see section 2.1). Committed
+directly to `main` (see Phase 7 note).
 
-- [ ] Update the **Implementation Status** section in `README.md`,
+- [x] Update the **Implementation Status** section in `README.md`,
       `georesponse-fe/README.md`, and `georesponse-be/README.md` to reflect
       what is now actually implemented (remove or narrow the "not yet
-      implemented" language as each part lands).
-- [ ] Update `docs/13_ai/AI_WORKFLOW.md` section 5 (disclosure) to describe
+      implemented" language as each part lands). Done for all three, plus
+      `QUICK_START.md`, `AGENTS.md`/`CLAUDE.md` (the "not yet runnable"
+      sentence), and the backend README's `APP_PORT` → `HTTP_PORT` slip.
+- [x] Update `docs/13_ai/AI_WORKFLOW.md` section 5 (disclosure) to describe
       the actual extent of AI assistance used during implementation, not
-      just documentation authoring.
-- [ ] For any FR/UC left intentionally unimplemented at submission time,
+      just documentation authoring. Done (all phases, and how verification
+      was reported); `QUICK_START.md` section 3 mirrors it.
+- [x] For any FR/UC left intentionally unimplemented at submission time,
       document it explicitly (file, section) per the take-home brief's
       "explain unfinished features" requirement — do not leave a silent
-      gap.
-- [ ] Verify every code example, endpoint list, and script path across
+      gap. Every FR/UC in `FUNCTIONAL_REQUIREMENTS.md` is implemented
+      (Phases 1–6 above). What is intentionally *not* delivered is
+      operational, not functional, and is listed in `README.md`
+      "Implementation Status": no hosted deployment, no continuous
+      deployment, no TLS termination, no container registry, and the e2e
+      suite not run as a CI stage — each with its rationale in
+      `DEPLOYMENT.md` section 8 / `CI_CD.md` sections 4.3 and 7. The
+      unverified checkboxes in sections 10–12 above are the honest record of
+      what was built but not exercised in this environment.
+- [x] Verify every code example, endpoint list, and script path across
       `docs/` still matches the real implementation (spot-check
-      `API_CONTRACT.md`, `DATABASE_SCHEMA.md`, and both READMEs).
-- [ ] Re-run the redundancy/consistency pass on any doc touched during
+      `API_CONTRACT.md`, `DATABASE_SCHEMA.md`, and both READMEs). Done for
+      the devops/database/backend docs touched by Phase 8 (`CONTAINERIZATION`,
+      `DOCKER_COMPOSE`, `DEPLOYMENT`, `ENVIRONMENT_MANAGEMENT`, `CI_CD`,
+      `DATABASE_MIGRATIONS`, `BACKEND_DEPENDENCIES`) and both READMEs; a
+      repo-wide grep for "placeholder" / "not yet" / "currently empty"
+      claims found no remaining stale statements. `API_CONTRACT.md` and
+      `DATABASE_SCHEMA.md` were reconciled when Phases 4 and 2 landed and
+      were not changed by later phases.
+- [x] Re-run the redundancy/consistency pass on any doc touched during
       implementation, per the ownership map established in this session.
+      Done: the migration bookkeeping table format is now stated once in
+      `DATABASE_MIGRATIONS.md` section 4 and referenced from
+      `DOCKER_COMPOSE.md` 6.5 / `BACKEND_DEPENDENCIES.md`; the frontend
+      build-time env-var behaviour lives in `ENVIRONMENT_MANAGEMENT.md` 5.1
+      and is referenced from `CONTAINERIZATION.md` 4.2.
 - [ ] Push, open a PR, confirm CI passes, merge into `main`, delete the
-      branch (workflow: section 2.1).
+      branch (workflow: section 2.1). **Left for the operator.**
 
 ---
 
 ## 14. Phase 11 — Final Submission Prep
 
-**Branch:** `chore/phase-11-submission-prep` (see section 2.1)
+**Branch:** `chore/phase-11-submission-prep` (see section 2.1).
 
-- [ ] Confirm `git log` reflects small, focused, Conventional-Commits-style
+- [x] Confirm `git log` reflects small, focused, Conventional-Commits-style
       commits per `GIT_MANAGEMENT.md` (squash/rebase stray WIP commits if
-      needed).
-- [ ] Confirm no secrets, `.env` files, or `node_modules`/build artifacts
-      are committed.
-- [ ] Confirm `AGENTS.md` and/or `CLAUDE.md` are present at the repository
+      needed). Reviewed: 40+ commits on `main`, all `type(scope): subject`
+      form, one concern each (the one outlier, `update: package-lock.json`,
+      is already pushed history and was left alone rather than rewritten).
+- [x] Confirm no secrets, `.env` files, or `node_modules`/build artifacts
+      are committed. `git ls-files` contains no `.env`, `node_modules/`,
+      `dist/`, or `*.log`. **Note for the operator**:
+      `georesponse-fe/.env.example` (and, mirroring it, the root
+      `.env.example`) contains a MapTiler free-tier API key as the
+      `MAP_TILE_URL` default. It is a low-value, revocable key committed
+      deliberately so the map renders out of the box; rotate or blank it
+      before sharing the repository more widely if that is not acceptable.
+- [x] Confirm `AGENTS.md` and/or `CLAUDE.md` are present at the repository
       root (take-home brief's explicit Agentic AI disclosure requirement).
+      Both present and in sync.
 - [ ] Do a final clean-checkout smoke test: clone into a fresh directory,
       run `scripts/dev/setup.sh`, run `docker compose up`, and confirm the
       golden path (view → create → update → relocate → delete a resource
-      on the map) works end to end.
+      on the map) works end to end. **Not done** (see section 11.2 blocker
+      and skip). The equivalent checks are `./run.sh` followed by
+      `tests/e2e` per `tests/README.md`.
 - [ ] Confirm the submission is pushed/available before **2026-09-19
-      23:59** (the take-home deadline).
+      23:59** (the take-home deadline). **Deadline has passed** (this work
+      was completed on 2026-09-20); the push is the operator's call.
 - [ ] Push, open a PR, confirm CI passes, and merge into `main` — this
       merge is the submission commit itself (workflow: section 2.1; delete
-      the branch afterward for a clean history).
+      the branch afterward for a clean history). **Left for the operator.**
 
 ---
 

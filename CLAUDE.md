@@ -32,8 +32,8 @@ How to run the system locally is documented in the root
 [`README.md`](README.md) and in each application's own README
 ([`georesponse-fe/README.md`](georesponse-fe/README.md),
 [`georesponse-be/README.md`](georesponse-be/README.md)) — including the
-current implementation status, since the application code is not yet
-runnable (see [`README.md#implementation-status`](README.md#implementation-status)).
+current implementation status and what is intentionally out of scope (see
+[`README.md#implementation-status`](README.md#implementation-status)).
 
 ## 2. Domain
 
@@ -75,7 +75,7 @@ Also fixed by prior technical evaluation (not to be silently swapped):
 - HTTP routing: Chi + `net/http`
 - Server state: TanStack Query
 - Client state: React `useState` / `useReducer` (no Redux/Zustand)
-- Styling: plain CSS
+- Styling: CSS via Tailwind CSS v4 (utility classes in JSX; no component library)
 - Frontend tests: Vitest + React Testing Library
 - Backend tests: Go `testing`
 

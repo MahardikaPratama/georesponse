@@ -43,7 +43,7 @@ Feature, fix, and release branches are validated through their pull requests rat
 
 ## 4. Pipeline Stages
 
-The pipeline runs frontend and backend jobs independently and in parallel, since the two applications have separate toolchains and no build-time dependency on one another.
+The pipeline runs frontend and backend jobs independently and in parallel, since the two applications have separate toolchains and no build-time dependency on one another. Two further jobs follow them: `integration` (after `backend`, section 4.3) and `docker-build` (after both, section 4.4).
 
 ```text
                 ┌─────────────────────────┐
@@ -58,7 +58,7 @@ The pipeline runs frontend and backend jobs independently and in parallel, since
 │  (georesponse-fe)      │                 │  (georesponse-be)      │
 ├───────────────────────┤                 ├───────────────────────┤
 │ 1. Install deps        │                 │ 1. Set up Go toolchain │
-│ 2. Lint (ESLint)        │                 │ 2. go vet / lint       │
+│ 2. Lint (ESLint)        │                 │ 2. gofmt / go vet      │
 │ 3. Type-check (tsc)     │                 │ 3. go build            │
 │ 4. Build (Rspack)       │                 │ 4. go test ./...       │
 │ 5. Test (Vitest + RTL)  │                 │                        │
@@ -83,7 +83,7 @@ The pipeline runs frontend and backend jobs independently and in parallel, since
 |---|---|---|
 | Install | `npm ci` | Reproducible dependency install from lockfile |
 | Lint | `npm run lint` | Enforce coding standards (NFR-MAIN-003, NFR-QUAL-002) |
-| Type-check | `npm run type-check` (`tsc --noEmit`) | Catch type errors before build |
+| Type-check | `npm run typecheck` (`tsc --noEmit`) | Catch type errors before build |
 | Build | `npm run build` | Verify Rspack production build succeeds |
 | Test | `npm run test` (Vitest + React Testing Library) | Verify component and behavior tests pass |
 
@@ -92,7 +92,7 @@ The pipeline runs frontend and backend jobs independently and in parallel, since
 | Stage | Command (illustrative) | Purpose |
 |---|---|---|
 | Format check | `gofmt -l .` | Enforce formatting (NFR-QUAL-001) |
-| Vet / Lint | `go vet ./...` (optionally `golangci-lint run`) | Static analysis (NFR-QUAL-003) |
+| Vet / Lint | `go vet ./...` (`golangci-lint run`, configured in `georesponse-be/.golangci.yml`, is run locally by `scripts/quality/check.sh` when installed, not in CI) | Static analysis (NFR-QUAL-003) |
 | Build | `go build ./...` | Verify the backend compiles to a binary |
 | Test | `go test ./... -cover` | Run unit/integration tests with coverage (NFR-TEST-005) |
 
@@ -102,10 +102,10 @@ Suite-specific automated tests are organized as:
 
 - `georesponse-fe/` — frontend unit/component tests colocated with source, run via Vitest.
 - `georesponse-be/` — backend unit tests colocated with source, run via `go test`.
-- `tests/integration/` — cross-boundary integration tests (currently a placeholder directory).
-- `tests/e2e/` — end-to-end tests exercising the running stack (currently a placeholder directory).
+- `tests/integration/` — black-box API integration tests (Go, its own module) that need a running backend + database; skipped unless `GEORESPONSE_API_URL` is set.
+- `tests/e2e/` — the Playwright golden-path test exercising the running stack through the browser (see `tests/README.md`).
 
-The integration and e2e suites are scaffolded but not yet populated. As they are implemented, they should be added as additional pipeline stages — an integration stage that runs against a docker-compose-provisioned PostgreSQL/PostGIS instance, and an e2e stage that runs against the composed frontend + backend + database stack described in `DOCKER_COMPOSE.md`.
+The integration suite runs in CI as its own `integration` job: a PostGIS service container, the backend built and started with `APP_ENV=development` (so it applies the migrations itself at start-up), the seed files loaded with `psql`, then `go test` in `tests/integration/` against `http://localhost:8080`. The e2e suite is **not** run in CI: it needs the full composed stack plus a browser, and its runtime and flakiness risk are disproportionate for this take-home's pipeline — it is run locally against `./run.sh` (`tests/README.md`).
 
 ### 4.4 Docker Build Verification
 
@@ -115,10 +115,10 @@ After lint/build/test succeed, the pipeline builds both Docker images (`georespo
 
 ## 5. Illustrative Pipeline Definition
 
-The following is a representative GitHub Actions workflow. It illustrates the intended pipeline shape; the actual `.github/workflows/ci.yml` file is an implementation artifact still to be created alongside this documentation.
+The following is the shape of the real `.github/workflows/ci.yml`, which is the source of truth. The sketch omits only the `integration` job described in section 4.3 (a PostGIS `services:` container, the backend started with `APP_ENV=development`, seeds loaded with `psql`, then `go test` in `tests/integration/`).
 
 ```yaml
-# .github/workflows/ci.yml  (illustrative — not yet present in the repository)
+# .github/workflows/ci.yml  (illustrative sketch of the real file)
 name: CI
 
 on:
@@ -143,12 +143,12 @@ jobs:
           cache-dependency-path: georesponse-fe/package-lock.json
       - run: npm ci
       - run: npm run lint
-      - run: npm run type-check
+      - run: npm run typecheck
       - run: npm run build
-      - run: npm run test -- --run
+      - run: npm run test
 
   backend:
-    name: Backend (vet, build, test)
+    name: Backend (fmt, vet, build, test)
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -157,7 +157,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
         with:
-          go-version: "1.22"
+          go-version: "1.26"
           cache-dependency-path: georesponse-be/go.sum
       - run: gofmt -l . | tee /tmp/fmt.out && test ! -s /tmp/fmt.out
       - run: go vet ./...
@@ -172,13 +172,13 @@ jobs:
       - uses: actions/checkout@v4
       - uses: docker/setup-buildx-action@v3
       - name: Build frontend image
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: ./georesponse-fe
           push: false
           tags: georesponse-fe:ci
       - name: Build backend image
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: ./georesponse-be
           push: false

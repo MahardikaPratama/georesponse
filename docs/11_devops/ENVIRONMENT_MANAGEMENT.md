@@ -57,7 +57,7 @@ Running Container / Process (environment-specific behavior)
 | `MAP_TILE_URL` | Map tile source URL for MapLibre GL JS, if a non-default tile provider is used | provider-specific |
 | `LOG_LEVEL` | Client-side logger verbosity, read by `src/utils/logger/logger.ts` | `debug` |
 
-The frontend build tool is Rspack, not Vite, so these are **not** `VITE_`-prefixed (that convention is Vite-specific and does not apply here). Rspack's `DefinePlugin` injects them at build time as `process.env.API_BASE_URL` etc., per `georesponse-fe/rspack.config.js`. Because the frontend is served as static assets, values needed only at build time are fixed per build; values that need to differ without rebuilding (rare for a static SPA) would require a runtime-injected config file served alongside the assets, which is not currently needed at this scope.
+The frontend build tool is Rspack, not Vite, so these are **not** `VITE_`-prefixed (that convention is Vite-specific and does not apply here). Rspack's `DefinePlugin` injects them at build time as `process.env.API_BASE_URL` etc., per `georesponse-fe/rspack.config.js`, which loads `georesponse-fe/.env` first when running outside Docker. Because the frontend is served as static assets, these values are fixed per build: the Docker image takes them as build arguments (`georesponse-fe/Dockerfile` `ARG`s, fed from the root `.env` by `docker-compose.yml`'s `build.args` or by `scripts/docker/build.sh --build-arg`). Values that need to differ without rebuilding (rare for a static SPA) would require a runtime-injected config file served alongside the assets, which is not currently needed at this scope.
 
 ### 5.2 Backend (`georesponse-be`)
 
@@ -70,8 +70,11 @@ The frontend build tool is Rspack, not Vite, so these are **not** `VITE_`-prefix
 | `CORS_ALLOWED_ORIGINS` | Comma-separated browser origins allowed to call the API cross-origin (SECURITY.md section 8.1); never a wildcard | `http://localhost:5173` |
 | `BMKG_BASE_URL` | BMKG's public GeoHotspot ArcGIS REST layer, queried by GET /api/v1/hotspots | `https://datacuaca.bmkg.go.id/arcgis/rest/services/production/geohotspot/MapServer/0` |
 | `BMKG_TIMEOUT` | Timeout for a single request to BMKG | `10s` |
+| `TOKEN_SECRET` | Signs and verifies authentication tokens (HMAC); required, must be kept confidential | local-dev placeholder only |
+| `TOKEN_TTL` | How long a signed authentication token remains valid | `24h` |
+| `MIGRATIONS_DIR` | Directory of `NNNN_*.up.sql` files the backend applies at start-up when `APP_ENV=development` (`DOCKER_COMPOSE.md` section 6.5) | `../database/migrations` (`go run` from `georesponse-be/`); `/migrations` in the container |
 
-Additional variables (e.g. JWT signing secret) would be added here as those concerns are implemented; the convention — environment variable, never hardcoded — applies uniformly.
+Any further variable follows the same convention — environment variable, never hardcoded, documented here and in `georesponse-be/.env.example`.
 
 ### 5.3 Database (`georesponse-db`)
 
@@ -145,7 +148,7 @@ If/when the integration test suite in `tests/integration/` is implemented, it wo
 
 ## 8. Startup Validation
 
-Per NFR-DEP-004, the backend must fail startup clearly when required configuration is missing or invalid (for example, an unset or malformed `DATABASE_URL`), rather than starting in a partially-configured state and failing unpredictably on the first request. This is an application-level responsibility (validating required environment variables at process start) rather than an environment-management infrastructure concern, but it depends on this document's convention: every required variable must be documented in `.env.example` so the validation logic and the documentation stay in sync.
+Per NFR-DEP-004, the backend must fail startup clearly when required configuration is missing or invalid, rather than starting in a partially-configured state and failing unpredictably on the first request. `georesponse-be/internal/platform/config` implements this: `config.Load()` runs before anything else in `cmd/api/main.go` and exits with an error naming the offending variable when `DATABASE_URL` is unset or not a `postgres://host/database` URL, `TOKEN_SECRET` is unset, `HTTP_PORT` is not a TCP port, `LOG_LEVEL` is not one of `debug|info|warn|error`, `TOKEN_TTL`/`BMKG_TIMEOUT` are not positive durations, `BMKG_BASE_URL` is not an absolute http(s) URL, or — in `APP_ENV=development` — `MIGRATIONS_DIR` is not a readable directory. This is an application-level responsibility rather than an environment-management infrastructure concern, but it depends on this document's convention: every required variable must be documented in `.env.example` so the validation logic and the documentation stay in sync.
 
 ---
 

@@ -50,6 +50,12 @@ Example:
 GET /api/v1/resources
 ```
 
+One operational endpoint sits outside the versioned prefix: `GET /health`
+returns `200 {"status": "ok", "database": "ok"}` when the process is up and
+can reach its database, or `503` with both values `"unavailable"`
+otherwise. It is used by Docker Compose health checks and deployment
+tooling, not by the frontend.
+
 ---
 
 ## 3. General HTTP Rules
@@ -60,6 +66,9 @@ GET /api/v1/resources
 - Use path parameters for resource identifiers.
 - Use query parameters for search, filtering, and pagination.
 - Validate all state-changing input on the backend (FR-041, FR-045).
+- Request bodies are decoded strictly: a malformed or empty body, or a body
+  containing a field the endpoint does not define, is rejected with
+  `400 VALIDATION_ERROR` rather than silently ignored.
 
 ### Response
 
@@ -81,6 +90,7 @@ Common error status codes:
 | 404 | Resource or requested entity not found |
 | 409 | Operation conflicts with current state |
 | 500 | Internal persistence or server failure |
+| 502 | An upstream data provider (section 18) is unavailable |
 
 ### Pagination Defaults
 
@@ -135,11 +145,19 @@ A `pageSize` above the maximum is rejected with `VALIDATION_ERROR`.
 {
   "error": {
     "code": "VALIDATION_ERROR",
-    "message": "Invalid resource data",
-    "details": []
+    "message": "Request data does not satisfy validation rules",
+    "details": [
+      { "field": "name", "message": "must not be empty" }
+    ]
   }
 }
 ```
+
+`details`, when present, is an array of `{ "field", "message" }` entries.
+It is omitted entirely (not `null`, not `[]`) when the error carries no
+field-level information, which is the case for every code other than
+`VALIDATION_ERROR` and for `VALIDATION_ERROR` responses raised by the
+domain layer rather than by request decoding (section 12).
 
 The frontend should rely on the stable error `code` rather than parsing the
 human-readable `message` (FR-043).
@@ -151,6 +169,14 @@ human-readable `message` (FR-043).
 Implements FR-027, FR-028, FR-029, BR-022, BR-023, BR-024, and UC-11
 (Authenticate User).
 
+How the authenticated context is transmitted is an implementation decision
+left open by the requirements. The current backend transmits it as an
+`HttpOnly`, `SameSite=Lax` cookie named `georesponse_token` (marked
+`Secure` when `APP_ENV=production`), set on login and cleared on logout,
+so the frontend never handles a token directly. Every protected endpoint
+below reads that cookie; a request without a valid one receives
+`401 AUTHENTICATION_FAILED`.
+
 ## 5.1 Login
 
 ```http
@@ -161,16 +187,18 @@ Request:
 
 ```json
 {
-  "identifier": "user@example.com",
+  "identifier": "user-001",
   "password": "..."
 }
 ```
 
-The exact authentication credential format is an implementation decision.
+The exact authentication credential format is an implementation decision;
+in the current backend `identifier` is the user's `id` (the users table
+has no separate username/email column).
 
-A successful response establishes an authenticated context (BR-023) and
-returns the authenticated user's identity in the same shape as
-`GET /api/v1/auth/me`.
+A successful response (`200`) establishes an authenticated context
+(BR-023) and returns the authenticated user's identity in the same shape
+as `GET /api/v1/auth/me`.
 
 If the submitted credentials are invalid, the backend must reject the
 request with `401 AUTHENTICATION_FAILED` and must not establish an
@@ -233,7 +261,7 @@ Supported query parameters:
 
 | Parameter | Purpose | Notes |
 |---|---|---|
-| `search` | Free-text match against supported resource information (FR-016, BR-043) | Optional; an empty value returns unfiltered results |
+| `search` | Free-text match against supported resource information (FR-016, BR-043) | Optional; an empty value returns unfiltered results. Currently a case-insensitive substring match on `name` |
 | `type` | Filter by resource type (FR-017, BR-044) | One of `VEHICLE`, `FACILITY`, `EQUIPMENT`, `IOT_DEVICE` |
 | `status` | Filter by resource status (FR-018, BR-044) | One of `AVAILABLE`, `IN_USE`, `MAINTENANCE`, `UNAVAILABLE` |
 | `page` | Page number | Default `1` |
@@ -560,6 +588,25 @@ and changes must be recorded in the audit trail (FR-033, BR-028). A caller
 without the required permission receives `403 AUTHORIZATION_DENIED`
 (FR-032).
 
+## 10.6 Request and Response Shapes
+
+The `Role`, `Permission`, and `User` representations are defined in
+`DATA_CONTRACT.md` sections 5–7. Endpoint-specific shapes:
+
+| Endpoint | Request body | Success response |
+|---|---|---|
+| `GET /api/v1/roles` | — | `200 { "data": [Role, ...] }` (not paginated; no `meta`) |
+| `GET /api/v1/permissions` | — | `200 { "data": [Permission, ...] }` (not paginated; no `meta`) |
+| `POST /api/v1/roles` | `{ "id": "role-002", "name": "coordinator" }` (`id` optional; generated when omitted) | `201 { "data": Role }` |
+| `PUT /api/v1/roles/{id}` | `{ "name": "coordinator" }` | `200 { "data": Role }` |
+| `DELETE /api/v1/roles/{id}` | — | `204` |
+| `PUT /api/v1/roles/{id}/permissions` | `{ "permissions": ["resource.read", ...] }` — replaces the role's full permission set | `204` |
+| `PUT /api/v1/users/{id}/roles` | `{ "roles": ["operator", ...] }` — role **names**; replaces the user's full role set | `204` |
+
+A role, permission code, or user that does not exist returns
+`404 RESOURCE_NOT_FOUND`. A role `name` that collides with an existing role
+returns `400 VALIDATION_ERROR`.
+
 ---
 
 # 11. Audit Trail
@@ -589,7 +636,12 @@ pageSize
 ```
 
 `page` defaults to `1` and `pageSize` defaults to `20` (maximum `100`), per
-section 3.
+section 3. `operation` takes one of the operation values listed below;
+`startTime` and `endTime` are inclusive RFC 3339 / ISO 8601 timestamps
+(e.g. `2026-09-19T10:30:00Z`); a value that does not parse is ignored
+rather than rejected. The response uses the paginated collection envelope
+(section 4) with `AuditRecord` items as defined in `DATA_CONTRACT.md`
+section 9, most recent first.
 
 The API returns enough information to trace relevant operations, including
 where available:
@@ -668,7 +720,13 @@ to error conditions without parsing human-readable text (FR-043, FR-047).
 | `AUTHORIZATION_DENIED` | 403 | Authenticated user lacks the required permission |
 | `RESOURCE_NOT_FOUND` | 404 | The requested resource, role, permission, or user does not exist |
 | `RESOURCE_ID_CONFLICT` | 409 | A resource with the submitted identifier already exists |
-| `PERSISTENCE_ERROR` | 500 | The operation could not be completed due to a persistence failure |
+| `PERSISTENCE_ERROR` | 500 | The operation could not be completed due to a persistence failure (also returned for any unrecognized server-side error) |
+| `HOTSPOT_UPSTREAM_UNAVAILABLE` | 502 | BMKG hotspot data (section 18) could not be fetched and no previously fetched result is available |
+
+`VALIDATION_ERROR` is also the code for the conditions that have no more
+specific code of their own: a missing `id` or `name`, a type-specific
+attribute that is missing or invalid, a request body with an unknown
+field, and a role name conflict (section 10.6).
 
 Example:
 
@@ -676,13 +734,13 @@ Example:
 {
   "error": {
     "code": "INVALID_LOCATION",
-    "message": "Invalid geographic coordinates",
-    "details": {
-      "field": "location"
-    }
+    "message": "Geographic coordinates are missing or out of range"
   }
 }
 ```
+
+`details` is present only on `VALIDATION_ERROR` responses that carry
+field-level information (section 4).
 
 Error messages are intended for humans; error codes are intended for
 application logic (FR-043). A persistence failure must never be reported
@@ -762,7 +820,9 @@ endpoints for route planning, automated dispatch, resource optimization,
 real-time/continuous location tracking, or external sensor integration.
 Radius-based or bounding-box spatial search (`SCOPE.md` section 6.1) is
 future scope and is intentionally not part of this contract until the
-product scope is explicitly updated.
+product scope is explicitly updated. The read-only BMKG hotspot overlay
+(section 18) is situational context drawn onto the map, not a managed
+resource, sensor integration, or dispatch capability.
 
 ---
 
@@ -779,3 +839,55 @@ The frontend must not:
 
 The backend remains responsible for validation, authorization, business
 rules, persistence, and consistent error handling.
+
+---
+
+# 18. Situational Awareness: BMKG Hotspots
+
+A read-only overlay of fire/heat-anomaly detections sourced from BMKG's
+public GeoHotspot service, drawn on the map alongside resources. A hotspot
+is never an application-managed `Resource`: it cannot be created, edited,
+relocated, or deleted through this API, has no status or history, and
+triggers no dispatch.
+
+## 18.1 List Hotspots
+
+```http
+GET /api/v1/hotspots
+```
+
+Requires an authenticated context (section 5).
+
+| Parameter | Purpose | Notes |
+|---|---|---|
+| `hours` | Recency window: only detections within the last `hours` hours | Default `24`, maximum `72`; a value that is missing, non-numeric, `<= 0`, or `> 72` falls back to `24` |
+
+The response uses the collection envelope (section 4). The result is not
+paginated: `meta.page` is always `1` and `meta.pageSize` equals
+`meta.total`.
+
+```json
+{
+  "data": [
+    {
+      "id": "12345",
+      "latitude": -2.1234,
+      "longitude": 113.5678,
+      "region": "Kalimantan",
+      "province": "Kalimantan Tengah",
+      "regency": "Kotawaringin Timur",
+      "district": "Mentaya Hilir Utara",
+      "observedDate": "2026-09-19",
+      "observedTime": "05:50",
+      "updatedAt": "2026-09-19T06:00:00Z",
+      "originDate": "2026-09-19T00:00:00Z"
+    }
+  ],
+  "meta": { "page": 1, "pageSize": 1, "total": 1 }
+}
+```
+
+Field meanings follow `DATA_CONTRACT.md` section 16. If BMKG is
+unreachable, the backend serves the last successfully fetched list
+(possibly stale); only when no prior result exists does it return
+`502 HOTSPOT_UPSTREAM_UNAVAILABLE` (section 13).

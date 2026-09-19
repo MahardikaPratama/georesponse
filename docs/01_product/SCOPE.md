@@ -434,3 +434,80 @@ implementation preferences, or an attempt to add additional features.
 
 Any approved scope change must be reflected in the relevant product
 documentation before it becomes part of the implementation.
+
+---
+
+## 11. Implementation Status at Submission
+
+This section records, as of 2026-09-20, which parts of the scope above are
+implemented, which are partial, and which are intentionally left out, so
+that no gap is silent. It is a factual snapshot for the take-home
+submission, not a change to the scope itself; the checkbox-level record of
+what was verified in which environment is `IMPLEMENTATION_CHECKLIST.md`.
+
+### 11.1 Implemented
+
+Every functional requirement (`FR-001` to `FR-053`) and every use case
+(`UC-01` to `UC-14`) has a backend implementation (`georesponse-be/`,
+exposed under `/api/v1`), a frontend implementation (`georesponse-fe/`),
+and automated tests, with the partial items in section 11.2. All out-of-
+scope capabilities in section 4 remain unimplemented by design.
+
+### 11.2 Partial
+
+- **FR-033 / UC-12 — Manage Roles and Permissions.** The API supports the
+  full model (`POST`/`PUT`/`DELETE /api/v1/roles`, `PUT
+  /api/v1/roles/{id}/permissions`, `PUT /api/v1/users/{id}/roles`, all
+  audited). The management UI exposes viewing roles and permissions,
+  changing a role's permission set, and assigning roles to a user; creating,
+  renaming, or deleting a role is available only through the API. Reason:
+  the seeded roles cover the MVP actors, so role lifecycle in the UI was
+  deferred in favour of permission and user-role assignment.
+- **FR-002 / FR-020 — List and map page size.** The API paginates
+  (`page`, `pageSize`, default 20, maximum 100). The frontend requests the
+  first page with the default size and has no pagination control, so the
+  list and map show at most the first 20 matching resources. Search and
+  filters apply server-side, so any resource can still be found. Reason:
+  the seeded dataset is well below the page size; a pagination control was
+  deferred.
+- **UC-05 — Map empty state.** When no resources match, the map renders no
+  markers and the adjacent resource list shows the empty-state message;
+  the map itself has no dedicated empty-state overlay.
+
+### 11.3 Non-Functional Requirements Not Fully Demonstrated
+
+The following `NON_FUNCTIONAL_REQUIREMENTS.md` items are implemented in
+code where applicable but their stated verification has not been carried
+out at this scope:
+
+- `NFR-PERF-001` to `NFR-PERF-005` — no API, database, or frontend latency
+  measurements were taken; the only benchmark performed is the map-library
+  selection in `geo-map-benchmark/`.
+- `NFR-SCAL-002`, `NFR-REL-004` — the "representative extension" and
+  failure-injection verifications were not exercised.
+- `NFR-TEST-005` — coverage is measured for the backend only (`go test
+  -cover` in CI); frontend coverage reporting is not configured.
+- `NFR-FE-005` — the layout is a fixed-width list beside the map, sized for
+  desktop viewports; the narrow-viewport behaviour described in
+  `docs/06_frontend/FRONTEND_UI_UX.md` section 9 is not implemented.
+- `NFR-SEC-005` — no TLS termination is provisioned; the system is not
+  exposed beyond a local environment (see `docs/11_devops/DEPLOYMENT.md`).
+- `NFR-QUAL-003` — static analysis is `go vet` and ESLint; the SonarQube
+  scripts exist but no Sonar server is provisioned.
+- `NFR-API-004` — no dedicated contract-compatibility tests beyond the
+  `tests/integration/` suite.
+
+### 11.4 Verification Gaps
+
+The Playwright end-to-end suite under `tests/e2e/` exists and is run
+locally against the composed stack; it is not a CI stage. The API
+integration suite under `tests/integration/` runs in CI against a live
+backend and PostGIS service container.
+
+### 11.5 Addition Beyond the Documented Scope
+
+A read-only BMKG GeoHotspot situational-awareness overlay (`GET
+/api/v1/hotspots`, a toggleable map layer) was added during implementation.
+It is not part of sections 3 or 5, does not alter the `Resource` domain
+model, and stores nothing; it is recorded here so that the implemented
+system and this scope document do not silently diverge.

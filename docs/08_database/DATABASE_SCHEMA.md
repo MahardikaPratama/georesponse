@@ -2,8 +2,12 @@
 
 ## 1. Purpose
 
-This document defines the proposed relational schema for GeoResponse's
-PostgreSQL + PostGIS database: tables, columns, keys, and indexes.
+This document defines the relational schema for GeoResponse's
+PostgreSQL + PostGIS database: tables, columns, keys, and indexes, as
+created by the migration files in `database/migrations/` (`0001`–`0007`).
+The listings below show the resulting objects; the migration files
+themselves wrap every `CREATE` in an `IF NOT EXISTS` guard
+(`DATABASE_MIGRATIONS.md` section 5.5).
 
 It is the physical counterpart of `DATA_CONTRACT.md` (the application-level
 data model) and `DOMAIN_MODEL.md` (the conceptual model). `DATA_CONTRACT.md`
@@ -32,7 +36,7 @@ column of the same name with underscores in place of camel humps:
 | `updatedAt` | `updated_at` |
 | `createdAt` | `created_at` |
 | `previousStatus` / `newStatus` | `previous_status` / `new_status` |
-| `previousLocation` / `newLocation` | `previous_latitude`/`previous_longitude` / `new_latitude`/`new_longitude` |
+| `previousLocation` / `newLocation` | derived from `previous_location` / `new_location` (both `geography(Point,4326)`) |
 | `changedAt` | `changed_at` |
 | `changedBy` | `changed_by` |
 | `occurredAt` | `occurred_at` |
@@ -153,13 +157,13 @@ CREATE TABLE role_permissions (
 CREATE TABLE users (
     id            text PRIMARY KEY,
     name          text NOT NULL,
-    -- Authentication credentials (password hash, etc.) are deliberately
-    -- excluded from this document's scope; DATA_CONTRACT.md §5 states
-    -- credentials are not part of general application data, and their
-    -- storage is a security-documentation concern, not a schema concern
-    -- covered here.
     created_at    timestamptz NOT NULL DEFAULT now(),
-    updated_at    timestamptz NOT NULL DEFAULT now()
+    updated_at    timestamptz NOT NULL DEFAULT now(),
+    -- bcrypt hash verified by POST /api/v1/auth/login (added by migration
+    -- 0007; the login `identifier` is the user's own id, since no separate
+    -- username/email column exists). Never returned by the API
+    -- (DATA_CONTRACT.md §5).
+    password_hash text NOT NULL DEFAULT ''
 );
 
 CREATE TABLE user_roles (
@@ -195,7 +199,7 @@ constrains what that specific history type may represent.
 ```sql
 CREATE TABLE resource_status_history (
     id               text PRIMARY KEY,
-    resource_id      text NOT NULL REFERENCES resources (id) ON DELETE CASCADE,
+    resource_id      text REFERENCES resources (id) ON DELETE SET NULL,
     previous_status  text NOT NULL,
     new_status       text NOT NULL,
     changed_at       timestamptz NOT NULL DEFAULT now(),
@@ -204,7 +208,7 @@ CREATE TABLE resource_status_history (
 
 CREATE TABLE resource_location_history (
     id                  text PRIMARY KEY,
-    resource_id         text NOT NULL REFERENCES resources (id) ON DELETE CASCADE,
+    resource_id         text REFERENCES resources (id) ON DELETE SET NULL,
     previous_location   geography(Point, 4326) NOT NULL,
     new_location        geography(Point, 4326) NOT NULL,
     changed_at          timestamptz NOT NULL DEFAULT now(),
@@ -213,7 +217,7 @@ CREATE TABLE resource_location_history (
 
 CREATE TABLE resource_change_history (
     id            text PRIMARY KEY,
-    resource_id   text NOT NULL REFERENCES resources (id) ON DELETE CASCADE,
+    resource_id   text REFERENCES resources (id) ON DELETE SET NULL,
     changes       jsonb NOT NULL,  -- [{ "field": "name", "before": "...", "after": "..." }]
     changed_at    timestamptz NOT NULL DEFAULT now(),
     changed_by    text REFERENCES users (id) ON DELETE SET NULL
@@ -225,16 +229,16 @@ CREATE INDEX idx_resource_change_history_resource_id ON resource_change_history 
 ```
 
 Note on `resources` deletion: `resource_id` foreign keys here use
-`ON DELETE CASCADE`. This intentionally differs from the hard-delete
-rationale in `DATABASE_ARCHITECTURE.md` §6.4 for the *current-state*
-`resources` row, but resource-scoped history rows have no independent
-meaning once the resource itself is permanently gone and the deletion is
-already captured, with full identifying detail, in `audit_records` (section
-8), which is the durable trail for deletion per `BR-021`. `changed_by` uses
-`ON DELETE SET NULL` rather than cascading, since removing a user account
-should not erase the historical record that a change happened — only who
-specifically made it becomes unknown, consistent with `DATA_CONTRACT.md` §8
-treating `changedBy` as available "when user identity is available."
+`ON DELETE SET NULL` (nullable column), matching `audit_records` (section
+8). Migrations `0001`–`0003` originally created them as `NOT NULL ... ON
+DELETE CASCADE`; migration `0006` relaxed them, because resource deletion
+is a hard delete (`DATABASE_ARCHITECTURE.md` §6.4) and resource history
+must remain available after the resource is gone — cascading silently
+destroyed it. `changed_by` likewise uses `ON DELETE SET NULL`, since
+removing a user account should not erase the historical record that a
+change happened — only who specifically made it becomes unknown,
+consistent with `DATA_CONTRACT.md` §8 treating `changedBy` as available
+"when user identity is available."
 
 ---
 
@@ -282,9 +286,9 @@ as a side effect of deleting the thing it describes.
 
 ```text
 resources
-  ├── resource_status_history   (resource_id → resources.id, CASCADE)
-  ├── resource_location_history (resource_id → resources.id, CASCADE)
-  ├── resource_change_history   (resource_id → resources.id, CASCADE)
+  ├── resource_status_history   (resource_id → resources.id, SET NULL)
+  ├── resource_location_history (resource_id → resources.id, SET NULL)
+  ├── resource_change_history   (resource_id → resources.id, SET NULL)
   └── audit_records             (resource_id → resources.id, SET NULL)
 
 users
@@ -298,6 +302,9 @@ roles
 
 permissions
   └── role_permissions  (permission_id → permissions.id, CASCADE)
+
+schema_migrations   migration bookkeeping only (see DATABASE_MIGRATIONS.md §4);
+                    not application data
 ```
 
 ---
@@ -313,7 +320,8 @@ This document does not cover:
   `DATABASE_MIGRATIONS.md`);
 - connection pooling, backup/restore, or index-tuning operations (see
   `DATABASE_ARCHITECTURE.md` and `DATABASE_OPERATIONS.md`);
-- authentication credential storage (a security-documentation concern).
+- how `users.password_hash` is generated or verified (the column is
+  defined in section 6; the hashing scheme is a backend/security concern).
 
 ---
 

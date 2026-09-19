@@ -25,6 +25,10 @@ The requirements in this document are derived from:
 - `USE_CASES.md`; and
 - `BUSINESS_RULES.md`.
 
+The implementation status of these requirements at submission time —
+including any requirement that is only partially implemented — is recorded
+in `SCOPE.md` section 11.
+
 ---
 
 # 2. Conventions

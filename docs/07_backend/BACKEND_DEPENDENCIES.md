@@ -20,8 +20,16 @@ re-evaluation without revisiting that document:
 |---|---|---|
 | `github.com/go-chi/chi/v5` | HTTP routing on top of `net/http` | `internal/http` |
 | PostgreSQL driver/toolkit (`github.com/jackc/pgx/v5`) | Database connectivity, connection pooling | `internal/platform/postgres`, `internal/repository/postgres` |
-| A SQL migration tool consistent with `scripts/database/migrate.sh` / `migrate.ps1` (e.g. `github.com/golang-migrate/migrate/v4` or `github.com/pressly/goose/v3`) | Applying and rolling back schema migrations | invoked by the migration script; not imported by application code |
+| golang-migrate CLI (`github.com/golang-migrate/migrate/v4/cmd/migrate`, installed as a tool, not a module dependency) | Applying and rolling back schema migrations from `scripts/database/migrate.sh` / `rollback.sh` (`.ps1` twins) | invoked by the migration scripts; not imported by application code. The backend's own development-only start-up migrator (`internal/platform/postgres.Migrate`, `DOCKER_COMPOSE.md` section 6.5) is ~150 lines over `pgx` that write the same `schema_migrations(version, dirty)` table — chosen over importing the golang-migrate library so the application binary gains no new dependency |
+| `golang.org/x/crypto` (`bcrypt`) | Password hash verification at login, and hashing in the `scripts/hashpw` seed helper | `internal/auth`, `scripts/hashpw` |
 | Go standard `testing` package | Backend tests | all layers, test files only |
+
+Everything else is the standard library: `log/slog` for structured logging,
+`crypto/hmac` + `crypto/sha256` for the stateless auth token,
+`crypto/rand` for server-generated ids (`internal/platform/idgen`), and
+`net/http` for the BMKG GeoHotspot client (`internal/platform/bmkg`). The
+current `go.mod` lists only `chi`, `pgx`, and `x/crypto` as direct
+requirements; the remaining entries are their transitive dependencies.
 
 `pgx` is preferred over `database/sql` + a generic driver because it exposes
 PostGIS-friendly type handling and its own connection pool
@@ -78,8 +86,11 @@ code over the dependency.
 net/http, Chi              → internal/http (router, middleware, handlers)
 pgx / pgxpool               → internal/platform/postgres,
                                internal/repository/postgres
-migration tool               → scripts/database/*.sh|ps1 only
-                               (not imported by application binaries)
+migration tool (CLI)         → scripts/database/*.sh|ps1 only
+                               (not imported by application binaries;
+                               the dev-only start-up migrator in
+                               internal/platform/postgres uses pgx)
+x/crypto/bcrypt              → internal/auth (service.go), scripts/hashpw
 testing, httptest            → *_test.go files in any layer
 ```
 
@@ -98,10 +109,10 @@ rather than imported ad hoc across feature packages — consistent with
 
 ## 5. `go.mod` / `go.sum` Hygiene
 
-- `go.mod` declares a single module for the backend, e.g.
-  `module github.com/<org>/georesponse-be` (the exact module path is set
-  when `go mod init` is run and should match the actual repository location;
-  see the backend `README.md`).
+- `go.mod` declares a single module for the backend:
+  `module github.com/mahardika-pratama/georesponse-be`, pinned to
+  `go 1.26.0` (matching the `1.26` toolchain CI and the Dockerfile build
+  stage use).
 - Run `go mod tidy` after adding or removing an import so `go.mod` and
   `go.sum` stay in sync with actual usage. Do not hand-edit `go.sum`.
 - Commit both `go.mod` and `go.sum`. `go.sum` provides supply-chain integrity
