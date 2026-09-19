@@ -1,6 +1,6 @@
 /*
  * Author       : Mahardika Pratama
- * Version      : 1.0.0
+ * Version      : 1.1.0
  * Created Date : 2026-09-19
  * Description  : The resource detail panel (FR-003, FR-021, UC-02): shows
  *                the selected resource's identity, type, attributes,
@@ -16,6 +16,8 @@
  *
  * Changelog:
  * - 1.0.0 (2026-09-19): Initial creation.
+ * - 1.1.0 (2026-09-19): Added the edit action (Phase 6 section 9.5),
+ *                        opening UpdateResourceModal via onEdit.
  */
 import React from "react";
 
@@ -45,7 +47,7 @@ function CloseButton({ onClose }: { onClose?: () => void }) {
 	);
 }
 
-function ResourceDetail({ resourceId, onClose }: ResourceDetailProps) {
+function ResourceDetail({ resourceId, onClose, onEdit }: ResourceDetailProps) {
 	const { data, status, error } = useResource(resourceId);
 
 	if (status === "pending") {
@@ -88,7 +90,16 @@ function ResourceDetail({ resourceId, onClose }: ResourceDetailProps) {
 					<h2 className="text-lg font-bold text-white">{resource.name}</h2>
 					<p className="text-xs text-neutral-3">{resource.id}</p>
 				</div>
-				<CloseButton onClose={onClose} />
+				<div className="flex items-center gap-2">
+					<button
+						type="button"
+						onClick={onEdit}
+						className="px-2 py-1 text-sm rounded-md bg-white/10 hover:bg-white/20"
+					>
+						Edit
+					</button>
+					<CloseButton onClose={onClose} />
+				</div>
 			</div>
 
 			<div className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">

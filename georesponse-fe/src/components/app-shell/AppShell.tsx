@@ -1,6 +1,6 @@
 /*
  * Author       : Mahardika Pratama
- * Version      : 1.4.0
+ * Version      : 1.5.0
  * Created Date : 2026-09-19
  * Description  : The map-first application shell (FRONTEND_UI_UX.md
  *                section 3): top bar, resource list panel, map, and a
@@ -31,6 +31,8 @@
  *                        useCreateResource already invalidates
  *                        resourceKeys.lists(), which this component's own
  *                        useResources call shares.
+ * - 1.5.0 (2026-09-19): Wires ResourceDetail's edit action to
+ *                        UpdateResourceModal (Phase 6 section 9.5).
  */
 import React, { useMemo, useState } from "react";
 
@@ -45,6 +47,7 @@ import ResourceList from "@components/resource-list/ResourceList";
 import ResourceMap from "@components/resource-map/ResourceMap";
 import { MapMarker } from "@components/resource-map/map-adapter/MapAdapter.types";
 import { RESOURCE_STATUS_CONFIG } from "@constants/resourceStatus.constants";
+import UpdateResourceModal from "@components/resource-update-form/UpdateResourceModal";
 
 function AppShell() {
 	const { data: user } = useCurrentUser();
@@ -53,6 +56,7 @@ function AppShell() {
 	const { data: resourcesPage } = useResources(filters);
 	const [selectedResourceId, setSelectedResourceId] = useState<string | null>(null);
 	const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+	const [editingResourceId, setEditingResourceId] = useState<string | null>(null);
 
 	const markers = useMemo<MapMarker[]>(
 		() =>
@@ -116,11 +120,19 @@ function AppShell() {
 				<ResourceDetail
 					resourceId={selectedResourceId}
 					onClose={() => setSelectedResourceId(null)}
+					onEdit={() => setEditingResourceId(selectedResourceId)}
 				/>
 			)}
 
 			{isCreateModalOpen && (
 				<CreateResourceModal onClose={() => setIsCreateModalOpen(false)} />
+			)}
+
+			{editingResourceId && (
+				<UpdateResourceModal
+					resourceId={editingResourceId}
+					onClose={() => setEditingResourceId(null)}
+				/>
 			)}
 		</div>
 	);
