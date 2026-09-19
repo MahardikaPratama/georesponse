@@ -161,18 +161,17 @@ const sizeStyles = {
  *
  * @returns {JSX.Element} The rendered button element.
  */
-export const Button = memo(
-	({
-		children,
-		className,
-		variant = "solid",
-		color = "primary",
-		size = "md",
-		loading,
-		fullWidth = false,
-		dataTestId,
-		...rest
-	}: ButtonProps) => {
+export const Button = memo(function Button({
+	children,
+	className,
+	variant = "solid",
+	color = "primary",
+	size = "md",
+	loading,
+	fullWidth = false,
+	dataTestId,
+	...rest
+}: ButtonProps) {
 		const isDisabled = rest.disabled;
 
 		return (

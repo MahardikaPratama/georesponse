@@ -1,9 +1,17 @@
+import {
+	countDecimalPlaces as realCountDecimalPlaces,
+	formatNumberWithCommas as realFormatNumberWithCommas
+} from "@utils/formatNumber";
+
 import { getMessage, MessageOptions } from "./messageUtils";
 
 vi.mock("@utils/formatNumber", () => ({
 	countDecimalPlaces: vi.fn(() => 2),
 	formatNumberWithCommas: vi.fn((n: number) => `,${n},`)
 }));
+
+const countDecimalPlaces = vi.mocked(realCountDecimalPlaces);
+const formatNumberWithCommas = vi.mocked(realFormatNumberWithCommas);
 
 describe("messageUtils - getMessage", () => {
 	beforeEach(() => {
@@ -141,8 +149,7 @@ describe("messageUtils - getMessage", () => {
 	});
 
 	it("handles numeric range with decimal formatting", () => {
-		const { formatNumberWithCommas, countDecimalPlaces } = require("@utils/formatNumber");
-		formatNumberWithCommas.mockImplementation((n: number, decimals: number) => 
+		formatNumberWithCommas.mockImplementation((n: number, decimals: number) =>
 			`${n.toFixed(decimals)}`
 		);
 		countDecimalPlaces.mockReturnValue(2);

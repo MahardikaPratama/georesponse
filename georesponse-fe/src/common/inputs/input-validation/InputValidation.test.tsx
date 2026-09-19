@@ -13,7 +13,26 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
+import type { Mock } from 'vitest';
 import InputValidation, { FieldValidator } from './InputValidation';
+import { InputValidationUtils as RealInputValidationUtils } from '@utils/inputValidation';
+import {
+	cleanNumericInput as realCleanNumericInput,
+	formatNumber as realFormatNumber,
+	unformatNumber as realUnformatNumber
+} from '@utils/formatNumber';
+import { logger } from '@utils/logger/logger';
+
+// These modules are replaced by the vi.mock factories below; re-typed here
+// as mocks so call sites can use jest/vitest mock assertion methods
+// (.mockReturnValue, etc.) without fighting the real modules' static types.
+const InputValidationUtils = RealInputValidationUtils as unknown as {
+	getValidationStatus: Mock;
+	getMessage: Mock;
+};
+const cleanNumericInput = vi.mocked(realCleanNumericInput);
+const formatNumber = vi.mocked(realFormatNumber);
+const unformatNumber = vi.mocked(realUnformatNumber);
 
 // Mock dependencies
 vi.mock('@utils/cn', () => ({
@@ -71,7 +90,6 @@ describe('InputValidation Component', () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
 		// Reset mocks to return valid by default
-		const { InputValidationUtils } = require('@utils/inputValidation');
 		InputValidationUtils.getValidationStatus.mockReturnValue(true);
 		InputValidationUtils.getMessage.mockReturnValue('');
 	});
@@ -242,7 +260,6 @@ describe('InputValidation Component', () => {
 	describe('Numeric Input Handling', () => {
 		it('handles numeric input with decimal places', () => {
 			const onChange = vi.fn();
-			const { cleanNumericInput } = require('@utils/formatNumber');
 			cleanNumericInput.mockReturnValue('123.45');
 
 			render(
@@ -262,7 +279,6 @@ describe('InputValidation Component', () => {
 
 		it('removes leading zeros when not allowed', () => {
 			const onChange = vi.fn();
-			const { cleanNumericInput } = require('@utils/formatNumber');
 			cleanNumericInput.mockReturnValue('007');
 
 			render(
@@ -282,7 +298,6 @@ describe('InputValidation Component', () => {
 
 		it('handles double zero input when leading zeros not allowed', () => {
 			const onChange = vi.fn();
-			const { cleanNumericInput } = require('@utils/formatNumber');
 			cleanNumericInput.mockReturnValue('00');
 
 			render(
@@ -303,7 +318,6 @@ describe('InputValidation Component', () => {
 
 		it('handles decimal input edge case', () => {
 			const onChange = vi.fn();
-			const { cleanNumericInput } = require('@utils/formatNumber');
 			// cleanNumericInput returns a processed decimal value
 			cleanNumericInput.mockReturnValue('.');
 
@@ -326,7 +340,6 @@ describe('InputValidation Component', () => {
 		});
 
 		it('formats numbers with thousands separators', () => {
-			const { formatNumber } = require('@utils/formatNumber');
 			formatNumber.mockReturnValue('1,234');
 
 			render(
@@ -443,7 +456,6 @@ describe('InputValidation Component', () => {
 
 	describe('Validation States', () => {
 		it('shows as valid for readonly kinematic fields', () => {
-			const { InputValidationUtils } = require('@utils/inputValidation');
 			InputValidationUtils.getValidationStatus.mockReturnValue(false);
 
 			render(
@@ -484,7 +496,6 @@ describe('InputValidation Component', () => {
 			);
 
 			// Change to invalid
-			const { InputValidationUtils } = require('@utils/inputValidation');
 			InputValidationUtils.getValidationStatus.mockReturnValue(false);
 			
 			rerender(
@@ -557,7 +568,6 @@ describe('InputValidation Component', () => {
 	describe('Auto Padding', () => {
 		it('applies auto padding on blur for squawk field', () => {
 			const onChange = vi.fn();
-			const { unformatNumber } = require('@utils/formatNumber');
 			unformatNumber.mockReturnValue('123');
 
 			render(
@@ -577,7 +587,6 @@ describe('InputValidation Component', () => {
 
 		it('applies end padding for other auto-padding fields', () => {
 			const onChange = vi.fn();
-			const { unformatNumber } = require('@utils/formatNumber');
 			unformatNumber.mockReturnValue('ABC');
 
 			render(
@@ -597,7 +606,6 @@ describe('InputValidation Component', () => {
 
 		it('truncates squawk to 4 digits when longer', () => {
 			const onChange = vi.fn();
-			const { unformatNumber } = require('@utils/formatNumber');
 			unformatNumber.mockReturnValue('123456');
 
 			render(
@@ -618,7 +626,6 @@ describe('InputValidation Component', () => {
 
 	describe('Error and Helper Messages', () => {
 		it('shows error message when validation fails and input has been blurred', () => {
-			const { InputValidationUtils } = require('@utils/inputValidation');
 			InputValidationUtils.getValidationStatus.mockReturnValue(false);
 			InputValidationUtils.getMessage.mockReturnValue('Error message');
 
@@ -638,7 +645,6 @@ describe('InputValidation Component', () => {
 		});
 
 		it('shows helper text when focused and no errors', () => {
-			const { InputValidationUtils } = require('@utils/inputValidation');
 			InputValidationUtils.getMessage.mockReturnValue('Helper text');
 
 			render(
@@ -656,7 +662,6 @@ describe('InputValidation Component', () => {
 		});
 
 		it('uses custom error message when provided', () => {
-			const { InputValidationUtils } = require('@utils/inputValidation');
 			InputValidationUtils.getValidationStatus.mockReturnValue(false);
 			InputValidationUtils.getMessage.mockImplementation(({ errorText }: { errorText: string }) => errorText);
 
@@ -734,7 +739,6 @@ describe('InputValidation Component', () => {
 		});
 
 		it('handles invalid regex pattern gracefully', () => {
-			const { logger } = require('@utils/logger/logger');
 			
 			render(
 				<InputValidation 

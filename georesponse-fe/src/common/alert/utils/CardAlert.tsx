@@ -47,11 +47,11 @@ const Card: React.FC<CardProps> & {
 	);
 };
 
-Card.Header = ({ className = "", children }: CardSubProps) => {
+Card.Header = function CardHeader({ className = "", children }: CardSubProps) {
 	return <header className={className}>{children ?? "Default Header"}</header>;
 };
 
-Card.Content = ({ className = "", children }: CardSubProps) => {
+Card.Content = function CardContent({ className = "", children }: CardSubProps) {
 	return (
 		<section className={className}>{children ?? "Default Content"}</section>
 	);

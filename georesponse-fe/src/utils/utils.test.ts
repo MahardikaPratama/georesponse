@@ -20,6 +20,10 @@ import {
 import { InputValidationUtils } from "./inputValidation";
 import { withTimeout } from "./withTimeOut";
 
+// colors.ts is a legacy CommonJS module (`module.exports = ...`, consumed
+// by tailwind.config.js), not an ES module — require() is the correct way
+// to load it here, so the no-require-imports rule is intentionally off.
+// eslint-disable-next-line @typescript-eslint/no-require-imports
 const colors = require("./colors");
 
 vi.mock("clsx", () => ({
@@ -72,22 +76,14 @@ describe("formatNumber utils", () => {
 		expect(formatNumber("notanumber")).toBe("notanumber");
 
 		// unformatNumber removes commas
-		expect(require("./formatNumber").unformatNumber("1,234,567")).toBe(
-			"1234567"
-		);
+		expect(unformatNumber("1,234,567")).toBe("1234567");
 
 		// cleanNumericInput: strip letters, handle negative, enforce decimal precision
-		expect(
-			require("./formatNumber").cleanNumericInput("-1,234.567abc", 2)
-		).toBe("-1234.56");
-		expect(require("./formatNumber").cleanNumericInput("123abc", 0)).toBe(
-			"123"
-		);
+		expect(cleanNumericInput("-1,234.567abc", 2)).toBe("-1234.56");
+		expect(cleanNumericInput("123abc", 0)).toBe("123");
 
 		// branch: no decimal part and maxDecimal !== 0 -> returns sanitized int
-		expect(require("./formatNumber").cleanNumericInput("1,234", 2)).toBe(
-			"1234"
-		);
+		expect(cleanNumericInput("1,234", 2)).toBe("1234");
 	});
 	test("countDecimalPlaces for integer and string inputs", () => {
 		expect(countDecimalPlaces(100)).toBe(0);
