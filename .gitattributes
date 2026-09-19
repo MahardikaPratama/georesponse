@@ -12,3 +12,7 @@ Dockerfile    text eol=lf
 
 # PowerShell scripts are consumed on Windows; let git normalise them.
 *.ps1         text
+
+# Go sources must be LF so gofmt -l (quality gate G5a, CI) sees no
+# CRLF-only differences on a Windows checkout.
+*.go          text eol=lf

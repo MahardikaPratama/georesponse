@@ -15,6 +15,10 @@
 #
 # Changelog:
 # - 1.0.0 (2026-09-20): Initial creation.
+# - 1.0.1 (2026-09-20): HEALTHCHECK targets 127.0.0.1 instead of localhost:
+#                        busybox wget resolves localhost to ::1 first, and
+#                        nginx only listens on IPv4, so the check always
+#                        failed with "connection refused".
 
 # ---- Build stage ----
 FROM node:20-alpine AS build
@@ -48,6 +52,6 @@ COPY nginx.conf /etc/nginx/conf.d/default.conf
 EXPOSE 80
 
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-    CMD wget -qO- http://localhost:80/ >/dev/null || exit 1
+    CMD wget -qO- http://127.0.0.1:80/ >/dev/null || exit 1
 
 CMD ["nginx", "-g", "daemon off;"]

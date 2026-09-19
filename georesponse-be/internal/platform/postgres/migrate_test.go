@@ -11,6 +11,9 @@ Description  : Tests for the start-up migration runner. ListMigrations is
 
 Changelog:
   - 1.0.0 (2026-09-20): Initial creation.
+  - 1.0.1 (2026-09-20): Close the pool via t.Cleanup instead of defer, so
+    the cleanup that restores schema_migrations still has a live pool;
+    previously the test left its throwaway version row behind.
 */
 package postgres
 
@@ -96,7 +99,10 @@ func TestMigrate_AppliesPendingAndIsIdempotent(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewPool() error = %v", err)
 	}
-	defer pool.Close()
+	// Registered before the restore cleanup below so it runs after it
+	// (cleanups run last-in, first-out); a defer would close the pool
+	// before the cleanup could restore the bookkeeping row.
+	t.Cleanup(pool.Close)
 
 	// Remember the real bookkeeping row so we can put it back afterwards.
 	var savedVersion int64
