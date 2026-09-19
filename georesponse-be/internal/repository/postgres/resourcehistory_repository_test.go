@@ -94,8 +94,7 @@ func TestResourceHistoryRepository_InsertAndListByResourceID(t *testing.T) {
 }
 
 // TestResourceHistoryRepository_SurvivesResourceDeletion proves migration
-// 0006's fix: deleting a resource must not delete its history, since
-// DATABASE_ARCHITECTURE.md and API_CONTRACT.md both require history to
+// 0006's fix: deleting a resource must not delete its history, which must
 // remain available after a hard delete.
 func TestResourceHistoryRepository_SurvivesResourceDeletion(t *testing.T) {
 	tx := testTx(t)

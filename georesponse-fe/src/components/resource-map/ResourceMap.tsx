@@ -9,9 +9,9 @@
  * Changelog:
  * - 1.0.0 (2026-09-19): Initial creation.
  * - 1.1.0 (2026-09-19): Feeds it real resource data via markers/
- *                        selectedResourceId (Phase 6 section 9.1); syncs
- *                        selectedResourceId to the adapter's selectMarker
- *                        so a list-driven selection highlights the marker.
+ *                        selectedResourceId; syncs selectedResourceId to
+ *                        the adapter's selectMarker so a list-driven
+ *                        selection highlights the marker.
  * - 1.2.0 (2026-09-19): Added hotspots/hotspotLayerVisible, synced to the
  *                        adapter's setHotspots/toggleHotspotLayer.
  * - 1.3.0 (2026-09-19): Wired onMapDoubleClick through to the adapter's

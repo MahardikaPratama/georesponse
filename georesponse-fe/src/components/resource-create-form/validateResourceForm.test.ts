@@ -2,9 +2,9 @@
  * Author       : Mahardika Pratama
  * Version      : 1.0.0
  * Created Date : 2026-09-19
- * Description  : Tests validateResourceForm mirrors API_CONTRACT.md
- *                section 12's rules for a valid resource, and flags each
- *                rule's violation independently.
+ * Description  : Tests validateResourceForm mirrors the backend's rules
+ *                for a valid resource, and flags each rule's violation
+ *                independently.
  *
  * Changelog:
  * - 1.0.0 (2026-09-19): Initial creation.

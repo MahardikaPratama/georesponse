@@ -9,13 +9,13 @@ Description  : Package config loads and validates process configuration
 
 Changelog:
   - 1.0.0 (2026-09-19): Initial creation.
-  - 1.1.0 (2026-09-19): Phase 4 wires a real database connection and
+  - 1.1.0 (2026-09-19): Wires a real database connection and
     authentication token signing into cmd/api/main.go, so DATABASE_URL and
     TOKEN_SECRET are now required in every environment, not only
     production. Added TokenSecret and TokenTTL.
   - 1.2.0 (2026-09-19): Added CORSAllowedOrigins so the frontend's origin
-    can call the API cross-origin from the browser (SECURITY.md section
-    8.1); previously missing, which blocked every browser request.
+    can call the API cross-origin from the browser; previously missing,
+    which blocked every browser request.
   - 1.3.0 (2026-09-19): Added BMKGBaseURL/BMKGTimeout for the BMKG
     GeoHotspot integration (internal/platform/bmkg).
 */
@@ -72,7 +72,7 @@ type Config struct {
 	TokenTTL time.Duration
 
 	// CORSAllowedOrigins lists the browser origins allowed to call this
-	// API cross-origin (SECURITY.md section 8.1). Never a wildcard.
+	// API cross-origin. Never a wildcard.
 	CORSAllowedOrigins []string
 
 	// BMKGBaseURL is BMKG's GeoHotspot ArcGIS REST layer base URL, queried

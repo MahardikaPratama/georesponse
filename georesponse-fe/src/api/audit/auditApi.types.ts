@@ -2,8 +2,7 @@
  * Author       : Mahardika Pratama
  * Version      : 1.0.0
  * Created Date : 2026-09-19
- * Description  : Request/response shapes for GET /api/v1/audit-logs
- *                (API_CONTRACT.md section 11).
+ * Description  : Request/response shapes for GET /api/v1/audit-logs.
  *
  * Changelog:
  * - 1.0.0 (2026-09-19): Initial creation.

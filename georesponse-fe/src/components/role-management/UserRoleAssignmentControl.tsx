@@ -8,10 +8,10 @@
  *
  *                The user is identified by typing their id, not picked
  *                from a list — there is no GET /api/v1/users (or
- *                equivalent) endpoint in API_CONTRACT.md section 10 or
- *                the backend to enumerate users, only
- *                PUT /api/v1/users/{id}/roles itself. A real user picker
- *                is blocked on that gap, not on this control.
+ *                equivalent) endpoint defined, or in the backend, to
+ *                enumerate users, only PUT /api/v1/users/{id}/roles
+ *                itself. A real user picker is blocked on that gap, not
+ *                on this control.
  *
  * Changelog:
  * - 1.0.0 (2026-09-19): Initial creation.

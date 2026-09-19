@@ -3,9 +3,8 @@
  * Version      : 1.0.0
  * Created Date : 2026-09-19
  * Description  : Data-access functions for /api/v1/roles,
- *                /api/v1/permissions, and /api/v1/users/{id}/roles
- *                (API_CONTRACT.md section 10). Called only from hooks —
- *                never directly from a component.
+ *                /api/v1/permissions, and /api/v1/users/{id}/roles.
+ *                Called only from hooks — never directly from a component.
  *
  * Changelog:
  * - 1.0.0 (2026-09-19): Initial creation.

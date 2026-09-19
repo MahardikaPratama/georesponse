@@ -33,8 +33,8 @@ import (
 )
 
 // Permission codes required by this package's use cases. The exact codes
-// are an implementation decision (BUSINESS_RULES.md fixes that
-// authorization is role-based, BR-025, but not a concrete permission set).
+// are an implementation decision (authorization is role-based, BR-025, but
+// the concrete permission set is not fixed elsewhere).
 const (
 	PermissionResourceCreate = "resource.create"
 	PermissionResourceRead   = "resource.read"
@@ -151,8 +151,7 @@ func (s *Service) ListResources(ctx context.Context, actingRoleNames []string, f
 // change-history entry, and records a RESOURCE_UPDATED audit entry
 // (FR-004, BR-015, BR-017, UC-07). Status and location are always taken
 // from the current record, never from updated: those go through
-// ChangeResourceStatus and RelocateResource instead (the BR symmetry note
-// in API_CONTRACT.md section 7.1/8).
+// ChangeResourceStatus and RelocateResource instead.
 func (s *Service) UpdateResource(ctx context.Context, actingUserID string, actingRoleNames []string, updated Resource) (*Resource, error) {
 	if err := s.checker.Require(ctx, actingRoleNames, PermissionResourceUpdate); err != nil {
 		return nil, err
@@ -195,7 +194,7 @@ func (s *Service) UpdateResource(ctx context.Context, actingUserID string, actin
 
 // DeleteResource permanently removes the resource identified by id and
 // records a RESOURCE_DELETED audit entry, atomically (FR-005, BR-019,
-// BR-021, UC-10; DATABASE_ARCHITECTURE.md section 6.4).
+// BR-021, UC-10).
 //
 // The audit record is written before the delete, not after: audit_records
 // .resource_id has a foreign key to resources(id) (ON DELETE SET NULL), so
@@ -226,7 +225,7 @@ func (s *Service) DeleteResource(ctx context.Context, actingUserID string, actin
 // ChangeResourceStatus updates only the status of the resource identified
 // by id, records a status-history entry, and records a
 // RESOURCE_STATUS_CHANGED audit entry (FR-011, FR-012, BR-006, BR-008,
-// UC-08). It never modifies location (API_CONTRACT.md section 7.1).
+// UC-08). It never modifies location.
 func (s *Service) ChangeResourceStatus(ctx context.Context, actingUserID string, actingRoleNames []string, id string, status Status) (*Resource, error) {
 	if err := s.checker.Require(ctx, actingRoleNames, PermissionResourceUpdate); err != nil {
 		return nil, err

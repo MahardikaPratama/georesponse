@@ -23,9 +23,8 @@ import (
 // without a live database: a pool pointed at an address nothing listens
 // on fails to ping quickly, and the handler must report 503 rather than
 // hanging or panicking. The success path (a real database reachable) is
-// exercised by the manual curl walkthrough documented in
-// IMPLEMENTATION_CHECKLIST.md, since it needs a live PostgreSQL instance
-// this unit test intentionally does not depend on.
+// exercised by a manual curl walkthrough, since it needs a live
+// PostgreSQL instance this unit test intentionally does not depend on.
 func TestHealthHandler_DatabaseUnavailable(t *testing.T) {
 	pool, err := pgxpool.New(context.Background(), "postgres://nouser:nopass@127.0.0.1:1/nodb?connect_timeout=1")
 	if err != nil {

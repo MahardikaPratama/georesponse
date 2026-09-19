@@ -3,7 +3,8 @@
  * Version      : 1.0.0
  * Created Date : 2026-09-19
  * Description  : Tests validateResourceUpdateForm requires a name and the
- *                current type's attributes, per API_CONTRACT.md section 12.
+ *                current type's attributes, matching the backend's
+ *                validation rules.
  *
  * Changelog:
  * - 1.0.0 (2026-09-19): Initial creation.

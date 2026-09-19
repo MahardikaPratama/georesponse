@@ -4,18 +4,15 @@ Version      : 1.0.0
 Created Date : 2026-09-19
 Description  : Chi router assembly. Wires the global middleware chain, the
 
-	health check, and every /api/v1 route (API_CONTRACT.md sections
-	5-11) to its handler.
+	health check, and every /api/v1 route to its handler.
 
 Changelog:
-  - 1.0.0 (2026-09-19): Initial creation. Phase 0: health check only, no
-    feature handlers wired yet.
-  - 2.0.0 (2026-09-19): Phase 4: wired every /api/v1 handler; health
-    check now reports real database connectivity instead of a static
-    "OK".
-  - 2.1.0 (2026-09-19): Added the CORS middleware (SECURITY.md section
-    8.1) so the browser-facing frontend origin can call this API
-    cross-origin.
+  - 1.0.0 (2026-09-19): Initial creation. Health check only, no feature
+    handlers wired yet.
+  - 2.0.0 (2026-09-19): Wired every /api/v1 handler; health check now
+    reports real database connectivity instead of a static "OK".
+  - 2.1.0 (2026-09-19): Added the CORS middleware so the browser-facing
+    frontend origin can call this API cross-origin.
   - 2.2.0 (2026-09-19): Added GET /api/v1/hotspots (BMKG GeoHotspot
     situational-awareness overlay).
 */
@@ -119,7 +116,7 @@ func New(logger *slog.Logger, deps Dependencies) nethttp.Handler {
 	return r
 }
 
-// healthResponse is the wire shape of GET /health (DEPLOYMENT.md).
+// healthResponse is the wire shape of GET /health.
 type healthResponse struct {
 	Status   string `json:"status"`
 	Database string `json:"database"`

@@ -14,8 +14,8 @@ package audit
 import "context"
 
 // PermissionAuditRead is the permission code required to view the audit
-// trail. The exact code is an implementation decision (BUSINESS_RULES.md
-// does not fix a concrete permission set).
+// trail. The exact code is an implementation decision, since no concrete
+// permission set is fixed elsewhere.
 const PermissionAuditRead = "audit.read"
 
 // PermissionChecker enforces that the caller holds a given permission

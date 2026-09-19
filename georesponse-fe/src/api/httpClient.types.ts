@@ -3,22 +3,22 @@
  * Version      : 1.0.0
  * Created Date : 2026-09-19
  * Description  : Shared types for the API layer: the response envelope
- *                shapes API_CONTRACT.md section 4 defines, and the typed
- *                error httpClient throws when the backend returns one.
+ *                shapes the backend API defines, and the typed error
+ *                httpClient throws when the backend returns one.
  *
  * Changelog:
  * - 1.0.0 (2026-09-19): Initial creation.
  * - 1.1.0 (2026-09-19): Added ValidationDetail, the `error.details` array
- *                        entry shape for VALIDATION_ERROR (API_CONTRACT.md
- *                        section 13), so a form can map a backend field
- *                        error onto the right input (FR-043).
+ *                        entry shape for VALIDATION_ERROR, so a form can
+ *                        map a backend field error onto the right input
+ *                        (FR-043).
  */
 
 export interface DataEnvelope<T> {
 	data: T;
 }
 
-/** One entry of a VALIDATION_ERROR's `details` array (API_CONTRACT.md section 13). */
+/** One entry of a VALIDATION_ERROR's `details` array. */
 export interface ValidationDetail {
 	field: string;
 	message: string;

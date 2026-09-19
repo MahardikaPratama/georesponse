@@ -9,14 +9,14 @@
  *                envelope, and translates a {"error": {...}} response into
  *                a thrown ApiError. No component or feature hook should
  *                call fetch directly — everything goes through this
- *                module, per FRONTEND_ARCHITECTURE.md's layering.
+ *                module, keeping the API layer as a single point of entry.
  *
  * Changelog:
  * - 1.0.0 (2026-09-19): Initial creation.
  * - 1.1.0 (2026-09-19): Added putNoContent, for the 204-returning
- *                        role/user role assignment endpoints (Phase 6
- *                        section 9.10) — put() claims a DataEnvelope<T>
- *                        that a 204 response never actually has.
+ *                        role/user role assignment endpoints — put() claims
+ *                        a DataEnvelope<T> that a 204 response never
+ *                        actually has.
  */
 import { logger } from "@utils/logger/logger";
 

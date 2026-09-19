@@ -5,11 +5,10 @@
  * Description  : Shared types for the resource update form. Deliberately
  *                narrower than the create form's state: `id` isn't an
  *                editable field (BR-015 — identity is preserved across an
- *                update), status has its own dedicated control (section
- *                9.6, FRONTEND_UI_UX.md section 5), and location has its
- *                own dedicated relocate flow (section 9.7, `API_CONTRACT.md`
- *                section 6.4's boundary between a general update and a
- *                relocation).
+ *                update), status has its own dedicated control, and
+ *                location has its own dedicated relocate flow, matching
+ *                the boundary the API draws between a general update and
+ *                a relocation.
  *
  * Changelog:
  * - 1.0.0 (2026-09-19): Initial creation.

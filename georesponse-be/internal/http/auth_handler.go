@@ -4,11 +4,10 @@ Version      : 1.0.0
 Created Date : 2026-09-19
 Description  : Implements POST /api/v1/auth/login, POST /api/v1/auth/logout,
 
-	and GET /api/v1/auth/me (API_CONTRACT.md section 5). The
-	authenticated context is transmitted as an HttpOnly, Secure,
-	SameSite=Lax cookie set on login and cleared on logout — an
-	implementation decision API_CONTRACT.md deliberately leaves open —
-	rather than returning the token in the response body, so the
+	and GET /api/v1/auth/me. The authenticated context is transmitted as
+	an HttpOnly, Secure, SameSite=Lax cookie set on login and cleared on
+	logout — an implementation decision deliberately left open elsewhere
+	— rather than returning the token in the response body, so the
 	frontend never handles it directly.
 
 Changelog:
@@ -90,7 +89,7 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	httpresponse.WriteData(w, http.StatusOK, userToResponse(*user))
 }
 
-// Logout handles POST /api/v1/auth/logout (API_CONTRACT.md section 5.2).
+// Logout handles POST /api/v1/auth/logout.
 // Tokens are stateless (see auth.Service.Logout), so there is nothing to
 // invalidate server-side; this clears the client's auth cookie, which is
 // what actually ends the session from the client's perspective.

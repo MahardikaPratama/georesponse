@@ -4,7 +4,7 @@ Version      : 1.0.0
 Created Date : 2026-09-19
 Description  : Defines the Repository interface for recording and querying
 
-	the audit trail, per API_CONTRACT.md section 11.1's filter set.
+	the audit trail and its filter set.
 
 Changelog:
   - 1.0.0 (2026-09-19): Initial creation.

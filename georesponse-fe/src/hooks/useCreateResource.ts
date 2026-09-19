@@ -3,9 +3,8 @@
  * Version      : 1.0.0
  * Created Date : 2026-09-19
  * Description  : Mutation for POST /api/v1/resources. On success,
- *                invalidates resourceKeys.lists() (FRONTEND_STATE.md
- *                section 6) so the list and map pick up the new resource
- *                without a manual refresh (UC-06 step 8).
+ *                invalidates resourceKeys.lists() so the list and map pick
+ *                up the new resource without a manual refresh (UC-06 step 8).
  *
  * Changelog:
  * - 1.0.0 (2026-09-19): Initial creation.

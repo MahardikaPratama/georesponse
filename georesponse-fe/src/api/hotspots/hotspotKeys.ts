@@ -2,9 +2,8 @@
  * Author       : Mahardika Pratama
  * Version      : 1.0.0
  * Created Date : 2026-09-19
- * Description  : TanStack Query key factory for hotspots, per
- *                FRONTEND_STATE.md section 5. Keyed on domain concept
- *                ("hotspots"), not the HTTP path.
+ * Description  : TanStack Query key factory for hotspots. Keyed on domain
+ *                concept ("hotspots"), not the HTTP path.
  *
  * Changelog:
  * - 1.0.0 (2026-09-19): Initial creation.

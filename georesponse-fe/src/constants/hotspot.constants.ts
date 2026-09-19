@@ -4,8 +4,7 @@
  * Created Date : 2026-09-19
  * Description  : The single source of hotspot marker styling, per the
  *                same "one color mapping, defined once" discipline
- *                resourceStatus.constants.ts uses for resource status
- *                (FRONTEND_UI_UX.md section 7).
+ *                resourceStatus.constants.ts uses for resource status.
  *
  * Changelog:
  * - 1.0.0 (2026-09-19): Initial creation.

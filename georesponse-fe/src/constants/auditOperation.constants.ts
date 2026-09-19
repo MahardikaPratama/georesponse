@@ -3,7 +3,7 @@
  * Version      : 1.0.0
  * Created Date : 2026-09-19
  * Description  : Labels and Dropdown options for the fixed set of
- *                auditable operations (API_CONTRACT.md section 11).
+ *                auditable operations.
  *
  * Changelog:
  * - 1.0.0 (2026-09-19): Initial creation.

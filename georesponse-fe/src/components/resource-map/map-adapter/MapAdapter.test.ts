@@ -3,11 +3,10 @@
  * Version      : 1.1.0
  * Created Date : 2026-09-19
  * Description  : Tests createMapLibreAdapter's hotspot layer at the
- *                boundary, with maplibre-gl mocked per
- *                FRONTEND_TESTING.md section 6 — no real MapLibre
- *                instance, just the small surface the adapter uses
- *                (Map, addSource, addLayer, on, setLayoutProperty,
- *                remove, ...).
+ *                boundary, with maplibre-gl mocked so the test doesn't
+ *                need a real MapLibre instance, just the small surface
+ *                the adapter uses (Map, addSource, addLayer, on,
+ *                setLayoutProperty, remove, ...).
  *
  * Changelog:
  * - 1.0.0 (2026-09-19): Initial creation.

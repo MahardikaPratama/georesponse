@@ -99,7 +99,7 @@ func (s *Service) GetCurrentUser(ctx context.Context, userID string) (*User, err
 
 // AssignUserRoles replaces the full set of roles held by the user
 // identified by userID with roleNames, and records a ROLE_CHANGED audit
-// entry (API_CONTRACT.md section 10.5, FR-033, BR-028). actingUserID is
+// entry (FR-033, BR-028). actingUserID is
 // the authenticated administrator performing the change; it is omitted
 // from the audit record when empty.
 func (s *Service) AssignUserRoles(ctx context.Context, actingUserID string, actingRoleNames []string, userID string, roleNames []string) error {

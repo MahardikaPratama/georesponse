@@ -11,23 +11,22 @@
  *
  * Changelog:
  * - 1.0.0 (2026-09-19): Initial creation.
- * - 1.1.0 (2026-09-19): Added the status-change control's tests (Phase 6
- *                        section 9.6), with useChangeResourceStatus now
- *                        mocked too — ResourceDetail calls it
- *                        unconditionally, so every existing test needed a
- *                        default return value even where it isn't the
- *                        thing under test.
- * - 1.2.0 (2026-09-19): Added the relocate control's tests (Phase 6
- *                        section 9.7), with useRelocateResource now mocked
- *                        too — RelocateResourceControl (rendered inside
+ * - 1.1.0 (2026-09-19): Added the status-change control's tests, with
+ *                        useChangeResourceStatus now mocked too —
+ *                        ResourceDetail calls it unconditionally, so every
+ *                        existing test needed a default return value even
+ *                        where it isn't the thing under test.
+ * - 1.2.0 (2026-09-19): Added the relocate control's tests, with
+ *                        useRelocateResource now mocked too —
+ *                        RelocateResourceControl (rendered inside
  *                        ResourceDetail) calls it unconditionally.
  * - 1.3.0 (2026-09-19): Added an onDelete assertion for the new delete
- *                        action (Phase 6 section 9.8) — the confirmation
- *                        dialog itself is DeleteResourceConfirmation.test.tsx.
- * - 1.4.0 (2026-09-19): Added a test for the history toggle (Phase 6
- *                        section 9.9), with useResourceHistory now mocked
- *                        too — ResourceHistoryView (mounted once toggled
- *                        open) calls it; the view's own states are
+ *                        action — the confirmation dialog itself is
+ *                        DeleteResourceConfirmation.test.tsx.
+ * - 1.4.0 (2026-09-19): Added a test for the history toggle, with
+ *                        useResourceHistory now mocked too —
+ *                        ResourceHistoryView (mounted once toggled open)
+ *                        calls it; the view's own states are
  *                        ResourceHistoryView.test.tsx's job.
  */
 import React from "react";

@@ -4,8 +4,7 @@
  * Created Date : 2026-09-19
  * Description  : Returns `value`, delayed by `delayMs` after it last
  *                changed. Used by the resource search input so the backend
- *                is not queried on every keystroke (FRONTEND_UI_UX.md
- *                section 4).
+ *                is not queried on every keystroke.
  *
  * Changelog:
  * - 1.0.0 (2026-09-19): Initial creation.

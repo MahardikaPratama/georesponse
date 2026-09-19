@@ -254,7 +254,7 @@ func (r *ResourceRepository) Delete(ctx context.Context, id string) error {
 }
 
 // normalizePage clamps page to at least 1 and pageSize to [1, 100],
-// defaulting pageSize to 20 when unset (API_CONTRACT.md section 3).
+// defaulting pageSize to 20 when unset.
 func normalizePage(page, pageSize int) (int, int) {
 	if page < 1 {
 		page = 1

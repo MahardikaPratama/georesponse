@@ -2,9 +2,9 @@
  * Author       : Mahardika Pratama
  * Version      : 1.0.0
  * Created Date : 2026-09-19
- * Description  : TanStack Query key factory for resources, per
- *                FRONTEND_STATE.md section 5. Keyed on domain concept
- *                ("resources"), not the HTTP path, so invalidation stays
+ * Description  : TanStack Query key factory for resources. Keyed on domain
+ *                concept ("resources"), not the HTTP path, so invalidation
+ *                stays
  *                correct regardless of how a query's data was fetched.
  *
  * Changelog:

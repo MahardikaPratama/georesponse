@@ -7,7 +7,7 @@ Description  : Implements Recovery, panic-recovery middleware that
 	reports an unexpected panic as the same JSON 500 PERSISTENCE_ERROR
 	envelope every other unhandled error produces (FR-053, BR-018),
 	rather than Chi's built-in Recoverer, which returns a plain-text
-	body and does not match API_CONTRACT.md's error shape.
+	body and does not match this API's error shape.
 
 Changelog:
   - 1.0.0 (2026-09-19): Initial creation.

@@ -13,9 +13,9 @@
  * - 1.0.0 (2026-09-19): Initial creation.
  * - 1.1.0 (2026-09-19): Added initialLocation, forwarded to
  *                        useResourceCreateForm, so AppShell can open this
- *                        pre-filled from a map double-click
- *                        (FRONTEND_UI_UX.md section 6's map-click
- *                        placement).
+ *                        pre-filled from a map double-click, matching
+ *                        the map-click placement pattern used elsewhere
+ *                        in the app.
  */
 import React from "react";
 

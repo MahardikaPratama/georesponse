@@ -226,7 +226,7 @@ func TestService_ChangeResourceStatus_DoesNotModifyLocation(t *testing.T) {
 		t.Fatalf("Status = %v, want IN_USE", got.Status)
 	}
 	if got.Location != seed.Location {
-		t.Fatalf("Location = %+v, want unchanged %+v (API_CONTRACT.md section 7.1)", got.Location, seed.Location)
+		t.Fatalf("Location = %+v, want unchanged %+v (status changes must not move a resource)", got.Location, seed.Location)
 	}
 	if got.ID != seed.ID || got.Type != seed.Type {
 		t.Fatalf("ChangeResourceStatus must not change identity/type, got %+v", got)

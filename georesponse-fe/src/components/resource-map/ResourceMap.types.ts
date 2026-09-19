@@ -8,13 +8,12 @@
  * - 1.0.0 (2026-09-19): Initial creation.
  * - 1.1.0 (2026-09-19): Added selectedResourceId, so a selection made in
  *                        ResourceList also highlights the matching marker
- *                        (FRONTEND_UI_UX.md section 3: list/map selection
- *                        is shared in both directions).
+ *                        (list/map selection is shared in both
+ *                        directions).
  * - 1.2.0 (2026-09-19): Added hotspots/hotspotLayerVisible for the BMKG
  *                        situational-awareness overlay.
  * - 1.3.0 (2026-09-19): Added onMapDoubleClick, passed through to the
- *                        adapter's onMapDoubleClick (map-click placement,
- *                        FRONTEND_UI_UX.md section 6).
+ *                        adapter's onMapDoubleClick (map-click placement).
  */
 import { HotspotMarker, MapMarker } from "./map-adapter/MapAdapter.types";
 

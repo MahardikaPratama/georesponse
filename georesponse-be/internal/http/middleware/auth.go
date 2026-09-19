@@ -5,14 +5,14 @@ Created Date : 2026-09-19
 Description  : Implements RequireAuth, the authentication middleware
 
 	(BR-022, BR-023). It lives here, in internal/http/middleware, rather
-	than in internal/auth as BACKEND_ARCHITECTURE.md's illustrative
-	package layout shows: internal/http/httpresponse.WriteError already
+	than in internal/auth as an illustrative package layout might
+	otherwise suggest: internal/http/httpresponse.WriteError already
 	needs to import internal/auth's sentinel errors to translate them,
 	so internal/auth importing internal/http/httpresponse back (which
 	RequireAuth needs, to report a rejected request) would be an import
 	cycle. Placing it alongside the other cross-cutting HTTP middleware
 	avoids that while keeping the same dependency direction
-	(HTTP -> use case -> domain) DEPENDENCY_RULES.md requires.
+	(HTTP -> use case -> domain) the project requires.
 
 Changelog:
   - 1.0.0 (2026-09-19): Initial creation.
@@ -32,8 +32,8 @@ import (
 // one the login handler sets on success. An HttpOnly, Secure, SameSite=Lax
 // cookie was chosen over returning the token in the response body, so the
 // frontend never handles the token directly and it cannot be read by
-// injected client-side script (API_CONTRACT.md leaves the transport
-// undecided; this is the implementation decision).
+// injected client-side script (the transport was left undecided
+// elsewhere; this is the implementation decision).
 const AuthCookieName = "georesponse_token"
 
 // authContextKey is the context key AuthContext is stored under.

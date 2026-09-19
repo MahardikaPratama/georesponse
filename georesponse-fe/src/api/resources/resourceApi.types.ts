@@ -3,7 +3,7 @@
  * Version      : 1.0.0
  * Created Date : 2026-09-19
  * Description  : Request/response shapes for the /api/v1/resources
- *                endpoints, matching API_CONTRACT.md sections 6-9.
+ *                endpoints.
  *
  * Changelog:
  * - 1.0.0 (2026-09-19): Initial creation.

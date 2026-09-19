@@ -4,17 +4,17 @@
  * Created Date : 2026-09-19
  * Description  : The relocation interaction (FR-022-026, UC-09): a
  *                "set new location" control in the detail panel's
- *                Location field, per FRONTEND_UI_UX.md section 6's
- *                checklist alternative to dragging the map marker. Marker
- *                dragging isn't implemented — ResourceMap renders
- *                resources through a GeoJSON source + circle layer
- *                (map-adapter/MapAdapter.ts), not maplibregl.Marker DOM
- *                elements, so native drag support isn't available without
- *                substantial adapter rework; this control gets the same
- *                UC-09 outcome (FR-022's marker moving on relocation)
- *                without it. useRelocateResource's optimistic update
- *                (FRONTEND_STATE.md section 7) is what makes the marker
- *                move immediately on save, before the backend confirms.
+ *                Location field, used as an alternative to dragging the
+ *                map marker. Marker dragging isn't implemented —
+ *                ResourceMap renders resources through a GeoJSON source +
+ *                circle layer (map-adapter/MapAdapter.ts), not
+ *                maplibregl.Marker DOM elements, so native drag support
+ *                isn't available without substantial adapter rework;
+ *                this control gets the same UC-09 outcome (FR-022's
+ *                marker moving on relocation) without it.
+ *                useRelocateResource's optimistic update is what makes
+ *                the marker move immediately on save, before the backend
+ *                confirms.
  *
  * Changelog:
  * - 1.0.0 (2026-09-19): Initial creation.

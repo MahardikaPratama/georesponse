@@ -5,10 +5,10 @@ Created Date : 2026-09-19
 Description  : Defines TokenSigner, the authenticated-context mechanism
 
 	Authenticate establishes (BR-023), and HMACTokenSigner, a stateless
-	implementation. SECURITY.md leaves "the exact token/session
-	mechanism" as an implementation decision; a self-verifying signed
-	token was chosen over a server-side session table so no new
-	session-storage schema is needed for this MVP.
+	implementation. The exact token/session mechanism is left as an
+	implementation decision; a self-verifying signed token was chosen
+	over a server-side session table so no new session-storage schema
+	is needed for this MVP.
 
 Changelog:
   - 1.0.0 (2026-09-19): Initial creation.
@@ -32,7 +32,7 @@ var ErrInvalidToken = errors.New("auth: invalid or expired token")
 // TokenSigner issues and verifies the token Authenticate returns to
 // establish an authenticated context (BR-023), and later requests present
 // to prove it (FR-029). Its concrete format is deliberately hidden behind
-// this interface, since SECURITY.md does not fix one.
+// this interface, since no format is fixed elsewhere.
 type TokenSigner interface {
 	// Sign returns a new token asserting userID's identity.
 	Sign(userID string) (string, error)

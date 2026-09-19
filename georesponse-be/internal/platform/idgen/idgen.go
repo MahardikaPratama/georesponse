@@ -7,8 +7,8 @@ Description  : Package idgen generates server-side identifiers for
 	records the caller has no natural id to reuse for (history and
 	audit records). Resource, role, and permission ids are supplied by
 	the caller instead, so this package is not used for those.
-	Per BACKEND_DEPENDENCIES.md's guidance, this uses crypto/rand plus
-	a small local helper rather than adding a UUID library dependency.
+	This uses crypto/rand plus a small local helper rather than adding
+	a UUID library dependency.
 
 Changelog:
   - 1.0.0 (2026-09-19): Initial creation.

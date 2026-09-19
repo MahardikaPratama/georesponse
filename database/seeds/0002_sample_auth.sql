@@ -5,8 +5,8 @@ Created Date : 2026-09-19
 Description  : Seeds a minimal permission set, an "administrator" role
 
 	granted all of them, and one demo user assigned that role, so the
-	authentication and authorization use cases (Phase 3) have real data
-	to exercise beyond unit tests with fakes. The demo password below
+	authentication and authorization use cases have real data to
+	exercise beyond unit tests with fakes. The demo password below
 	("ChangeMe123!") is a local-development-only placeholder, never a
 	real credential; its hash was generated with
 	georesponse-be/scripts/hashpw.

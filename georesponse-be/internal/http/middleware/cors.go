@@ -5,9 +5,9 @@ Created Date : 2026-09-19
 Description  : Implements CORS, Cross-Origin Resource Sharing middleware
 
 	that allows only the configured frontend origin(s) to call the API
-	from a browser, per SECURITY.md section 8.1 — never a wildcard,
-	since the API relies on an HttpOnly cookie (credentials: "include")
-	that only makes sense with an explicit, credentialed origin.
+	from a browser — never a wildcard, since the API relies on an
+	HttpOnly cookie (credentials: "include") that only makes sense with
+	an explicit, credentialed origin.
 
 Changelog:
   - 1.0.0 (2026-09-19): Initial creation.

@@ -2,12 +2,12 @@
 Author       : Mahardika Pratama
 Version      : 1.0.0
 Created Date : 2026-09-19
-Description  : Implements the /api/v1/resources HTTP handlers
+Description  : Implements the /api/v1/resources HTTP handlers and their
 
-	(API_CONTRACT.md sections 6-8) and their request/response DTOs.
-	Handlers live here, alongside router.go, rather than inside
-	internal/resource as BACKEND_ARCHITECTURE.md's illustrative package
-	layout shows — see middleware/auth.go's header comment for why:
+	request/response DTOs. Handlers live here, alongside router.go,
+	rather than inside internal/resource as an illustrative package
+	layout might otherwise suggest — see middleware/auth.go's header
+	comment for why:
 	internal/http/httpresponse (which every handler needs) already
 	imports internal/resource for its sentinel errors, so
 	internal/resource importing httpresponse back to write responses

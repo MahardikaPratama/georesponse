@@ -5,7 +5,7 @@ Created Date : 2026-09-19
 Description  : Defines the RoleRepository and PermissionRepository
 
 	interfaces backing the /api/v1/roles and /api/v1/permissions
-	endpoints (API_CONTRACT.md section 10).
+	endpoints.
 
 Changelog:
   - 1.0.0 (2026-09-19): Initial creation.

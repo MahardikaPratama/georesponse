@@ -4,9 +4,8 @@
  * Created Date : 2026-09-19
  * Description  : Mutation for PATCH /api/v1/resources/{id}/location
  *                (FR-022-026, UC-09). Applies an optimistic update
- *                (FRONTEND_STATE.md section 7 names relocation as exactly
- *                the case for this — "dragging a marker should feel
- *                immediate"): on mutate, the resource's cached location is
+ *                since dragging a marker should feel immediate: on mutate,
+ *                the resource's cached location is
  *                updated straight away in both the detail and every
  *                matching list query, so the marker moves before the
  *                backend confirms; on error, it's rolled back and the

@@ -2,9 +2,8 @@
  * Author       : Mahardika Pratama
  * Version      : 1.0.0
  * Created Date : 2026-09-19
- * Description  : Data-access functions for /api/v1/resources
- *                (API_CONTRACT.md sections 6-9). Called only from
- *                hooks — never directly from a component.
+ * Description  : Data-access functions for /api/v1/resources. Called only
+ *                from hooks — never directly from a component.
  *
  * Changelog:
  * - 1.0.0 (2026-09-19): Initial creation.

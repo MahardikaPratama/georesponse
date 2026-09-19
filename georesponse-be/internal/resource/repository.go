@@ -5,9 +5,8 @@ Created Date : 2026-09-19
 Description  : Defines the Repository interface application code depends
 
 	on to persist and retrieve Resources. The PostgreSQL implementation
-	lives outside this package, in internal/repository/postgres, per
-	DEPENDENCY_RULES.md (application code depends on the interface,
-	never the implementation).
+	lives outside this package, in internal/repository/postgres, so that
+	application code depends on the interface, never the implementation.
 
 Changelog:
   - 1.0.0 (2026-09-19): Initial creation.
@@ -63,7 +62,7 @@ type Repository interface {
 	UpdateLocation(ctx context.Context, id string, location Location) error
 
 	// Delete permanently removes the resource identified by id (a hard
-	// delete; see DATABASE_ARCHITECTURE.md's deletion-model decision). It
-	// returns ErrNotFound if no resource exists with that id.
+	// delete, per the project's deletion-model decision). It returns
+	// ErrNotFound if no resource exists with that id.
 	Delete(ctx context.Context, id string) error
 }

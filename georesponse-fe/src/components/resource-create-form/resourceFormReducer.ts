@@ -8,8 +8,9 @@
  * - 1.0.0 (2026-09-19): Initial creation.
  * - 1.1.0 (2026-09-19): createInitialResourceFormState takes an optional
  *                        initial location, pre-filling latitude/longitude
- *                        when the form was opened from a map double-click
- *                        (FRONTEND_UI_UX.md section 6's map-click placement).
+ *                        when the form was opened from a map double-click,
+ *                        matching the map-click placement pattern used
+ *                        elsewhere in the app.
  */
 import { ResourceFormAction, ResourceFormState } from "./ResourceCreateForm.types";
 

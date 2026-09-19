@@ -3,9 +3,9 @@
  * Version      : 1.0.0
  * Created Date : 2026-09-19
  * Description  : Toggles the BMKG hotspot map layer on/off and shows its
- *                loading/empty/unavailable state, per FRONTEND_UI_UX.md
- *                section 8's state-handling convention. Purely
- *                presentational — the parent owns the useHotspots() query
+ *                loading/empty/unavailable state, following the app's
+ *                usual state-handling convention. Purely presentational
+ *                — the parent owns the useHotspots() query
  *                and passes its status/count/error down, the same way
  *                AppShell already derives resource markers via useMemo and
  *                hands them to ResourceList/ResourceMap as props, rather

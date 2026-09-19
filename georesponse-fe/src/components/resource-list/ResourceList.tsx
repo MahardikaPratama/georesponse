@@ -3,17 +3,17 @@
  * Version      : 1.0.0
  * Created Date : 2026-09-19
  * Description  : The resource list panel (FR-002, FR-020, UC-01, UC-05):
- *                identity, type, status, and a location cue per row
- *                (FRONTEND_UI_UX.md section 4), with loading/error/empty
- *                states driven by useResources' query status (section 8).
- *                Search/filter controls are Phase 6 section 9.2.
+ *                identity, type, status, and a location cue per row, with
+ *                loading/error/empty states driven by useResources' query
+ *                status. Search/filter controls were added in a later
+ *                revision.
  *
  * Changelog:
  * - 1.0.0 (2026-09-19): Initial creation.
- * - 1.1.0 (2026-09-19): Queries by `filters` (Phase 6 section 9.2) and
- *                        distinguishes "no resources exist" from "no
- *                        results match the current filters" (UC-03/UC-04
- *                        alternative flows).
+ * - 1.1.0 (2026-09-19): Queries by `filters` and distinguishes "no
+ *                        resources exist" from "no results match the
+ *                        current filters" (UC-03/UC-04 alternative
+ *                        flows).
  */
 import React from "react";
 

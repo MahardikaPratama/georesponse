@@ -16,8 +16,7 @@
  * - 1.0.0 (2026-09-19): Initial creation.
  * - 1.1.0 (2026-09-19): Built its type options from the new shared
  *                        RESOURCE_TYPE_OPTIONS instead of its own copy of
- *                        the same Object.keys(...).map(...) (Phase 6
- *                        section 9.6).
+ *                        the same Object.keys(...).map(...).
  */
 import React from "react";
 

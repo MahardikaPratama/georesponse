@@ -2,9 +2,9 @@
  * Author       : Mahardika Pratama
  * Version      : 1.0.0
  * Created Date : 2026-09-19
- * Description  : Validates typed latitude/longitude input, mirroring
- *                API_CONTRACT.md section 12 (latitude in [-90, 90],
- *                longitude in [-180, 180]). UX-only — the backend remains
+ * Description  : Validates typed latitude/longitude input, mirroring the
+ *                backend's range rules (latitude in [-90, 90], longitude
+ *                in [-180, 180]). UX-only — the backend remains
  *                authoritative. Shared by the create form and the
  *                relocate control, both of which take typed coordinates.
  *

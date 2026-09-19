@@ -4,25 +4,25 @@
  * Created Date : 2026-09-19
  * Description  : The create-resource form's fields (FR-001, FR-006-009,
  *                FR-013-015, UC-06): id, name, type, status, type-specific
- *                attributes, and location, per FRONTEND_UI_UX.md section
- *                6. Field-level errors (client-side validation and,
- *                per FR-043, backend `details`) render under their field;
- *                anything that can't be mapped to a field renders as a
- *                form-level error. Presentation only — state and
- *                submission live in useResourceCreateForm, owned by this
- *                component's container, CreateResourceModal.
+ *                attributes, and location. Field-level errors
+ *                (client-side validation and, per FR-043, backend
+ *                `details`) render under their field; anything that
+ *                can't be mapped to a field renders as a form-level
+ *                error. Presentation only — state and submission live in
+ *                useResourceCreateForm, owned by this component's
+ *                container, CreateResourceModal.
  *
  *                Location can be typed directly or filled in by
  *                double-clicking the map before opening this form — see
- *                AppShell's onMapDoubleClick — per FRONTEND_UI_UX.md
- *                section 6's map-click placement.
+ *                AppShell's onMapDoubleClick — matching the map-click
+ *                placement pattern used elsewhere in the app.
  *
  * Changelog:
  * - 1.0.0 (2026-09-19): Initial creation.
  * - 1.1.0 (2026-09-19): Built its type/status options from the new shared
  *                        RESOURCE_TYPE_OPTIONS/RESOURCE_STATUS_OPTIONS
  *                        instead of its own copy of the same
- *                        Object.keys(...).map(...) (Phase 6 section 9.6).
+ *                        Object.keys(...).map(...).
  * - 1.2.0 (2026-09-19): Latitude/longitude (and numeric attribute fields)
  *                        switched from `type="number"` to `type="text"`
  *                        with `inputMode="decimal"`/`"numeric"` — the native
@@ -157,7 +157,7 @@ function ResourceCreateForm({
 								})
 							}
 							disabled={isSubmitting}
-							placeholder={field.kind === "number" ? "e.g. 4" : `e.g. ${field.label}`}
+							placeholder={field.placeholder}
 							className={fieldClassName}
 						/>
 						<FieldError message={errors[`attributes.${field.key}`]} />

@@ -10,8 +10,7 @@
  * - 1.0.0 (2026-09-19): Adapted from a prior personal project for
  *                        GeoResponse.
  * - 1.1.0 (2026-09-19): Added the "info" color role for Resource.status
- *                        IN_USE (informational/blue), per
- *                        FRONTEND_UI_UX.md section 7.
+ *                        IN_USE (informational/blue).
  */
 import React from "react";
 

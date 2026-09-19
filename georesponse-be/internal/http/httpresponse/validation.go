@@ -17,9 +17,9 @@ Changelog:
 */
 package httpresponse
 
-// FieldError identifies one invalid field in a request body, per
-// API_CONTRACT.md section 12's requirement that a VALIDATION_ERROR
-// response let the caller identify which field(s) were invalid.
+// FieldError identifies one invalid field in a request body, so that a
+// VALIDATION_ERROR response lets the caller identify which field(s) were
+// invalid.
 type FieldError struct {
 	Field   string `json:"field"`
 	Message string `json:"message"`

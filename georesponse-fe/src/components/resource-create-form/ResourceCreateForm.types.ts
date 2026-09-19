@@ -3,9 +3,8 @@
  * Version      : 1.1.0
  * Created Date : 2026-09-19
  * Description  : Shared types for the resource create form: its field
- *                state (a multi-field transition, per FRONTEND_STATE.md
- *                section 3's useReducer guidance), reducer actions, and
- *                validation error shape.
+ *                state (a multi-field transition, using the useReducer
+ *                pattern), reducer actions, and validation error shape.
  *
  * Changelog:
  * - 1.0.0 (2026-09-19): Initial creation.

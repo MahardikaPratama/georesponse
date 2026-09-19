@@ -14,8 +14,7 @@
  * - 1.1.0 (2026-09-19): Marker circles are now painted per-feature from
  *                        MapMarker.color (data-driven "circle-color"),
  *                        instead of one fixed color for every marker, so
- *                        status is visible on the map per
- *                        FRONTEND_UI_UX.md section 7.
+ *                        status is visible directly on the map.
  * - 1.2.0 (2026-09-19): Added the BMKG hotspot layer: a second, independent
  *                        GeoJSON source/layer pair (setHotspots/
  *                        toggleHotspotLayer), styled distinctly from
@@ -137,10 +136,9 @@ export function createMapLibreAdapter(): MapAdapter {
 				zoom: options.zoom ?? 4
 			});
 
-			// Double-click is repurposed for map-click placement
-			// (FRONTEND_UI_UX.md section 6), so the default zoom-on-
-			// double-click interaction is disabled to avoid the two
-			// fighting each other.
+			// Double-click is repurposed for map-click placement, so the
+			// default zoom-on-double-click interaction is disabled to
+			// avoid the two fighting each other.
 			map.doubleClickZoom.disable();
 
 			map.on("load", () => {

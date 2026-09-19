@@ -3,9 +3,8 @@
  * Version      : 1.0.0
  * Created Date : 2026-09-19
  * Description  : Queries a resource's history (GET
- *                /api/v1/resources/{id}/history), per FRONTEND_UI_UX.md
- *                section 5 and the resourceKeys factory in
- *                FRONTEND_STATE.md section 5.
+ *                /api/v1/resources/{id}/history), using the resourceKeys
+ *                factory for its cache key.
  *
  * Changelog:
  * - 1.0.0 (2026-09-19): Initial creation.

@@ -3,8 +3,7 @@
  * Version      : 1.0.0
  * Created Date : 2026-09-19
  * Description  : Queries a single resource (GET /api/v1/resources/{id}),
- *                per FRONTEND_UI_UX.md section 5 and the resourceKeys
- *                factory in FRONTEND_STATE.md section 5.
+ *                using the resourceKeys factory for its cache key.
  *
  * Changelog:
  * - 1.0.0 (2026-09-19): Initial creation.

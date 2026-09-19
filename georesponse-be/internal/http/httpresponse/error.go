@@ -4,11 +4,10 @@ Version      : 1.1.0
 Created Date : 2026-09-19
 Description  : Implements WriteError, the single place a Go error is
 
-	translated into the JSON error envelope and HTTP status
-	API_CONTRACT.md section 13 defines. Every handler calls this
-	instead of writing its own error response, so a given domain error
-	always produces the same code/status regardless of which endpoint
-	triggered it.
+	translated into the JSON error envelope and HTTP status the API
+	defines. Every handler calls this instead of writing its own error
+	response, so a given domain error always produces the same
+	code/status regardless of which endpoint triggered it.
 
 Changelog:
   - 1.0.0 (2026-09-19): Initial creation.
@@ -39,7 +38,7 @@ type errorBody struct {
 }
 
 // WriteError translates err into the JSON error envelope and HTTP status
-// API_CONTRACT.md section 13 defines, and writes it to w. Any error not
+// the API defines, and writes it to w. Any error not
 // recognized by one of the cases below is logged server-side (with r's
 // request-scoped logger) and reported to the client as a generic
 // 500 PERSISTENCE_ERROR, so internal details never leak into a response.
@@ -72,8 +71,8 @@ func WriteError(w http.ResponseWriter, r *http.Request, err error) {
 		errors.Is(err, resource.ErrMissingAttribute),
 		errors.Is(err, resource.ErrInvalidAttribute),
 		errors.Is(err, authorization.ErrNameConflict):
-		// Domain rules with no dedicated API_CONTRACT.md error code of
-		// their own fall back to the general validation code.
+		// Domain rules with no dedicated error code of their own fall
+		// back to the general validation code.
 		writeError(w, http.StatusBadRequest, "VALIDATION_ERROR", "Request data does not satisfy validation rules", nil)
 
 	case errors.Is(err, auth.ErrInvalidCredentials),

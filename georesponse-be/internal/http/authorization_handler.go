@@ -4,10 +4,10 @@ Version      : 1.0.0
 Created Date : 2026-09-19
 Description  : Implements /api/v1/roles, /api/v1/permissions,
 
-	/api/v1/roles/{id}/permissions, and /api/v1/users/{id}/roles
-	(API_CONTRACT.md section 10). No example request/response JSON is
-	given for these in the contract, so the shapes here are grounded
-	directly in the Role/Permission/User domain types.
+	/api/v1/roles/{id}/permissions, and /api/v1/users/{id}/roles.
+	No example request/response JSON is given for these in the contract,
+	so the shapes here are grounded directly in the Role/Permission/User
+	domain types.
 
 Changelog:
   - 1.0.0 (2026-09-19): Initial creation.

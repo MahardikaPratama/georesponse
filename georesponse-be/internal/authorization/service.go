@@ -7,9 +7,9 @@ Description  : Implements the role/permission management use cases
 	(UC-12: ListRoles, CreateRole, UpdateRole, DeleteRole,
 	ListPermissions, AssignRolePermissions). The exact permission codes
 	required by each operation (PermissionRoleRead, PermissionRoleManage,
-	PermissionPermissionRead) are an implementation decision:
-	BUSINESS_RULES.md fixes that authorization is role-based (BR-025)
-	but not the concrete permission set.
+	PermissionPermissionRead) are an implementation decision: authorization
+	is role-based (BR-025), but the concrete permission set is not fixed
+	elsewhere.
 
 Changelog:
   - 1.0.0 (2026-09-19): Initial creation.

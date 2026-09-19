@@ -15,8 +15,8 @@
  *                        palette, which would have rendered "primary"
  *                        buttons with no background at all.
  * - 1.2.0 (2026-09-19): Added indicator.info (Resource.status IN_USE is
- *                        informational/blue per FRONTEND_UI_UX.md section 7,
- *                        a role the adapted indicator palette didn't have).
+ *                        informational/blue, a role the adapted indicator
+ *                        palette didn't have).
  * - 1.3.0 (2026-09-19): Removed the CommonJS `module.exports` assignment —
  *                        mixing it with `export default` in the same file
  *                        is invalid once a bundler treats the file as an

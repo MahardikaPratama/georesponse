@@ -4,11 +4,10 @@ Version      : 1.0.0
 Created Date : 2026-09-19
 Description  : Adds password_hash to users, resolving the credential
 
-	storage gap SECURITY.md/API_CONTRACT.md/DATABASE_SCHEMA.md each
-	deferred to "an implementation decision" without ever landing one:
-	POST /api/v1/auth/login (BR-022 through BR-024, UC-11) cannot
-	verify credentials against a table with none. The `identifier` in
-	the login request body is treated as the user's own id, since no
+	storage gap that was deferred to "an implementation decision"
+	without ever landing one: POST /api/v1/auth/login cannot verify
+	credentials against a table with none. The `identifier` in the
+	login request body is treated as the user's own id, since no
 	separate username/email column exists.
 
 Changelog:

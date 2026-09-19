@@ -5,7 +5,7 @@ Created Date : 2026-09-19
 Description  : httptest-based tests for the /api/v1/resources handlers,
 
 	covering the success path and at least one documented failure path
-	per endpoint (BACKEND_TESTING.md).
+	per endpoint.
 
 Changelog:
   - 1.0.0 (2026-09-19): Initial creation.

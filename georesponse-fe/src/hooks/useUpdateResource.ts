@@ -4,8 +4,8 @@
  * Created Date : 2026-09-19
  * Description  : Mutation for PUT /api/v1/resources/{id}. On success,
  *                invalidates resourceKeys.detail(id) and
- *                resourceKeys.lists() (FRONTEND_STATE.md section 6) so the
- *                detail panel and the list/map pick up the change without
+ *                resourceKeys.lists() so the detail panel and the list/map
+ *                pick up the change without
  *                a manual refresh.
  *
  * Changelog:

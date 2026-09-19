@@ -4,43 +4,41 @@
  * Created Date : 2026-09-19
  * Description  : The resource detail panel (FR-003, FR-021, UC-02): shows
  *                the selected resource's identity, type, attributes,
- *                status, and location (FRONTEND_UI_UX.md section 5), with
- *                loading/error/"not found" states driven by useResource's
- *                query status (section 8). The status-change, edit,
- *                delete, and history controls the same doc section
- *                describes are added by their own Phase 6 sub-phases
- *                (9.5-9.9). `updatedAt` is left out for now — the backend's
- *                resource response doesn't include it yet, even though
- *                DATA_CONTRACT.md section 3.1 and this doc list it; showing
- *                it is blocked on that gap, not on this panel.
+ *                status, and location, with loading/error/"not found"
+ *                states driven by useResource's query status. The
+ *                status-change, edit, delete, and history controls were
+ *                added in later revisions, listed below. `updatedAt` is
+ *                left out for now — the backend's resource response
+ *                doesn't include it yet, even though it belongs in the
+ *                displayed fields; showing it is blocked on that gap,
+ *                not on this panel.
  *
  * Changelog:
  * - 1.0.0 (2026-09-19): Initial creation.
- * - 1.1.0 (2026-09-19): Added the edit action (Phase 6 section 9.5),
- *                        opening UpdateResourceModal via onEdit.
- * - 1.2.0 (2026-09-19): Replaced the static status display with the
- *                        status-change control (Phase 6 section 9.6): a
- *                        Dropdown constrained to the four valid statuses,
- *                        driving useChangeResourceStatus directly, with an
- *                        inline error on failure. Its invalidation of
+ * - 1.1.0 (2026-09-19): Added the edit action, opening UpdateResourceModal
+ *                        via onEdit.
+ * - 1.2.0 (2026-09-19): Replaced the static status display with a
+ *                        status-change control: a Dropdown constrained to
+ *                        the four valid statuses, driving
+ *                        useChangeResourceStatus directly, with an inline
+ *                        error on failure. Its invalidation of
  *                        resourceKeys.lists() and the map's shared
  *                        useResources call is what makes the status badge
  *                        update across list, detail, and map views.
- * - 1.3.0 (2026-09-19): Added the relocate control (Phase 6 section 9.7)
- *                        to the Location field.
- * - 1.4.0 (2026-09-19): Added the delete action (Phase 6 section 9.8),
- *                        opening DeleteResourceConfirmation via onDelete.
- * - 1.5.0 (2026-09-19): Added the history section (Phase 6 section 9.9),
- *                        toggled open/closed as local client state.
+ * - 1.3.0 (2026-09-19): Added the relocate control to the Location field.
+ * - 1.4.0 (2026-09-19): Added the delete action, opening
+ *                        DeleteResourceConfirmation via onDelete.
+ * - 1.5.0 (2026-09-19): Added the history section, toggled open/closed as
+ *                        local client state.
  * - 1.6.0 (2026-09-19): Restyled as a floating card anchored to the map's
  *                        top-right corner instead of a full-width bottom
- *                        bar (FRONTEND_UI_UX.md section 3's "side panel"
- *                        option) — the bottom-bar layout capped the panel
- *                        at a shallow max-height, which made the history
- *                        section (the tallest content) cramped and put it
- *                        below the fold. AppShell now renders this inside
- *                        `main`, so the card positions relative to the map
- *                        only, not the resource list.
+ *                        bar (the "side panel" layout option) — the
+ *                        bottom-bar layout capped the panel at a shallow
+ *                        max-height, which made the history section (the
+ *                        tallest content) cramped and put it below the
+ *                        fold. AppShell now renders this inside `main`,
+ *                        so the card positions relative to the map only,
+ *                        not the resource list.
  */
 import React, { useState } from "react";
 
@@ -62,7 +60,7 @@ import { ResourceStatus } from "../../types/resource.types";
 
 import { ResourceDetailProps } from "./ResourceDetail.types";
 
-/** "vehicleType" -> "Vehicle Type". Attribute keys have no fixed display label per DATA_CONTRACT.md section 3.4. */
+/** "vehicleType" -> "Vehicle Type". Attribute keys have no fixed display label. */
 function humanizeAttributeKey(key: string): string {
 	const withSpaces = key.replace(/([a-z0-9])([A-Z])/g, "$1 $2");
 	return withSpaces.charAt(0).toUpperCase() + withSpaces.slice(1);

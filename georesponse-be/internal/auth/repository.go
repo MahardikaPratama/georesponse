@@ -27,8 +27,8 @@ type Repository interface {
 	FindCredentialsByIdentifier(ctx context.Context, identifier string) (*Credentials, error)
 
 	// SetRoles replaces the full set of roles held by the user
-	// identified by userID with roleNames (a full replace, not a merge,
-	// per API_CONTRACT.md section 5.1). It returns ErrNotFound if the
-	// user, or any of the given role names, do not exist.
+	// identified by userID with roleNames (a full replace, not a merge).
+	// It returns ErrNotFound if the user, or any of the given role
+	// names, do not exist.
 	SetRoles(ctx context.Context, userID string, roleNames []string) error
 }

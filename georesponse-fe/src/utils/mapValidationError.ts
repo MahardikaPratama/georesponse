@@ -3,13 +3,12 @@
  * Version      : 1.0.0
  * Created Date : 2026-09-19
  * Description  : Maps an ApiError from a resource create/update mutation
- *                onto form field errors, per FR-043 and
- *                FRONTEND_UI_UX.md section 6 ("field-level errors are
+ *                onto form field errors, per FR-043 (field-level errors are
  *                mapped from error.details back onto the corresponding
  *                form fields when the shape allows it; otherwise the
- *                message is shown as a form-level error"). Reused by every
- *                resource form (create now, update in a later Phase 6
- *                sub-phase), not just resource-create-form, hence its
+ *                message is shown as a form-level error). Reused by every
+ *                resource form (create now, update in a later phase),
+ *                not just resource-create-form, hence its
  *                place in utils/ rather than that component's own folder.
  *
  *                Known gap, not something to silently work around: most of

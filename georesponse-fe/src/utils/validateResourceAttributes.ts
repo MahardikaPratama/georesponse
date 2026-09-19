@@ -4,7 +4,7 @@
  * Created Date : 2026-09-19
  * Description  : Validates a resource form's attribute fields against
  *                resourceAttributeSchema.constants.ts for the current
- *                type, mirroring API_CONTRACT.md section 12 (UX-only).
+ *                type, mirroring the backend's validation rules (UX-only).
  *                Shared by the create and update forms' own validation
  *                functions, since both render the same type-specific
  *                attribute fields.

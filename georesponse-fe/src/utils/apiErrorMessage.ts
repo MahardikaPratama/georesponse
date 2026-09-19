@@ -2,9 +2,8 @@
  * Author       : Mahardika Pratama
  * Version      : 1.0.0
  * Created Date : 2026-09-19
- * Description  : Maps an ApiError's stable `code` (API_CONTRACT.md section
- *                13) to a human-facing message. Per FRONTEND_UI_UX.md
- *                section 8, the frontend never shows a raw, unmapped
+ * Description  : Maps an ApiError's stable `code` to a human-facing
+ *                message. The frontend never shows a raw, unmapped
  *                `error.message` as the primary text for a known code —
  *                this is the single place that mapping happens, reused by
  *                every query/mutation error state.

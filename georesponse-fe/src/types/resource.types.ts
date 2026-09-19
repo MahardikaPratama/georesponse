@@ -3,7 +3,7 @@
  * Version      : 1.0.0
  * Created Date : 2026-09-19
  * Description  : Shared Resource domain type, mirroring the backend's
- *                resource.Resource shape (DATA_CONTRACT.md section 3).
+ *                resource.Resource shape.
  *
  * Changelog:
  * - 1.0.0 (2026-09-19): Initial creation.

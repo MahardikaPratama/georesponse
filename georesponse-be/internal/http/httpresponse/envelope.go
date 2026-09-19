@@ -4,11 +4,11 @@ Version      : 1.0.0
 Created Date : 2026-09-19
 Description  : Package httpresponse writes the JSON response envelopes
 
-	API_CONTRACT.md section 4 defines: a single-value success envelope
-	({"data": ...}), a paginated collection envelope ({"data": [...],
-	"meta": {...}}), and (in error.go) the error envelope. Every
-	handler writes its response through this package, so the shape is
-	identical across all of them.
+	the API defines: a single-value success envelope ({"data": ...}),
+	a paginated collection envelope ({"data": [...], "meta": {...}}),
+	and (in error.go) the error envelope. Every handler writes its
+	response through this package, so the shape is identical across
+	all of them.
 
 Changelog:
   - 1.0.0 (2026-09-19): Initial creation.
@@ -20,8 +20,7 @@ import (
 	"net/http"
 )
 
-// Meta is the pagination metadata attached to a collection response
-// (API_CONTRACT.md section 4).
+// Meta is the pagination metadata attached to a collection response.
 type Meta struct {
 	Page     int `json:"page"`
 	PageSize int `json:"pageSize"`

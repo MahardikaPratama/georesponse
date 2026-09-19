@@ -3,9 +3,8 @@
  * Version      : 1.0.0
  * Created Date : 2026-09-19
  * Description  : Queries the authenticated user (GET /api/v1/auth/me).
- *                The authenticated user is server state, per
- *                FRONTEND_STATE.md's client/server state boundary — not
- *                a client-side store — so components/App.tsx use this to
+ *                The authenticated user is server state, not a client-side
+ *                store, so components/App.tsx use this to
  *                decide whether to show the login form or the app shell.
  *
  * Changelog:

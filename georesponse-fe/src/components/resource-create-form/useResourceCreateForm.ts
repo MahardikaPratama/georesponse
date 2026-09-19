@@ -4,16 +4,17 @@
  * Created Date : 2026-09-19
  * Description  : Container hook for the create-resource form (used by
  *                CreateResourceModal): owns the form's field state via a
- *                reducer (a multi-field transition, per FRONTEND_STATE.md
- *                section 3), runs client-side validation before
+ *                reducer (a multi-field transition, using the useReducer
+ *                pattern), runs client-side validation before
  *                submitting, and drives the create mutation.
  *
  * Changelog:
  * - 1.0.0 (2026-09-19): Initial creation.
  * - 1.1.0 (2026-09-19): Takes an optional initialLocation, forwarded to
  *                        createInitialResourceFormState, so the form can
- *                        open pre-filled from a map double-click
- *                        (FRONTEND_UI_UX.md section 6's map-click placement).
+ *                        open pre-filled from a map double-click, matching
+ *                        the map-click placement pattern used elsewhere
+ *                        in the app.
  */
 import { useReducer, useState } from "react";
 

@@ -11,9 +11,8 @@
  *                pattern RoleManagementModal uses for role.read.
  *                Filter controls (userId, resourceId, operation,
  *                startTime, endTime) are local client state, reflected in
- *                the query key so each combination caches independently
- *                (FRONTEND_STATE.md section 5), per FRONTEND_UI_UX.md
- *                section 4's filter pattern.
+ *                the query key so each combination caches independently,
+ *                matching the filter pattern used elsewhere in the app.
  *
  * Changelog:
  * - 1.0.0 (2026-09-19): Initial creation.

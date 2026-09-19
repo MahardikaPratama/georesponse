@@ -2,8 +2,7 @@
  * Author       : Mahardika Pratama
  * Version      : 1.0.0
  * Created Date : 2026-09-19
- * Description  : TanStack Query key factory for roles/permissions, per
- *                FRONTEND_STATE.md section 5.
+ * Description  : TanStack Query key factory for roles/permissions.
  *
  * Changelog:
  * - 1.0.0 (2026-09-19): Initial creation.

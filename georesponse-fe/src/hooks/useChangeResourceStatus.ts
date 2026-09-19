@@ -5,10 +5,9 @@
  * Description  : Mutation for PATCH /api/v1/resources/{id}/status
  *                (FR-010-012, UC-08). On success, invalidates
  *                resourceKeys.detail(id), resourceKeys.lists(), and
- *                resourceKeys.history(id) (FRONTEND_STATE.md section 6),
- *                so the detail panel, the list/map, and (once section 9.9
- *                implements it) the history view all pick up the change
- *                without a manual refresh.
+ *                resourceKeys.history(id), so the detail panel, the
+ *                list/map, and (once implemented) the history view all pick
+ *                up the change without a manual refresh.
  *
  * Changelog:
  * - 1.0.0 (2026-09-19): Initial creation.

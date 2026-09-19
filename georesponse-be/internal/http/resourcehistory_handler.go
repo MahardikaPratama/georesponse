@@ -2,9 +2,7 @@
 Author       : Mahardika Pratama
 Version      : 1.0.0
 Created Date : 2026-09-19
-Description  : Implements GET /api/v1/resources/{id}/history
-
-	(API_CONTRACT.md section 9.1).
+Description  : Implements GET /api/v1/resources/{id}/history.
 
 Changelog:
   - 1.0.0 (2026-09-19): Initial creation.

@@ -3,10 +3,9 @@
  * Version      : 1.0.0
  * Created Date : 2026-09-19
  * Description  : The resource history view (FR-034-037, UC-13): status,
- *                location, and change history in tabs (FRONTEND_UI_UX.md
- *                section 5), each entry showing what changed, when, and
- *                by whom when available. Tab selection is client state
- *                (FRONTEND_STATE.md section 3), local to this component.
+ *                location, and change history in tabs, each entry
+ *                showing what changed, when, and by whom when available.
+ *                Tab selection is client state, local to this component.
  *
  * Changelog:
  * - 1.0.0 (2026-09-19): Initial creation.
