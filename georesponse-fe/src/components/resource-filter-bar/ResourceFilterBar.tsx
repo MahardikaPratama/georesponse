@@ -1,6 +1,6 @@
 /*
  * Author       : Mahardika Pratama
- * Version      : 1.0.0
+ * Version      : 1.1.0
  * Created Date : 2026-09-19
  * Description  : The resource list's search + type/status filter controls
  *                (FR-016-019, UC-03, UC-04). The search input is debounced
@@ -12,11 +12,18 @@
  *
  * Changelog:
  * - 1.0.0 (2026-09-19): Initial creation.
+ * - 1.1.0 (2026-09-19): Built its type/status options from the new shared
+ *                        RESOURCE_TYPE_OPTIONS/RESOURCE_STATUS_OPTIONS
+ *                        instead of its own copy of the same
+ *                        Object.keys(...).map(...) (Phase 6 section 9.6).
  */
 import React, { useEffect, useRef, useState } from "react";
 
-import Dropdown, { DropdownOption } from "@common/dropdowns/dropdown/Dropdown";
-import { RESOURCE_STATUS_CONFIG, RESOURCE_TYPE_LABEL } from "@constants/resourceStatus.constants";
+import Dropdown from "@common/dropdowns/dropdown/Dropdown";
+import {
+	RESOURCE_STATUS_OPTIONS,
+	RESOURCE_TYPE_OPTIONS
+} from "@constants/resourceStatus.constants";
 import { useDebouncedValue } from "@hooks/useDebouncedValue";
 
 // See resourceApi.ts for why this is a relative import, not "@types/...".
@@ -26,20 +33,11 @@ import { ResourceFilterBarProps } from "./ResourceFilterBar.types";
 
 const ALL_VALUE = "";
 
-const TYPE_OPTIONS: DropdownOption[] = [
-	{ value: ALL_VALUE, label: "All types" },
-	...(Object.keys(RESOURCE_TYPE_LABEL) as ResourceType[]).map((type) => ({
-		value: type,
-		label: RESOURCE_TYPE_LABEL[type]
-	}))
-];
+const TYPE_OPTIONS = [{ value: ALL_VALUE, label: "All types" }, ...RESOURCE_TYPE_OPTIONS];
 
-const STATUS_OPTIONS: DropdownOption[] = [
+const STATUS_OPTIONS = [
 	{ value: ALL_VALUE, label: "All statuses" },
-	...(Object.keys(RESOURCE_STATUS_CONFIG) as ResourceStatus[]).map((status) => ({
-		value: status,
-		label: RESOURCE_STATUS_CONFIG[status].label
-	}))
+	...RESOURCE_STATUS_OPTIONS
 ];
 
 const SEARCH_DEBOUNCE_MS = 300;

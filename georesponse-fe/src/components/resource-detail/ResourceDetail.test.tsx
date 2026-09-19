@@ -1,19 +1,28 @@
 /*
  * Author       : Mahardika Pratama
- * Version      : 1.0.0
+ * Version      : 1.1.0
  * Created Date : 2026-09-19
  * Description  : Tests ResourceDetail's loading, "not found", generic
- *                error, and populated states, with useResource mocked so
- *                no real network call is made.
+ *                error, and populated states, and the status-change
+ *                control's interaction and error display, with
+ *                useResource/useChangeResourceStatus mocked so no real
+ *                network call is made.
  *
  * Changelog:
  * - 1.0.0 (2026-09-19): Initial creation.
+ * - 1.1.0 (2026-09-19): Added the status-change control's tests (Phase 6
+ *                        section 9.6), with useChangeResourceStatus now
+ *                        mocked too — ResourceDetail calls it
+ *                        unconditionally, so every existing test needed a
+ *                        default return value even where it isn't the
+ *                        thing under test.
  */
 import React from "react";
 import { fireEvent, render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { ApiError } from "@api/httpClient.types";
+import { useChangeResourceStatus } from "@hooks/useChangeResourceStatus";
 import { useResource } from "@hooks/useResource";
 
 import ResourceDetail from "./ResourceDetail";
@@ -22,9 +31,23 @@ vi.mock("@hooks/useResource", () => ({
 	useResource: vi.fn()
 }));
 
+vi.mock("@hooks/useChangeResourceStatus", () => ({
+	useChangeResourceStatus: vi.fn()
+}));
+
 const mockedUseResource = vi.mocked(useResource);
+const mockedUseChangeResourceStatus = vi.mocked(useChangeResourceStatus);
 
 describe("ResourceDetail", () => {
+	beforeEach(() => {
+		mockedUseChangeResourceStatus.mockReturnValue({
+			mutate: vi.fn(),
+			isPending: false,
+			isError: false,
+			error: null
+		} as unknown as ReturnType<typeof useChangeResourceStatus>);
+	});
+
 	it("shows a loading placeholder while the query is pending", () => {
 		mockedUseResource.mockReturnValue({
 			status: "pending",
@@ -100,5 +123,70 @@ describe("ResourceDetail", () => {
 
 		fireEvent.click(screen.getByRole("button", { name: /close resource detail/i }));
 		expect(onClose).toHaveBeenCalled();
+	});
+
+	// jsdom doesn't implement scrollIntoView; Dropdown calls it when it
+	// opens with a pre-selected option (the status control always has one).
+	// Same workaround Dropdown.test.tsx/SearchableDropdown.test.tsx use.
+	Element.prototype.scrollIntoView = vi.fn();
+
+	it("changes the status via the status-change control", () => {
+		const mutate = vi.fn();
+		mockedUseChangeResourceStatus.mockReturnValue({
+			mutate,
+			isPending: false,
+			isError: false,
+			error: null
+		} as unknown as ReturnType<typeof useChangeResourceStatus>);
+		mockedUseResource.mockReturnValue({
+			status: "success",
+			data: {
+				data: {
+					id: "res-001",
+					name: "Ambulance 12",
+					type: "VEHICLE",
+					status: "AVAILABLE",
+					attributes: { vehicleType: "Ambulance", capacity: 4 },
+					location: { latitude: -6.2, longitude: 106.8166 }
+				}
+			},
+			error: null
+		} as unknown as ReturnType<typeof useResource>);
+
+		render(<ResourceDetail resourceId="res-001" />);
+
+		fireEvent.click(screen.getByRole("button", { name: "Available" }));
+		fireEvent.click(screen.getByRole("button", { name: "Maintenance" }));
+
+		expect(mutate).toHaveBeenCalledWith({ status: "MAINTENANCE" });
+	});
+
+	it("shows an inline error when the status change fails", () => {
+		mockedUseChangeResourceStatus.mockReturnValue({
+			mutate: vi.fn(),
+			isPending: false,
+			isError: true,
+			error: new ApiError(500, { code: "PERSISTENCE_ERROR", message: "boom" })
+		} as unknown as ReturnType<typeof useChangeResourceStatus>);
+		mockedUseResource.mockReturnValue({
+			status: "success",
+			data: {
+				data: {
+					id: "res-001",
+					name: "Ambulance 12",
+					type: "VEHICLE",
+					status: "AVAILABLE",
+					attributes: { vehicleType: "Ambulance", capacity: 4 },
+					location: { latitude: -6.2, longitude: 106.8166 }
+				}
+			},
+			error: null
+		} as unknown as ReturnType<typeof useResource>);
+
+		render(<ResourceDetail resourceId="res-001" />);
+
+		expect(screen.getByRole("alert")).toHaveTextContent(
+			"The server could not complete the operation. Please try again."
+		);
 	});
 });

@@ -1,6 +1,6 @@
 /*
  * Author       : Mahardika Pratama
- * Version      : 1.1.0
+ * Version      : 1.2.0
  * Created Date : 2026-09-19
  * Description  : The resource detail panel (FR-003, FR-021, UC-02): shows
  *                the selected resource's identity, type, attributes,
@@ -18,13 +18,30 @@
  * - 1.0.0 (2026-09-19): Initial creation.
  * - 1.1.0 (2026-09-19): Added the edit action (Phase 6 section 9.5),
  *                        opening UpdateResourceModal via onEdit.
+ * - 1.2.0 (2026-09-19): Replaced the static status display with the
+ *                        status-change control (Phase 6 section 9.6): a
+ *                        Dropdown constrained to the four valid statuses,
+ *                        driving useChangeResourceStatus directly, with an
+ *                        inline error on failure. Its invalidation of
+ *                        resourceKeys.lists() and the map's shared
+ *                        useResources call is what makes the status badge
+ *                        update across list, detail, and map views.
  */
 import React from "react";
 
 import { ApiError } from "@api/httpClient.types";
-import { RESOURCE_STATUS_CONFIG, RESOURCE_TYPE_LABEL } from "@constants/resourceStatus.constants";
+import Dropdown from "@common/dropdowns/dropdown/Dropdown";
+import {
+	RESOURCE_STATUS_CONFIG,
+	RESOURCE_STATUS_OPTIONS,
+	RESOURCE_TYPE_LABEL
+} from "@constants/resourceStatus.constants";
+import { useChangeResourceStatus } from "@hooks/useChangeResourceStatus";
 import { useResource } from "@hooks/useResource";
 import { getApiErrorMessage } from "@utils/apiErrorMessage";
+
+// See resourceApi.ts for why this is a relative import, not "@types/...".
+import { ResourceStatus } from "../../types/resource.types";
 
 import { ResourceDetailProps } from "./ResourceDetail.types";
 
@@ -49,6 +66,7 @@ function CloseButton({ onClose }: { onClose?: () => void }) {
 
 function ResourceDetail({ resourceId, onClose, onEdit }: ResourceDetailProps) {
 	const { data, status, error } = useResource(resourceId);
+	const changeStatus = useChangeResourceStatus(resourceId);
 
 	if (status === "pending") {
 		return (
@@ -109,13 +127,27 @@ function ResourceDetail({ resourceId, onClose, onEdit }: ResourceDetailProps) {
 				</div>
 				<div>
 					<p className="text-xs text-neutral-3">Status</p>
-					<p className="flex items-center gap-1.5">
+					<div className="flex items-center gap-1.5">
 						<span
 							data-testid="status-color-box"
-							className={`h-2.5 w-2.5 rounded-sm bg-indicator-${statusConfig.indicatorColor}`}
+							className={`h-2.5 w-2.5 shrink-0 rounded-sm bg-indicator-${statusConfig.indicatorColor}`}
 						/>
-						{statusConfig.label}
-					</p>
+						<Dropdown
+							value={resource.status}
+							options={RESOURCE_STATUS_OPTIONS}
+							disabled={changeStatus.isPending}
+							inputHeight="h-7"
+							fontSize="text-sm"
+							onChange={(value) =>
+								changeStatus.mutate({ status: value as ResourceStatus })
+							}
+						/>
+					</div>
+					{changeStatus.isError && (
+						<p role="alert" className="mt-1 text-xs text-error-4">
+							{getApiErrorMessage(changeStatus.error)}
+						</p>
+					)}
 				</div>
 				<div>
 					<p className="text-xs text-neutral-3">Location</p>
