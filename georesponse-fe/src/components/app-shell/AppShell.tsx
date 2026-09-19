@@ -33,11 +33,11 @@
  *                        useResources call shares.
  * - 1.5.0 (2026-09-19): Wires ResourceDetail's edit action to
  *                        UpdateResourceModal (Phase 6 section 9.5).
- * - 1.6.0 (2026-09-19): Added the BMKG hotspot toggle/layer: owns
- *                        useHotspots() and hotspotLayerVisible the same
- *                        way it already owns useResources()/markers, and
- *                        passes both down to HotspotToggle and
- *                        ResourceMap.
+ * - 1.6.0 (2026-09-19): Wires ResourceDetail's delete action to
+ *                        DeleteResourceConfirmation (Phase 6 section 9.8).
+ *                        A successful deletion also closes the detail
+ *                        panel itself, since the resource it was showing
+ *                        no longer exists.
  */
 import React, { useMemo, useState } from "react";
 
@@ -47,6 +47,7 @@ import { useHotspots } from "@hooks/useHotspots";
 import { useLogout } from "@hooks/useLogout";
 import { useResources } from "@hooks/useResources";
 import CreateResourceModal from "@components/resource-create-form/CreateResourceModal";
+import DeleteResourceConfirmation from "@components/resource-delete-confirmation/DeleteResourceConfirmation";
 import ResourceDetail from "@components/resource-detail/ResourceDetail";
 import ResourceFilterBar from "@components/resource-filter-bar/ResourceFilterBar";
 import HotspotToggle from "@components/hotspot-toggle/HotspotToggle";
@@ -57,6 +58,9 @@ import { RESOURCE_STATUS_CONFIG } from "@constants/resourceStatus.constants";
 import UpdateResourceModal from "@components/resource-update-form/UpdateResourceModal";
 import { getApiErrorMessage } from "@utils/apiErrorMessage";
 
+// See resourceApi.ts for why this is a relative import, not "@types/...".
+import { Resource } from "../../types/resource.types";
+
 function AppShell() {
 	const { data: user } = useCurrentUser();
 	const logout = useLogout();
@@ -66,6 +70,7 @@ function AppShell() {
 	const [selectedResourceId, setSelectedResourceId] = useState<string | null>(null);
 	const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 	const [editingResourceId, setEditingResourceId] = useState<string | null>(null);
+	const [deletingResource, setDeletingResource] = useState<Resource | null>(null);
 	const [hotspotLayerVisible, setHotspotLayerVisible] = useState(true);
 
 	const markers = useMemo<MapMarker[]>(
@@ -155,6 +160,7 @@ function AppShell() {
 					resourceId={selectedResourceId}
 					onClose={() => setSelectedResourceId(null)}
 					onEdit={() => setEditingResourceId(selectedResourceId)}
+					onDelete={setDeletingResource}
 				/>
 			)}
 
@@ -166,6 +172,18 @@ function AppShell() {
 				<UpdateResourceModal
 					resourceId={editingResourceId}
 					onClose={() => setEditingResourceId(null)}
+				/>
+			)}
+
+			{deletingResource && (
+				<DeleteResourceConfirmation
+					resourceId={deletingResource.id}
+					resourceName={deletingResource.name}
+					onClose={() => setDeletingResource(null)}
+					onDeleted={() => {
+						setDeletingResource(null);
+						setSelectedResourceId(null);
+					}}
 				/>
 			)}
 		</div>

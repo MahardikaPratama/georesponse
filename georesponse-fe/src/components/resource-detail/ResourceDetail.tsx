@@ -1,6 +1,6 @@
 /*
  * Author       : Mahardika Pratama
- * Version      : 1.3.0
+ * Version      : 1.4.0
  * Created Date : 2026-09-19
  * Description  : The resource detail panel (FR-003, FR-021, UC-02): shows
  *                the selected resource's identity, type, attributes,
@@ -28,6 +28,8 @@
  *                        update across list, detail, and map views.
  * - 1.3.0 (2026-09-19): Added the relocate control (Phase 6 section 9.7)
  *                        to the Location field.
+ * - 1.4.0 (2026-09-19): Added the delete action (Phase 6 section 9.8),
+ *                        opening DeleteResourceConfirmation via onDelete.
  */
 import React from "react";
 
@@ -67,7 +69,7 @@ function CloseButton({ onClose }: { onClose?: () => void }) {
 	);
 }
 
-function ResourceDetail({ resourceId, onClose, onEdit }: ResourceDetailProps) {
+function ResourceDetail({ resourceId, onClose, onEdit, onDelete }: ResourceDetailProps) {
 	const { data, status, error } = useResource(resourceId);
 	const changeStatus = useChangeResourceStatus(resourceId);
 
@@ -118,6 +120,13 @@ function ResourceDetail({ resourceId, onClose, onEdit }: ResourceDetailProps) {
 						className="px-2 py-1 text-sm rounded-md bg-white/10 hover:bg-white/20"
 					>
 						Edit
+					</button>
+					<button
+						type="button"
+						onClick={() => onDelete?.(resource)}
+						className="px-2 py-1 text-sm rounded-md bg-error-4/20 text-error-4 hover:bg-error-4/30"
+					>
+						Delete
 					</button>
 					<CloseButton onClose={onClose} />
 				</div>
