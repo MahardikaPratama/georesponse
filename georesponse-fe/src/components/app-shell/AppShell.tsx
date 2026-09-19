@@ -1,10 +1,10 @@
 /*
  * Author       : Mahardika Pratama
- * Version      : 1.2.0
+ * Version      : 1.3.0
  * Created Date : 2026-09-19
  * Description  : The map-first application shell (FRONTEND_UI_UX.md
  *                section 3): top bar, resource list panel, map, and a
- *                detail panel region (still empty; see the changelog).
+ *                detail panel that opens when a resource is selected.
  *                Shown by App.tsx once a user is authenticated.
  *
  * Changelog:
@@ -18,6 +18,12 @@
  *                        fed by the new ResourceFilterBar and applied to
  *                        both the list and the map's own useResources call,
  *                        so they always show the same filtered set.
+ * - 1.3.0 (2026-09-19): Renders ResourceDetail when a resource is selected
+ *                        (Phase 6 section 9.3) — map-marker selection
+ *                        already flowed into selectedResourceId via
+ *                        ResourceMap's onResourceSelect (section 9.1), so
+ *                        this is what makes that selection actually open
+ *                        the panel (FR-021, UC-05 step 5).
  */
 import React, { useMemo, useState } from "react";
 
@@ -25,6 +31,7 @@ import { ResourceFilters } from "@api/resources/resourceApi.types";
 import { useCurrentUser } from "@hooks/useCurrentUser";
 import { useLogout } from "@hooks/useLogout";
 import { useResources } from "@hooks/useResources";
+import ResourceDetail from "@components/resource-detail/ResourceDetail";
 import ResourceFilterBar from "@components/resource-filter-bar/ResourceFilterBar";
 import ResourceList from "@components/resource-list/ResourceList";
 import ResourceMap from "@components/resource-map/ResourceMap";
@@ -88,8 +95,12 @@ function AppShell() {
 				</main>
 			</div>
 
-			{/* Resource detail panel opens here when a resource is selected —
-			    Phase 6 section 9.3 */}
+			{selectedResourceId && (
+				<ResourceDetail
+					resourceId={selectedResourceId}
+					onClose={() => setSelectedResourceId(null)}
+				/>
+			)}
 		</div>
 	);
 }

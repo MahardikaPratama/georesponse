@@ -903,20 +903,46 @@ individually as each feature completes (see section 2.1).
       "no resources exist" (UC-03/UC-04 alternative flows). (`ResourceList`,
       based on whether any of `filters.search`/`type`/`status` is set;
       covered by `ResourceList.test.tsx`.)
+- [x] Push, open a PR, confirm CI passes, merge into `main`, delete the
+      branch (workflow: section 2.1). PR #12 (`feature/phase-6-search-filter`)
+      merged into `main` (squash commit `28b3f12`); branch deleted (remote
+      and local). CI initially failed two `ResourceFilterBar` tests
+      (jsdom doesn't implement `scrollIntoView`, which `Dropdown` calls when
+      opening with a pre-selected option — fixed by mocking it, the same
+      workaround `Dropdown.test.tsx`/`SearchableDropdown.test.tsx` already
+      use); fixed and re-pushed, then green.
+
+### 9.3 Resource Detail (FR-003, FR-021, UC-02)
+
+- [x] Implement `useResource(id)` hook. (`src/hooks/useResource.ts`,
+      `enabled: id !== null` so it stays idle until a resource is selected;
+      covered by `useResource.test.ts`.)
+- [x] Implement the `ResourceDetail` panel (identity, type, attributes,
+      status, location). (`src/components/resource-detail/ResourceDetail.tsx`
+      — attribute keys have no fixed display label per
+      `DATA_CONTRACT.md` section 3.4, so they're humanized generically
+      (`vehicleType` -> "Vehicle Type"). `updatedAt` (also listed in
+      `FRONTEND_UI_UX.md` section 5) is left out: the backend's
+      `resourceResponse` DTO (`georesponse-be/internal/http/resource_handler.go`)
+      doesn't return it yet even though the domain model
+      (`resource.go`'s `UpdatedAt`) and `DATA_CONTRACT.md` section 3.1 both
+      have it — a backend gap, out of this frontend phase's scope, noted
+      here rather than silently worked around.)
+- [x] Wire map-marker selection to open the detail panel (FR-021, UC-05
+      step 5). (`AppShell` now renders `ResourceDetail` whenever
+      `selectedResourceId` is set; that state was already fed by both
+      `ResourceMap`'s `onResourceSelect` and `ResourceList`'s row clicks
+      since section 9.1, so this is what makes the existing selection
+      actually open the panel.)
+- [x] Implement the "resource not found" state (UC-02 alternative flow).
+      (`ResourceDetail`, distinct message when `error.code` is
+      `RESOURCE_NOT_FOUND` vs. the generic error-code-derived message for
+      anything else; covered by `ResourceDetail.test.tsx`.)
 - [ ] Push, open a PR, confirm CI passes, merge into `main`, delete the
       branch (workflow: section 2.1). **Not yet verified**: this
       environment has no Node.js/npm available, so typecheck/lint/build/test
       could not be run locally before this push — CI is the first real
       verification.
-
-### 9.3 Resource Detail (FR-003, FR-021, UC-02)
-
-- [ ] Implement `useResource(id)` hook.
-- [ ] Implement the `ResourceDetail` panel (identity, type, attributes,
-      status, location).
-- [ ] Wire map-marker selection to open the detail panel (FR-021, UC-05
-      step 5).
-- [ ] Implement the "resource not found" state (UC-02 alternative flow).
 
 ### 9.4 Create Resource (FR-001, FR-006–009, FR-013–015, UC-06)
 
