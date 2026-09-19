@@ -8,7 +8,8 @@
  * Changelog:
  * - 1.0.0 (2026-09-19): Initial creation.
  */
-import { Location, ResourceStatus, ResourceType } from "@types/resource.types";
+// See resourceApi.ts for why this is a relative import, not "@types/...".
+import { Location, ResourceStatus, ResourceType } from "../../types/resource.types";
 
 export interface ResourceFilters {
 	search?: string;

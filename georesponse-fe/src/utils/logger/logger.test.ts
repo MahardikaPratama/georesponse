@@ -11,16 +11,16 @@
 import { logger } from "./logger";
 
 describe("logger", () => {
-	const consoleDebugSpy = jest
+	const consoleDebugSpy = vi
 		.spyOn(console, "debug")
 		.mockImplementation(() => {});
-	const consoleInfoSpy = jest
+	const consoleInfoSpy = vi
 		.spyOn(console, "info")
 		.mockImplementation(() => {});
-	const consoleWarnSpy = jest
+	const consoleWarnSpy = vi
 		.spyOn(console, "warn")
 		.mockImplementation(() => {});
-	const consoleErrorSpy = jest
+	const consoleErrorSpy = vi
 		.spyOn(console, "error")
 		.mockImplementation(() => {});
 

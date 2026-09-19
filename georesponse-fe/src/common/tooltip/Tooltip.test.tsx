@@ -11,10 +11,17 @@
  */
 import React from "react";
 
-import { render, screen } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
+import { fireEvent, render, screen } from "@testing-library/react";
 
 import Tooltip from "./Tooltip";
+
+// @testing-library/user-event isn't a project dependency; fireEvent's
+// mouseEnter/mouseLeave cover everything these tests need (Tooltip only
+// listens for onMouseEnter/onMouseLeave/onMouseMove).
+const userEvent = {
+	hover: (el: Element) => fireEvent.mouseEnter(el),
+	unhover: (el: Element) => fireEvent.mouseLeave(el)
+};
 
 describe("Tooltip", () => {
 	it("renders children", () => {

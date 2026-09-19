@@ -11,7 +11,11 @@
  */
 import { httpClient } from "@api/httpClient";
 import { DataEnvelope, ListEnvelope } from "@api/httpClient.types";
-import { Resource } from "@types/resource.types";
+// TypeScript refuses to import a file ending in ".types" through the
+// "@types" path alias (TS6137: it resolves the specifier as if it were a
+// declaration-only package, like an npm @types/* scope) — a relative
+// import sidesteps that, since only this file's extension triggers it.
+import { Resource } from "../../types/resource.types";
 
 import {
 	ChangeResourceStatusRequest,

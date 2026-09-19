@@ -149,8 +149,8 @@ describe("messageUtils - getMessage", () => {
 	});
 
 	it("handles numeric range with decimal formatting", () => {
-		formatNumberWithCommas.mockImplementation((n: number, decimals: number) =>
-			`${n.toFixed(decimals)}`
+		formatNumberWithCommas.mockImplementation((n: string | number, decimals?: number) =>
+			Number(n).toFixed(decimals ?? 0)
 		);
 		countDecimalPlaces.mockReturnValue(2);
 
