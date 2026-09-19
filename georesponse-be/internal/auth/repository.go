@@ -13,12 +13,18 @@ package auth
 
 import "context"
 
-// Repository retrieves Users and manages their role assignments.
+// Repository retrieves Users, their credentials, and manages their role
+// assignments.
 type Repository interface {
 	// GetByID returns the user with the given id, along with the names
 	// of their currently assigned roles, or ErrNotFound if no user
 	// exists with that id.
 	GetByID(ctx context.Context, id string) (*User, error)
+
+	// FindCredentialsByIdentifier returns the credentials for the user
+	// identified by identifier (their id), or ErrNotFound if no such
+	// user exists.
+	FindCredentialsByIdentifier(ctx context.Context, identifier string) (*Credentials, error)
 
 	// SetRoles replaces the full set of roles held by the user
 	// identified by userID with roleNames (a full replace, not a merge,

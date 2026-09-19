@@ -38,7 +38,7 @@ func (r *ResourceHistoryRepository) InsertStatusHistory(ctx context.Context, h r
 		INSERT INTO resource_status_history (id, resource_id, previous_status, new_status, changed_at, changed_by)
 		VALUES ($1, $2, $3, $4, $5, $6)
 	`
-	_, err := r.db.Exec(ctx, query, h.ID, h.ResourceID, string(h.PreviousStatus), string(h.NewStatus), h.ChangedAt, h.ChangedBy)
+	_, err := activeConn(ctx, r.db).Exec(ctx, query, h.ID, h.ResourceID, string(h.PreviousStatus), string(h.NewStatus), h.ChangedAt, h.ChangedBy)
 	if err != nil {
 		return fmt.Errorf("insert status history for resource %q: %w", h.ResourceID, err)
 	}
@@ -56,7 +56,7 @@ func (r *ResourceHistoryRepository) InsertLocationHistory(ctx context.Context, h
 			$7, $8
 		)
 	`
-	_, err := r.db.Exec(ctx, query,
+	_, err := activeConn(ctx, r.db).Exec(ctx, query,
 		h.ID, h.ResourceID,
 		h.PreviousLocation.Longitude, h.PreviousLocation.Latitude,
 		h.NewLocation.Longitude, h.NewLocation.Latitude,
@@ -79,7 +79,7 @@ func (r *ResourceHistoryRepository) InsertChangeHistory(ctx context.Context, h r
 		INSERT INTO resource_change_history (id, resource_id, changes, changed_at, changed_by)
 		VALUES ($1, $2, $3, $4, $5)
 	`
-	if _, err := r.db.Exec(ctx, query, h.ID, h.ResourceID, changes, h.ChangedAt, h.ChangedBy); err != nil {
+	if _, err := activeConn(ctx, r.db).Exec(ctx, query, h.ID, h.ResourceID, changes, h.ChangedAt, h.ChangedBy); err != nil {
 		return fmt.Errorf("insert change history for resource %q: %w", h.ResourceID, err)
 	}
 	return nil
@@ -136,7 +136,7 @@ func (r *ResourceHistoryRepository) listStatusHistory(ctx context.Context, resou
 		ORDER BY changed_at DESC
 		LIMIT $2 OFFSET $3
 	`
-	rows, err := r.db.Query(ctx, query, resourceID, limit, offset)
+	rows, err := activeConn(ctx, r.db).Query(ctx, query, resourceID, limit, offset)
 	if err != nil {
 		return nil, fmt.Errorf("list status history for resource %q: %w", resourceID, err)
 	}
@@ -169,7 +169,7 @@ func (r *ResourceHistoryRepository) listLocationHistory(ctx context.Context, res
 		ORDER BY changed_at DESC
 		LIMIT $2 OFFSET $3
 	`
-	rows, err := r.db.Query(ctx, query, resourceID, limit, offset)
+	rows, err := activeConn(ctx, r.db).Query(ctx, query, resourceID, limit, offset)
 	if err != nil {
 		return nil, fmt.Errorf("list location history for resource %q: %w", resourceID, err)
 	}
@@ -202,7 +202,7 @@ func (r *ResourceHistoryRepository) listChangeHistory(ctx context.Context, resou
 		ORDER BY changed_at DESC
 		LIMIT $2 OFFSET $3
 	`
-	rows, err := r.db.Query(ctx, query, resourceID, limit, offset)
+	rows, err := activeConn(ctx, r.db).Query(ctx, query, resourceID, limit, offset)
 	if err != nil {
 		return nil, fmt.Errorf("list change history for resource %q: %w", resourceID, err)
 	}
