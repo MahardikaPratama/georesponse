@@ -10,6 +10,10 @@
  *
  * Changelog:
  * - 1.0.0 (2026-09-19): Initial creation.
+ * - 1.1.0 (2026-09-19): Queries by `filters` (Phase 6 section 9.2) and
+ *                        distinguishes "no resources exist" from "no
+ *                        results match the current filters" (UC-03/UC-04
+ *                        alternative flows).
  */
 import React from "react";
 
@@ -40,8 +44,12 @@ function ResourceListSkeleton() {
 	);
 }
 
-function ResourceList({ selectedResourceId = null, onSelectResource }: ResourceListProps) {
-	const { data, status, error, refetch, isFetching } = useResources();
+function ResourceList({
+	filters = {},
+	selectedResourceId = null,
+	onSelectResource
+}: ResourceListProps) {
+	const { data, status, error, refetch, isFetching } = useResources(filters);
 
 	if (status === "pending") {
 		return <ResourceListSkeleton />;
@@ -66,8 +74,13 @@ function ResourceList({ selectedResourceId = null, onSelectResource }: ResourceL
 	const resources = data.data;
 
 	if (resources.length === 0) {
+		const hasActiveFilters = Boolean(filters.search || filters.type || filters.status);
 		return (
-			<p className="p-4 text-sm text-neutral-3">No resources match the current filters.</p>
+			<p className="p-4 text-sm text-neutral-3">
+				{hasActiveFilters
+					? "No resources match the current filters."
+					: "No resources exist yet."}
+			</p>
 		);
 	}
 

@@ -1,6 +1,6 @@
 /*
  * Author       : Mahardika Pratama
- * Version      : 1.1.0
+ * Version      : 1.2.0
  * Created Date : 2026-09-19
  * Description  : The map-first application shell (FRONTEND_UI_UX.md
  *                section 3): top bar, resource list panel, map, and a
@@ -14,12 +14,18 @@
  *                        state the two panels highlight in both directions
  *                        (FRONTEND_UI_UX.md section 3). The detail panel's
  *                        real content is still Phase 6 section 9.3.
+ * - 1.2.0 (2026-09-19): Owns `filters` client state (Phase 6 section 9.2),
+ *                        fed by the new ResourceFilterBar and applied to
+ *                        both the list and the map's own useResources call,
+ *                        so they always show the same filtered set.
  */
 import React, { useMemo, useState } from "react";
 
+import { ResourceFilters } from "@api/resources/resourceApi.types";
 import { useCurrentUser } from "@hooks/useCurrentUser";
 import { useLogout } from "@hooks/useLogout";
 import { useResources } from "@hooks/useResources";
+import ResourceFilterBar from "@components/resource-filter-bar/ResourceFilterBar";
 import ResourceList from "@components/resource-list/ResourceList";
 import ResourceMap from "@components/resource-map/ResourceMap";
 import { MapMarker } from "@components/resource-map/map-adapter/MapAdapter.types";
@@ -28,7 +34,8 @@ import { RESOURCE_STATUS_CONFIG } from "@constants/resourceStatus.constants";
 function AppShell() {
 	const { data: user } = useCurrentUser();
 	const logout = useLogout();
-	const { data: resourcesPage } = useResources();
+	const [filters, setFilters] = useState<ResourceFilters>({});
+	const { data: resourcesPage } = useResources(filters);
 	const [selectedResourceId, setSelectedResourceId] = useState<string | null>(null);
 
 	const markers = useMemo<MapMarker[]>(
@@ -64,8 +71,9 @@ function AppShell() {
 					className="w-80 p-4 overflow-y-auto border-r shrink-0 border-white/10"
 					aria-label="Resource list"
 				>
-					{/* Search and filter controls — Phase 6 section 9.2 */}
+					<ResourceFilterBar filters={filters} onFiltersChange={setFilters} />
 					<ResourceList
+						filters={filters}
 						selectedResourceId={selectedResourceId}
 						onSelectResource={setSelectedResourceId}
 					/>
