@@ -74,6 +74,12 @@ var (
 	// ErrInvalidStatus reports a resource status outside the defined enum
 	// (BR-005, BR-006).
 	ErrInvalidStatus = errors.New("resource: status is not a recognized resource status")
+
+	// ErrNotFound reports that no resource exists with the given id.
+	ErrNotFound = errors.New("resource: not found")
+	// ErrIDConflict reports that a resource already exists with the given
+	// id (BR-001: identifiers must be unique).
+	ErrIDConflict = errors.New("resource: id already in use")
 )
 
 // Resource is a real-world object managed by GeoResponse in the context of

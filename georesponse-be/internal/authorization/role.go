@@ -11,6 +11,18 @@ Changelog:
 */
 package authorization
 
+import "errors"
+
+// Domain errors for Role and Permission lookups.
+var (
+	// ErrNotFound reports that no role or permission exists with the
+	// given identifier.
+	ErrNotFound = errors.New("authorization: not found")
+	// ErrNameConflict reports that a role already exists with the given
+	// name (roles.name is unique).
+	ErrNameConflict = errors.New("authorization: role name already in use")
+)
+
 // Permission is a single grantable capability, identified by a dotted
 // code such as "resource.update".
 type Permission struct {
