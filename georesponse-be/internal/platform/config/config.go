@@ -13,17 +13,26 @@ Changelog:
     authentication token signing into cmd/api/main.go, so DATABASE_URL and
     TOKEN_SECRET are now required in every environment, not only
     production. Added TokenSecret and TokenTTL.
+  - 1.2.0 (2026-09-19): Added CORSAllowedOrigins so the frontend's origin
+    can call the API cross-origin from the browser (SECURITY.md section
+    8.1); previously missing, which blocked every browser request.
 */
 package config
 
 import (
 	"fmt"
 	"os"
+	"strings"
 	"time"
 )
 
 // defaultHTTPPort is used when HTTP_PORT is not set in the environment.
 const defaultHTTPPort = "8080"
+
+// defaultCORSAllowedOrigins is used when CORS_ALLOWED_ORIGINS is not set in
+// the environment: the frontend dev server's default origin (rspack.config.js
+// devServer.port).
+const defaultCORSAllowedOrigins = "http://localhost:5173"
 
 // defaultTokenTTL is used when TOKEN_TTL is not set in the environment.
 const defaultTokenTTL = 24 * time.Hour
@@ -51,6 +60,10 @@ type Config struct {
 
 	// TokenTTL is how long a signed authentication token remains valid.
 	TokenTTL time.Duration
+
+	// CORSAllowedOrigins lists the browser origins allowed to call this
+	// API cross-origin (SECURITY.md section 8.1). Never a wildcard.
+	CORSAllowedOrigins []string
 }
 
 // Addr returns the address the HTTP server should bind to, in
@@ -85,6 +98,14 @@ func Load() (*Config, error) {
 		return nil, fmt.Errorf("config: TOKEN_TTL %q is not a valid duration: %w", ttlValue, err)
 	}
 	cfg.TokenTTL = ttl
+
+	origins := getEnvOrDefault("CORS_ALLOWED_ORIGINS", defaultCORSAllowedOrigins)
+	for _, origin := range strings.Split(origins, ",") {
+		origin = strings.TrimSpace(origin)
+		if origin != "" {
+			cfg.CORSAllowedOrigins = append(cfg.CORSAllowedOrigins, origin)
+		}
+	}
 
 	return cfg, nil
 }

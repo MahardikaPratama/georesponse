@@ -67,8 +67,9 @@ The frontend build tool is Rspack, not Vite, so these are **not** `VITE_`-prefix
 | `HTTP_PORT` | Port the Go HTTP server listens on | `8080` |
 | `DATABASE_URL` | PostgreSQL/PostGIS connection string | `postgres://georesponse:georesponse_dev_password@georesponse-db:5432/georesponse?sslmode=disable` |
 | `LOG_LEVEL` | Structured logging verbosity (NFR-OBS-001) | `debug` |
+| `CORS_ALLOWED_ORIGINS` | Comma-separated browser origins allowed to call the API cross-origin (SECURITY.md section 8.1); never a wildcard | `http://localhost:5173` |
 
-Additional variables (JWT signing secret, CORS allowed origins, etc.) would be added here as those concerns are implemented; the convention — environment variable, never hardcoded — applies uniformly.
+Additional variables (e.g. JWT signing secret) would be added here as those concerns are implemented; the convention — environment variable, never hardcoded — applies uniformly.
 
 ### 5.3 Database (`georesponse-db`)
 
