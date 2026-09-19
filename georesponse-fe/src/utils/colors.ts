@@ -117,4 +117,8 @@ const colors = {
 	},
 };
 
+// tailwind.config.js requires this file directly under Node, which needs
+// the CommonJS form; anything importing it from within the app/tests
+// (e.g. utils/utils.test.ts) uses the ES export below instead.
 module.exports = colors;
+export default colors;

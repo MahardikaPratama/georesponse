@@ -8,6 +8,7 @@
  * - 1.0.0 (2026-09-19): Adapted from a prior personal project for
  *                        GeoResponse.
  */
+import colors from "./colors";
 import { cn } from "./cn";
 import {
 	cleanNumericInput,
@@ -19,12 +20,6 @@ import {
 } from "./formatNumber";
 import { InputValidationUtils } from "./inputValidation";
 import { withTimeout } from "./withTimeOut";
-
-// colors.ts is a legacy CommonJS module (`module.exports = ...`, consumed
-// by tailwind.config.js), not an ES module — require() is the correct way
-// to load it here, so the no-require-imports rule is intentionally off.
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const colors = require("./colors");
 
 vi.mock("clsx", () => ({
 	__esModule: true,
