@@ -1,6 +1,6 @@
 /*
  * Author       : Mahardika Pratama
- * Version      : 1.0.0
+ * Version      : 1.1.0
  * Created Date : 2026-09-19
  * Description  : The update-resource form's fields (FR-004, UC-07): id
  *                shown read-only (BR-015 — identity is preserved across an
@@ -14,21 +14,21 @@
  *
  * Changelog:
  * - 1.0.0 (2026-09-19): Initial creation.
+ * - 1.1.0 (2026-09-19): Built its type options from the new shared
+ *                        RESOURCE_TYPE_OPTIONS instead of its own copy of
+ *                        the same Object.keys(...).map(...) (Phase 6
+ *                        section 9.6).
  */
 import React from "react";
 
-import Dropdown, { DropdownOption } from "@common/dropdowns/dropdown/Dropdown";
+import Dropdown from "@common/dropdowns/dropdown/Dropdown";
 import { RESOURCE_ATTRIBUTE_SCHEMA } from "@constants/resourceAttributeSchema.constants";
-import { RESOURCE_TYPE_LABEL } from "@constants/resourceStatus.constants";
+import { RESOURCE_TYPE_OPTIONS } from "@constants/resourceStatus.constants";
 
 // See resourceApi.ts for why this is a relative import, not "@types/...".
 import { ResourceType } from "../../types/resource.types";
 
 import { ResourceUpdateFormProps } from "./ResourceUpdateForm.types";
-
-const TYPE_OPTIONS: DropdownOption[] = (Object.keys(RESOURCE_TYPE_LABEL) as ResourceType[]).map(
-	(type) => ({ value: type, label: RESOURCE_TYPE_LABEL[type] })
-);
 
 const fieldClassName =
 	"h-10 rounded-md border border-transparent bg-background-100-1 px-3 text-sm text-white " +
@@ -80,7 +80,7 @@ function ResourceUpdateForm({
 				Type
 				<Dropdown
 					value={state.type}
-					options={TYPE_OPTIONS}
+					options={RESOURCE_TYPE_OPTIONS}
 					disabled={isSubmitting}
 					inputHeight="h-10"
 					fontSize="text-sm"

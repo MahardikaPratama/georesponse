@@ -1,6 +1,6 @@
 /*
  * Author       : Mahardika Pratama
- * Version      : 1.0.0
+ * Version      : 1.1.0
  * Created Date : 2026-09-19
  * Description  : The create-resource form's fields (FR-001, FR-006-009,
  *                FR-013-015, UC-06): id, name, type, status, type-specific
@@ -20,25 +20,24 @@
  *
  * Changelog:
  * - 1.0.0 (2026-09-19): Initial creation.
+ * - 1.1.0 (2026-09-19): Built its type/status options from the new shared
+ *                        RESOURCE_TYPE_OPTIONS/RESOURCE_STATUS_OPTIONS
+ *                        instead of its own copy of the same
+ *                        Object.keys(...).map(...) (Phase 6 section 9.6).
  */
 import React from "react";
 
-import Dropdown, { DropdownOption } from "@common/dropdowns/dropdown/Dropdown";
+import Dropdown from "@common/dropdowns/dropdown/Dropdown";
+import {
+	RESOURCE_STATUS_OPTIONS,
+	RESOURCE_TYPE_OPTIONS
+} from "@constants/resourceStatus.constants";
 import { RESOURCE_ATTRIBUTE_SCHEMA } from "@constants/resourceAttributeSchema.constants";
-import { RESOURCE_STATUS_CONFIG, RESOURCE_TYPE_LABEL } from "@constants/resourceStatus.constants";
 
 // See resourceApi.ts for why this is a relative import, not "@types/...".
 import { ResourceStatus, ResourceType } from "../../types/resource.types";
 
 import { ResourceCreateFormProps } from "./ResourceCreateForm.types";
-
-const TYPE_OPTIONS: DropdownOption[] = (Object.keys(RESOURCE_TYPE_LABEL) as ResourceType[]).map(
-	(type) => ({ value: type, label: RESOURCE_TYPE_LABEL[type] })
-);
-
-const STATUS_OPTIONS: DropdownOption[] = (
-	Object.keys(RESOURCE_STATUS_CONFIG) as ResourceStatus[]
-).map((status) => ({ value: status, label: RESOURCE_STATUS_CONFIG[status].label }));
 
 const fieldClassName =
 	"h-10 rounded-md border border-transparent bg-background-100-1 px-3 text-sm text-white " +
@@ -95,7 +94,7 @@ function ResourceCreateForm({
 					Type
 					<Dropdown
 						value={state.type}
-						options={TYPE_OPTIONS}
+						options={RESOURCE_TYPE_OPTIONS}
 						disabled={isSubmitting}
 						inputHeight="h-10"
 						fontSize="text-sm"
@@ -110,7 +109,7 @@ function ResourceCreateForm({
 					Status
 					<Dropdown
 						value={state.status}
-						options={STATUS_OPTIONS}
+						options={RESOURCE_STATUS_OPTIONS}
 						disabled={isSubmitting}
 						inputHeight="h-10"
 						fontSize="text-sm"
