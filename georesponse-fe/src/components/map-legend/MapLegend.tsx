@@ -1,6 +1,6 @@
 /*
  * Author       : Mahardika Pratama
- * Version      : 1.0.0
+ * Version      : 1.1.0
  * Created Date : 2026-09-20
  * Description  : Floating legend for the resource map: one row per
  *                resource status (colour straight from
@@ -11,6 +11,9 @@
  *
  * Changelog:
  * - 1.0.0 (2026-09-20): Initial creation.
+ * - 1.1.0 (2026-09-20): Anchored top-left (the map's bottom edge can sit
+ *                        below the viewport) with an inline background,
+ *                        since the theme colour has no opacity variant.
  */
 import React from "react";
 
@@ -54,7 +57,8 @@ function MapLegend({ hotspotLayerVisible, hotspotAsOf }: MapLegendProps) {
 	return (
 		<aside
 			aria-label="Map legend"
-			className="absolute bottom-8 left-3 z-10 px-3 py-2 text-xs rounded-md bg-background-100-1/85 border border-white/10 text-neutral-2 backdrop-blur-sm"
+			className="absolute top-3 left-3 z-10 px-3 py-2 text-xs rounded-md border border-white/10 text-neutral-2 shadow-lg"
+			style={{ backgroundColor: "rgba(17, 20, 25, 0.88)" }}
 		>
 			<p className="mb-1 font-semibold text-white">Resources</p>
 			<ul className="space-y-1">
