@@ -8,10 +8,20 @@
  *
  * Changelog:
  * - 1.0.0 (2026-09-19): Initial creation.
+ * - 1.1.0 (2026-09-19): Added ValidationDetail, the `error.details` array
+ *                        entry shape for VALIDATION_ERROR (API_CONTRACT.md
+ *                        section 13), so a form can map a backend field
+ *                        error onto the right input (FR-043).
  */
 
 export interface DataEnvelope<T> {
 	data: T;
+}
+
+/** One entry of a VALIDATION_ERROR's `details` array (API_CONTRACT.md section 13). */
+export interface ValidationDetail {
+	field: string;
+	message: string;
 }
 
 export interface ListMeta {
