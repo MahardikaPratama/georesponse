@@ -412,7 +412,16 @@ merged to `main`, since later phases depend on earlier ones (section 1).
       search is explicitly out of scope per `API_CONTRACT.md` section 16,
       so there is currently no query that would exercise that index.
 - [x] Push, open a PR, confirm CI passes, merge into `main`, delete the
-      branch (workflow: section 2.1).
+      branch (workflow: section 2.1). Branch
+      `feature/phase-2-backend-repository`. CI initially failed with
+      `go: no such tool "covdata"` on every package with no test files —
+      `go.mod`'s `go` directive had drifted to `1.25.0` (pgx/v5 v5.11.0's
+      own minimum) while CI stayed pinned to Go 1.23, so
+      `actions/setup-go` auto-toolchain-switched to a downloaded Go 1.25
+      missing the `covdata` tool. Fixed by pinning CI to Go 1.25 directly
+      (matching `go.mod`) instead of chasing an older pgx version. CI
+      passed after that fix; merged into `main`, branch deleted (remote
+      and local).
 
 ---
 
