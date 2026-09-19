@@ -65,8 +65,9 @@ describe("ResourceDetail", () => {
 		);
 	});
 
-	it("renders identity, type, status, location, and attributes, and calls onClose", () => {
+	it("renders identity, type, status, location, and attributes, and calls onClose/onEdit", () => {
 		const onClose = vi.fn();
+		const onEdit = vi.fn();
 		mockedUseResource.mockReturnValue({
 			status: "success",
 			data: {
@@ -82,7 +83,7 @@ describe("ResourceDetail", () => {
 			error: null
 		} as unknown as ReturnType<typeof useResource>);
 
-		render(<ResourceDetail resourceId="res-001" onClose={onClose} />);
+		render(<ResourceDetail resourceId="res-001" onClose={onClose} onEdit={onEdit} />);
 
 		expect(screen.getByText("Ambulance 12")).toBeInTheDocument();
 		expect(screen.getByText("res-001")).toBeInTheDocument();
@@ -93,6 +94,9 @@ describe("ResourceDetail", () => {
 		expect(screen.getByText("Ambulance")).toBeInTheDocument();
 		expect(screen.getByText("Capacity")).toBeInTheDocument();
 		expect(screen.getByText("4")).toBeInTheDocument();
+
+		fireEvent.click(screen.getByRole("button", { name: "Edit" }));
+		expect(onEdit).toHaveBeenCalled();
 
 		fireEvent.click(screen.getByRole("button", { name: /close resource detail/i }));
 		expect(onClose).toHaveBeenCalled();
