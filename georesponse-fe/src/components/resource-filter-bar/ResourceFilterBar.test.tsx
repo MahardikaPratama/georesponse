@@ -20,6 +20,11 @@ describe("ResourceFilterBar", () => {
 	beforeEach(() => vi.useFakeTimers());
 	afterEach(() => vi.useRealTimers());
 
+	// jsdom doesn't implement scrollIntoView; Dropdown calls it when it opens
+	// with a pre-selected option. Same workaround Dropdown.test.tsx and
+	// SearchableDropdown.test.tsx already use.
+	Element.prototype.scrollIntoView = vi.fn();
+
 	it("debounces the search input before calling onFiltersChange", () => {
 		const onFiltersChange = vi.fn();
 		render(<ResourceFilterBar filters={{}} onFiltersChange={onFiltersChange} />);
