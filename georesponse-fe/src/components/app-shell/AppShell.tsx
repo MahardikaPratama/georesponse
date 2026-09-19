@@ -1,6 +1,6 @@
 /*
  * Author       : Mahardika Pratama
- * Version      : 1.10.0
+ * Version      : 1.11.0
  * Created Date : 2026-09-19
  * Description  : The map-first application shell: top bar, resource list
  *                panel, map, and a detail panel that opens when a resource
@@ -57,6 +57,8 @@
  *                        pre-filled from the clicked point, and added a
  *                        one-line tip next to "+ New Resource" so the
  *                        feature is discoverable.
+ * - 1.11.0 (2026-09-20): Pass the newest hotspot's observation date to
+ *                         HotspotToggle as the overlay's "as of" date.
  */
 import React, { useMemo, useState } from "react";
 
@@ -125,6 +127,10 @@ function AppShell() {
 		[hotspotsQuery.data]
 	);
 
+	// The backend orders hotspots newest-first, so the first item carries
+	// the observation date the whole overlay is current to.
+	const hotspotsAsOf = hotspotsQuery.data?.data[0]?.observedDate;
+
 	return (
 		<div className="flex flex-col w-screen h-screen overflow-hidden text-white bg-background-100-1">
 			<header className="flex items-center justify-between p-4 border-b border-white/10">
@@ -135,6 +141,7 @@ function AppShell() {
 						onToggle={setHotspotLayerVisible}
 						status={hotspotsQuery.status}
 						count={hotspots.length}
+						asOf={hotspotsAsOf}
 						error={hotspotsQuery.error}
 						getErrorMessage={getApiErrorMessage}
 					/>

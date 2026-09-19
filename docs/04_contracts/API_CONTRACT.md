@@ -860,7 +860,15 @@ Requires an authenticated context (section 5).
 
 | Parameter | Purpose | Notes |
 |---|---|---|
-| `hours` | Recency window: only detections within the last `hours` hours | Default `24`, maximum `72`; a value that is missing, non-numeric, `<= 0`, or `> 72` falls back to `24` |
+| `hours` | Recency window: detections within the `hours` hours ending at BMKG's most recent observation | Default `24`, maximum `72`; a value that is missing, non-numeric, `<= 0`, or `> 72` falls back to `24` |
+
+The window ends at the newest observation BMKG has published, not at the
+current time: the GeoHotspot feed is published with a lag of days, so a
+wall-clock window would be empty exactly when the latest available data
+matters most. Clients can read how current the overlay is from
+`observedDate` / `originDate`; results are ordered newest first. BMKG's
+layer returns at most 2,000 features per query, so a busy window is
+truncated to the 2,000 most recent detections.
 
 The response uses the collection envelope (section 4). The result is not
 paginated: `meta.page` is always `1` and `meta.pageSize` equals

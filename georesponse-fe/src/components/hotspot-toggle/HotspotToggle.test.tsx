@@ -1,12 +1,13 @@
 /*
  * Author       : Mahardika Pratama
- * Version      : 1.0.0
+ * Version      : 1.1.0
  * Created Date : 2026-09-19
  * Description  : Tests HotspotToggle's loading/empty/error/populated
  *                states and the toggle interaction.
  *
  * Changelog:
  * - 1.0.0 (2026-09-19): Initial creation.
+ * - 1.1.0 (2026-09-20): Cover the "as of" observation date.
  */
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
@@ -33,6 +34,19 @@ describe("HotspotToggle", () => {
 			<HotspotToggle visible={true} onToggle={vi.fn()} status="success" count={3} />
 		);
 		expect(screen.getByText("3 active")).toBeInTheDocument();
+	});
+
+	it("shows the observation date the data is current to", () => {
+		render(
+			<HotspotToggle
+				visible={true}
+				onToggle={vi.fn()}
+				status="success"
+				count={3}
+				asOf="2026-09-01"
+			/>
+		);
+		expect(screen.getByText("3 active (BMKG data as of 2026-09-01)")).toBeInTheDocument();
 	});
 
 	it("shows an unavailable message on error", () => {

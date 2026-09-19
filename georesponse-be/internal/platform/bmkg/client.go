@@ -1,6 +1,6 @@
 /*
 Author       : Mahardika Pratama
-Version      : 1.0.0
+Version      : 1.1.0
 Created Date : 2026-09-19
 Description  : Package bmkg is the only package that opens an HTTP
 
@@ -12,6 +12,9 @@ Description  : Package bmkg is the only package that opens an HTTP
 
 Changelog:
   - 1.0.0 (2026-09-19): Initial creation.
+  - 1.1.0 (2026-09-20): Treat ArcGIS's HTTP-200 error envelope as a
+    failure (previously decoded as an empty feature list); add
+    OutFields/OrderBy/ResultRecordCount query options.
 */
 package bmkg
 
@@ -22,6 +25,8 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"strconv"
+	"strings"
 	"time"
 )
 
@@ -47,8 +52,30 @@ func NewClient(baseURL string, timeout time.Duration) *Client {
 // QueryOptions constrains a GeoHotspot query.
 type QueryOptions struct {
 	// Where is an ArcGIS SQL-92 WHERE clause (e.g. "provinsi <> '-'").
-	// An empty Where queries every feature.
+	// An empty Where queries every feature. Date fields must be compared
+	// against a TIMESTAMP literal (see TimestampLiteral); a bare epoch
+	// integer is rejected by the layer.
 	Where string
+
+	// OutFields lists the attribute fields to return. Empty means every
+	// field ("*").
+	OutFields []string
+
+	// OrderBy is an ArcGIS orderByFields expression (e.g. "date_full
+	// DESC"). Empty means "objectid DESC".
+	OrderBy string
+
+	// ResultRecordCount caps the number of features returned. Zero means
+	// the layer's own maximum (2000 on BMKG's layer; larger result sets
+	// are truncated by the layer, which is why OrderBy matters).
+	ResultRecordCount int
+}
+
+// TimestampLiteral formats t as the ArcGIS SQL TIMESTAMP literal the layer
+// accepts in a WHERE clause against a date field. The layer interprets the
+// literal in UTC, matching how it reports date fields (epoch milliseconds).
+func TimestampLiteral(t time.Time) string {
+	return "TIMESTAMP '" + t.UTC().Format("2006-01-02 15:04:05") + "'"
 }
 
 // Feature is a single ArcGIS GeoJSON hotspot point, decoded from BMKG's
@@ -74,9 +101,16 @@ type Feature struct {
 	} `json:"properties"`
 }
 
-// featureCollection is the raw ArcGIS GeoJSON envelope.
+// featureCollection is the raw ArcGIS GeoJSON envelope. ArcGIS reports a
+// rejected query (for example a malformed WHERE clause) as HTTP 200 with an
+// "error" member instead of "features", so both are decoded and the error
+// member is checked first.
 type featureCollection struct {
 	Features []Feature `json:"features"`
+	Error    *struct {
+		Code    int    `json:"code"`
+		Message string `json:"message"`
+	} `json:"error"`
 }
 
 // Query fetches every current GeoHotspot feature matching opts.
@@ -86,11 +120,23 @@ func (c *Client) Query(ctx context.Context, opts QueryOptions) ([]Feature, error
 		where = "1=1"
 	}
 
+	outFields := "*"
+	if len(opts.OutFields) > 0 {
+		outFields = strings.Join(opts.OutFields, ",")
+	}
+	orderBy := opts.OrderBy
+	if orderBy == "" {
+		orderBy = "objectid DESC"
+	}
+
 	query := url.Values{
 		"where":         {where},
-		"outFields":     {"*"},
+		"outFields":     {outFields},
 		"f":             {"geojson"},
-		"orderByFields": {"objectid DESC"},
+		"orderByFields": {orderBy},
+	}
+	if opts.ResultRecordCount > 0 {
+		query.Set("resultRecordCount", strconv.Itoa(opts.ResultRecordCount))
 	}
 
 	reqURL := c.baseURL + "/query?" + query.Encode()
@@ -113,6 +159,9 @@ func (c *Client) Query(ctx context.Context, opts QueryOptions) ([]Feature, error
 	var decoded featureCollection
 	if err := json.NewDecoder(resp.Body).Decode(&decoded); err != nil {
 		return nil, fmt.Errorf("%w: decode response: %v", ErrRequestFailed, err)
+	}
+	if decoded.Error != nil {
+		return nil, fmt.Errorf("%w: arcgis error %d: %s", ErrRequestFailed, decoded.Error.Code, decoded.Error.Message)
 	}
 
 	return decoded.Features, nil

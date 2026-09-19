@@ -1,6 +1,6 @@
 /*
 Author       : Mahardika Pratama
-Version      : 1.0.0
+Version      : 1.1.0
 Created Date : 2026-09-19
 Description  : Tests for Client against an httptest.NewServer fixture
 
@@ -11,6 +11,8 @@ Description  : Tests for Client against an httptest.NewServer fixture
 
 Changelog:
   - 1.0.0 (2026-09-19): Initial creation.
+  - 1.1.0 (2026-09-20): Cover the ArcGIS HTTP-200 error envelope, the
+    new query options, and TimestampLiteral.
 */
 package bmkg
 
@@ -146,5 +148,95 @@ func TestClient_Query_Timeout(t *testing.T) {
 	_, err := client.Query(context.Background(), QueryOptions{})
 	if err == nil {
 		t.Fatal("Query() error = nil, want non-nil (timeout)")
+	}
+}
+
+// arcgisErrorEnvelope is what the layer returns (with HTTP 200 under
+// f=geojson) for a rejected query, e.g. a date compared to a bare integer.
+const arcgisErrorEnvelope = `{"error":{"code":400,"extendedCode":-2147220985,"message":"Unable to complete operation.","details":[]}}`
+
+func TestClient_Query_ArcGISErrorEnvelope(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(arcgisErrorEnvelope))
+	}))
+	defer server.Close()
+
+	client := NewClient(server.URL, 5*time.Second)
+	features, err := client.Query(context.Background(), QueryOptions{Where: "date_full >= 1"})
+	if err == nil {
+		t.Fatalf("Query() error = nil, want ErrRequestFailed (got %d features)", len(features))
+	}
+	if !strings.Contains(err.Error(), "arcgis error 400") {
+		t.Errorf("error %q does not carry the ArcGIS error code/message", err)
+	}
+}
+
+func TestClient_Query_PassesOptions(t *testing.T) {
+	var captured map[string][]string
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		captured = r.URL.Query()
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(cannedResponse))
+	}))
+	defer server.Close()
+
+	client := NewClient(server.URL, 5*time.Second)
+	_, err := client.Query(context.Background(), QueryOptions{
+		Where:             "provinsi <> '-'",
+		OutFields:         []string{"date_full", "objectid"},
+		OrderBy:           "date_full DESC",
+		ResultRecordCount: 1,
+	})
+	if err != nil {
+		t.Fatalf("Query() error = %v, want nil", err)
+	}
+
+	want := map[string]string{
+		"outFields":         "date_full,objectid",
+		"orderByFields":     "date_full DESC",
+		"resultRecordCount": "1",
+		"f":                 "geojson",
+	}
+	for key, value := range want {
+		if got := captured[key]; len(got) != 1 || got[0] != value {
+			t.Errorf("query %s = %q, want %q", key, got, value)
+		}
+	}
+}
+
+func TestClient_Query_DefaultsWhenOptionsEmpty(t *testing.T) {
+	var captured map[string][]string
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		captured = r.URL.Query()
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(cannedResponse))
+	}))
+	defer server.Close()
+
+	client := NewClient(server.URL, 5*time.Second)
+	if _, err := client.Query(context.Background(), QueryOptions{}); err != nil {
+		t.Fatalf("Query() error = %v, want nil", err)
+	}
+	if got := captured["where"]; len(got) != 1 || got[0] != "1=1" {
+		t.Errorf("where = %q, want 1=1", got)
+	}
+	if got := captured["outFields"]; len(got) != 1 || got[0] != "*" {
+		t.Errorf("outFields = %q, want *", got)
+	}
+	if got := captured["orderByFields"]; len(got) != 1 || got[0] != "objectid DESC" {
+		t.Errorf("orderByFields = %q, want objectid DESC", got)
+	}
+	if _, present := captured["resultRecordCount"]; present {
+		t.Errorf("resultRecordCount should be omitted when zero, got %q", captured["resultRecordCount"])
+	}
+}
+
+func TestTimestampLiteral(t *testing.T) {
+	// 2026-09-01T05:50:00Z is BMKG's date_full 1788241800000 as captured
+	// in cannedResponse; a non-UTC input must be normalised to UTC.
+	in := time.UnixMilli(1788241800000).In(time.FixedZone("WIB", 7*3600))
+	if got, want := TimestampLiteral(in), "TIMESTAMP '2026-09-01 05:50:00'"; got != want {
+		t.Errorf("TimestampLiteral() = %q, want %q", got, want)
 	}
 }

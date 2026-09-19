@@ -126,6 +126,21 @@ matching the versioned base path defined in `API_CONTRACT.md` section 2,
 and `GET http://localhost:${HTTP_PORT}/health` reports `{"status":"ok",
 "database":"ok"}` once the database is reachable.
 
+Two things to know when running the binary directly:
+
+- The process reads real environment variables only; it does not load
+  `.env` by itself. Export the file first (Git Bash: `set -a; source .env;
+  set +a`, PowerShell: `Get-Content .env | ForEach-Object { if ($_ -match
+  '^([^#=]+)=(.*)$') { Set-Item "env:$($matches[1])" $matches[2] } }`),
+  otherwise start-up fails with `config: DATABASE_URL is required`.
+- If the Docker stack from `./run.sh` / `.un.ps1` is up, its backend
+  container already publishes port 8080 and `go run` fails with `bind:
+  Only one usage of each socket address`. Either stop the stack first
+  (`./run.sh --down` / `.un.ps1 -Down`) or run the local binary on
+  another port with `HTTP_PORT=8081 go run ./cmd/api` (the compose
+  database on `localhost:5432` can be shared by both). Point the frontend
+  at it with `API_BASE_URL=http://localhost:8081/api/v1`.
+
 For a repeatable local environment setup (env file, dependency install,
 database bootstrap), prefer the project scripts:
 

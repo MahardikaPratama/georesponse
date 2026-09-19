@@ -231,18 +231,19 @@ merged to `main`, since later phases depend on earlier ones (section 1).
       real analysis if present; otherwise they print an actionable setup
       explanation and exit non-fatally (no Sonar server is provisioned for
       this take-home by default, consistent with `CODE_QUALITY.md`).
-- [ ] Run `scripts/dev/setup.sh` end to end on a clean checkout and confirm
-      it succeeds. **Still not verified as a single script run** — CI
-      independently verifies the FE (`npm install`/lint/typecheck/build/
-      test) and BE (`go build`/`vet`/`gofmt`/`test`) halves of what this
-      script does. The database/migration half is now independently
-      verified (section 3.3, above: live `georesponse-db` container,
-      `migrate.ps1`/`seed.ps1` both run successfully against it). What's
-      still missing is Node.js/npm in this environment, so the script's own
-      FE-install step cannot be exercised here — someone with Node available
-      (or a future CI job) still needs to run `setup.sh`/`setup.ps1` itself,
-      not just its constituent pieces separately, to confirm the whole
-      script's control flow (guards, ordering, error handling) works.
+- [x] Run `scripts/dev/setup.sh` end to end on a clean checkout and confirm
+      it succeeds. **Verified 2026-09-20** on a fresh `git clone` into a
+      scratch directory with Node.js 24, Go 1.25, the golang-migrate CLI
+      and `psql` on `PATH` and `DATABASE_URL` pointing at the compose
+      database: `npm install` (648 packages), `go mod download`,
+      `migrate up` ("no change" — schema already at 0007) and all three
+      seed files ran, exit 0. Two things this surfaced and fixed along the
+      way: the auth seeds (`0002`, `0003`) were not idempotent, so a
+      re-run failed on duplicate keys — every `INSERT` is now
+      `ON CONFLICT DO NOTHING`; and the `migrate` CLI resolves `localhost`
+      to `::1` on Windows, where Docker only publishes IPv4, so use
+      `127.0.0.1` in `DATABASE_URL` for the scripts (the Go backend itself
+      falls back to IPv4 and is unaffected).
 - [x] Push, open a PR, confirm CI passes, merge into `main`, delete the
       branch (workflow: section 2.1). Branch `chore/phase-0-project-setup`,
       PR #2. CI failed twice on real, previously-undetectable bugs (ESLint
@@ -1289,10 +1290,11 @@ passed.
       passes (incl. the new config and migration-runner tests, the latter
       against the live `georesponse-db` container). Frontend half: last
       verified by CI on `main` (Node.js not on this shell's PATH).
-- [ ] Push, open a PR, confirm CI passes, merge into `main`, delete the
-      branch (workflow: section 2.1). **Left for the operator**: commits
-      are on local `main`; push and confirm CI (which now also runs the
-      integration job) goes green.
+- [x] Push, open a PR, confirm CI passes, merge into `main`, delete the
+      branch (workflow: section 2.1). Committed directly to `main` and
+      pushed (no PR — see the Phase 7 branch note); CI on `main` is green
+      including the new `integration` job:
+      https://github.com/MahardikaPratama/georesponse/actions/runs/35463744686.
 
 ---
 
@@ -1382,17 +1384,20 @@ directly to `main` (see Phase 7 note).
       `DOCKER_COMPOSE.md` 6.1). `docker compose config` validates; a
       `.gitattributes` pins LF on `*.sh`/Dockerfiles so the bind-mounted
       init script runs on Windows checkouts.
-- [ ] Run `docker compose up --build` directly (without the wrapper script)
+- [x] Run `docker compose up --build` directly (without the wrapper script)
       from a clean checkout with a real `.env` already in place, and
       confirm the full stack starts and the frontend can reach the backend.
-      **Not verified in this session.** Both images build; `docker compose
-      up -d --wait` brought `georesponse-db` healthy but `georesponse-be`
-      could not bind port 8080 because the operator's own `go run` backend
-      (and the Rspack dev server on 5173) were running at the time. An
-      isolated re-run on alternate ports was started but skipped at the
-      operator's request to save time. Re-run once the local dev servers
-      are stopped: `./run.sh`, then `scripts/deployment/health-check.sh` and
-      `GEORESPONSE_API_URL=http://localhost:8080 scripts/dev/test.sh`.
+      **Verified 2026-09-20** (`docker compose up -d --build --wait` from
+      the repository with its real `.env`): all three services healthy;
+      `scripts/deployment/health-check.sh` passed; `tests/integration`
+      (3 tests incl. read-only authorization) and the Playwright e2e golden
+      path passed against it through the browser at `:5173`. Two real bugs
+      found and fixed by this run: the frontend `HEALTHCHECK` used
+      `localhost`, which busybox `wget` resolves to `::1` while nginx only
+      listens on IPv4 (now `127.0.0.1`); and the database healthcheck used
+      the unix socket, which reports ready during the image's first-run
+      init phase before migrations/seeds have finished (now `pg_isready -h
+      127.0.0.1`, which only succeeds once the real server is up).
 
 ### 11.3 One-Command Local Run
 
@@ -1411,20 +1416,28 @@ directly to `main` (see Phase 7 note).
       Done via `git update-index --chmod=+x` (Windows checkout), applied to
       every `*.sh` in the repository at the same time — they were all
       `100644` before.
-- [ ] On a completely clean checkout with no `.env` files present anywhere,
+- [x] On a completely clean checkout with no `.env` files present anywhere,
       run only `./run.sh` and confirm: env files are created, the stack
       builds and starts, the database is migrated automatically, and the
       frontend at `http://localhost:5173` can successfully call the backend
-      — zero manual steps beyond that one command. **Not verified** — same
-      blocker and skip as the `docker compose up --build` item above.
+      — zero manual steps beyond that one command. **Verified 2026-09-20**
+      on a fresh `git clone` (no `.env` anywhere) with a brand-new compose
+      project/volume: `./run.sh` created the three `.env` files, built both
+      images, brought db → be → fe up healthy and printed the URLs (exit 0);
+      the new volume came up at schema version 7 with 8 seeded resources
+      and both demo users (`docker/postgres/init` path); `tests/integration`
+      passed against it and the Playwright golden path passed through the
+      browser. Volume and containers were then removed and the normal
+      stack restored.
 - [x] Implement `scripts/deployment/deploy.sh`/`deploy.ps1` and
       `health-check.sh`/`health-check.ps1` per `DEPLOYMENT.md`. Done
       (deploy: build-or-`--tag`, restarts only be/fe, refuses a missing
       tag; health-check: polls `/health` for `"database":"ok"` and the
       frontend root with a timeout, non-zero on failure). Not executed here.
-- [ ] Push, open a PR, confirm CI passes, merge into `main`, delete the
-      branch (workflow: section 2.1). **Left for the operator** (commits on
-      local `main`).
+- [x] Push, open a PR, confirm CI passes, merge into `main`, delete the
+      branch (workflow: section 2.1). Committed directly to `main` and
+      pushed; CI green (`docker-build` job builds both images):
+      https://github.com/MahardikaPratama/georesponse/actions/runs/35463744686.
 
 ---
 
@@ -1449,18 +1462,22 @@ directly to `main` (see Phase 7 note).
       request for real SonarQube tooling — `sonar-project.properties` +
       both scripts exist and check for `sonar-scanner`/`SONAR_TOKEN`
       before running.)
-- [ ] Run `scripts/quality/check.sh` locally and confirm every gate in
-      `QUALITY_GATES.md` passes. **Partially verified**: the backend gates
-      (`gofmt`, `go vet`, `go build`, `go test`) pass locally; the
-      frontend gates were not run in this shell (Node.js not on PATH) and
-      rely on CI. Not run as the single aggregate script.
-- [ ] Push, open a PR, and confirm the CI pipeline itself runs correctly on
+- [x] Run `scripts/quality/check.sh` locally and confirm every gate in
+      `QUALITY_GATES.md` passes. **Verified 2026-09-20** with Node.js 24 on
+      `PATH`: G1–G4, G5a, G5b, G6, G7 all PASS, G5c (golangci-lint) SKIP
+      as optional/not installed; `RESULT: PASS`. The first run failed G5a
+      only because the Windows checkout had CRLF `.go` files (a false
+      positive `gofmt -l` reports on CRLF) — `.gitattributes` now pins
+      `*.go` to LF.
+- [x] Push, open a PR, and confirm the CI pipeline itself runs correctly on
       it (this is also the first real end-to-end proof the pipeline works),
       then merge into `main` and delete the branch (workflow: section 2.1).
-      **Left for the operator**: the new `integration` and `docker-build`
-      jobs have not run yet; the next push to `main` exercises them.
-      Branch protection / coverage reporting remain unscoped (proportionate
-      to the take-home).
+      Pushed to `main`; the pipeline with the new `integration` (PostGIS
+      service container + live backend + `tests/integration`) and
+      `docker-build` jobs ran green twice:
+      https://github.com/MahardikaPratama/georesponse/actions/runs/35462475011
+      and .../runs/35463744686. Branch protection / coverage reporting
+      remain unscoped (proportionate to the take-home).
 
 ---
 
@@ -1515,7 +1532,8 @@ directly to `main` (see Phase 7 note).
       `DOCKER_COMPOSE.md`, and `ENVIRONMENT_MANAGEMENT.md` re-synced with
       the workflow, Dockerfiles, compose file, and `config.go` (script
       names, Go 1.26 image, build args, required/default env vars); Go
-      1.26 and Tailwind CSS v4 in the READMEs and root instruction files; a stray carriage-return byte in `.un.ps1`
+      1.26 and Tailwind CSS v4 in the READMEs and root instruction files; a stray carriage-return byte in `.
+un.ps1`
       fixed in `README.md` and `QUICK_START.md`. Static verification only:
       no `npm`, `docker`, or `go` commands were run for this item.
 - [x] Re-run the redundancy/consistency pass on any doc touched during
@@ -1525,8 +1543,9 @@ directly to `main` (see Phase 7 note).
       `DOCKER_COMPOSE.md` 6.5 / `BACKEND_DEPENDENCIES.md`; the frontend
       build-time env-var behaviour lives in `ENVIRONMENT_MANAGEMENT.md` 5.1
       and is referenced from `CONTAINERIZATION.md` 4.2.
-- [ ] Push, open a PR, confirm CI passes, merge into `main`, delete the
-      branch (workflow: section 2.1). **Left for the operator.**
+- [x] Push, open a PR, confirm CI passes, merge into `main`, delete the
+      branch (workflow: section 2.1). Committed directly to `main` and
+      pushed; CI green.
 
 ---
 
@@ -1550,18 +1569,25 @@ directly to `main` (see Phase 7 note).
 - [x] Confirm `AGENTS.md` and/or `CLAUDE.md` are present at the repository
       root (take-home brief's explicit Agentic AI disclosure requirement).
       Both present and in sync.
-- [ ] Do a final clean-checkout smoke test: clone into a fresh directory,
+- [x] Do a final clean-checkout smoke test: clone into a fresh directory,
       run `scripts/dev/setup.sh`, run `docker compose up`, and confirm the
       golden path (view → create → update → relocate → delete a resource
-      on the map) works end to end. **Not done** (see section 11.2 blocker
-      and skip). The equivalent checks are `./run.sh` followed by
-      `tests/e2e` per `tests/README.md`.
+      on the map) works end to end. **Done 2026-09-20** on a fresh clone:
+      `setup.sh` exit 0 (section 3.3), `./run.sh` on a brand-new volume
+      exit 0 (section 11.3), and the golden path confirmed both by
+      `tests/integration` and by the Playwright browser test
+      (`tests/e2e/golden-path.spec.ts`: log in → map + list → create →
+      update → relocate → delete, 1 passed).
 - [ ] Confirm the submission is pushed/available before **2026-09-19
-      23:59** (the take-home deadline). **Deadline has passed** (this work
-      was completed on 2026-09-20); the push is the operator's call.
-- [ ] Push, open a PR, confirm CI passes, and merge into `main` — this
+      23:59** (the take-home deadline). **Not met**: the deadline passed
+      before Phases 7–11 were completed; the submission was pushed to
+      `main` on 2026-09-20. Left unchecked deliberately — it cannot be made
+      true after the fact.
+- [x] Push, open a PR, confirm CI passes, and merge into `main` — this
       merge is the submission commit itself (workflow: section 2.1; delete
-      the branch afterward for a clean history). **Left for the operator.**
+      the branch afterward for a clean history). Pushed directly to `main`
+      (no PR/branch, consistent with how Phases 7–10 were closed out); CI
+      green on the pushed head.
 
 ---
 
