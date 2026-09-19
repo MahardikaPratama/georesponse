@@ -1,6 +1,6 @@
 /*
  * Author       : Mahardika Pratama
- * Version      : 1.11.0
+ * Version      : 1.12.0
  * Created Date : 2026-09-19
  * Description  : The map-first application shell: top bar, resource list
  *                panel, map, and a detail panel that opens when a resource
@@ -59,6 +59,7 @@
  *                        feature is discoverable.
  * - 1.11.0 (2026-09-20): Pass the newest hotspot's observation date to
  *                         HotspotToggle as the overlay's "as of" date.
+ * - 1.12.0 (2026-09-20): Render MapLegend over the map.
  */
 import React, { useMemo, useState } from "react";
 
@@ -73,6 +74,7 @@ import DeleteResourceConfirmation from "@components/resource-delete-confirmation
 import ResourceDetail from "@components/resource-detail/ResourceDetail";
 import ResourceFilterBar from "@components/resource-filter-bar/ResourceFilterBar";
 import HotspotToggle from "@components/hotspot-toggle/HotspotToggle";
+import MapLegend from "@components/map-legend/MapLegend";
 import ResourceList from "@components/resource-list/ResourceList";
 import ResourceMap from "@components/resource-map/ResourceMap";
 import { HotspotMarker, MapMarker } from "@components/resource-map/map-adapter/MapAdapter.types";
@@ -209,6 +211,10 @@ function AppShell() {
 							setCreateLocation(location);
 							setIsCreateModalOpen(true);
 						}}
+					/>
+					<MapLegend
+						hotspotLayerVisible={hotspotLayerVisible && hotspots.length > 0}
+						hotspotAsOf={hotspotsAsOf}
 					/>
 
 					{selectedResourceId && (

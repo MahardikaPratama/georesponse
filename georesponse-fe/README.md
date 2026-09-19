@@ -67,7 +67,7 @@ npm run lint
 | Variable | Purpose |
 |---|---|
 | `API_BASE_URL` | Base URL of the GeoResponse backend, e.g. `http://localhost:8080/api/v1` |
-| `MAP_TILE_URL` | Raster tile URL template for the map, e.g. `https://tile.example.org/{z}/{x}/{y}.png`. Left empty, the map renders with no base tiles, only resource markers. |
+| `MAP_TILE_URL` | Raster tile URL template for the map, e.g. `https://tile.example.org/{z}/{x}/{y}.png`. Left unset or empty, the build falls back to the provider URL in `.env.example` so the map always has a base layer. |
 | `LOG_LEVEL` | Frontend log level (default `debug`) |
 
 Copy `.env.example` to `.env` (not committed) and adjust, or set these through your shell before running `npm run dev` / `npm run build`. No `VITE_` prefix — the build tool is Rspack, not Vite. See `../docs/11_devops/ENVIRONMENT_MANAGEMENT.md` section 5.1/6.

@@ -1,6 +1,6 @@
 /*
  * Author       : Mahardika Pratama
- * Version      : 1.1.0
+ * Version      : 1.4.0
  * Created Date : 2026-09-19
  * Description  : MapLibre GL JS implementation of the MapAdapter
  *                interface (MapAdapter.types.ts). The only file outside
@@ -30,11 +30,15 @@
  *                        queryRenderedFeatures), so double-clicking a
  *                        marker doesn't also offer to create a resource on
  *                        top of it.
+ * - 1.4.0 (2026-09-20): Hotspots drawn beneath resource markers, small,
+ *                        translucent and zoom-scaled; resource markers
+ *                        outlined; selected colour from map.constants.
  */
 import maplibregl, { GeoJSONSource, Map as MapLibreMap, Popup } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 
 import { HOTSPOT_MARKER_COLOR, HOTSPOT_MARKER_STROKE_COLOR } from "@constants/hotspot.constants";
+import { MARKER_STROKE_COLOR, SELECTED_MARKER_COLOR } from "@constants/map.constants";
 
 import {
 	HotspotMarker,
@@ -148,18 +152,30 @@ export function createMapLibreAdapter(): MapAdapter {
 					type: "geojson",
 					data: toFeatureCollection(pendingMarkers)
 				});
+				// Resource markers get a white outline so they read as "ours"
+				// against the (much denser) hotspot layer beneath them.
 				map.addLayer({
 					id: MARKER_LAYER_ID,
 					type: "circle",
 					source: SOURCE_ID,
-					paint: { "circle-radius": 6, "circle-color": ["get", "color"] }
+					paint: {
+						"circle-radius": 7,
+						"circle-color": ["get", "color"],
+						"circle-stroke-width": 2,
+						"circle-stroke-color": MARKER_STROKE_COLOR
+					}
 				});
 				map.addLayer({
 					id: SELECTED_LAYER_ID,
 					type: "circle",
 					source: SOURCE_ID,
 					filter: ["==", ["get", "id"], ""],
-					paint: { "circle-radius": 9, "circle-color": "#f97316" }
+					paint: {
+						"circle-radius": 11,
+						"circle-color": SELECTED_MARKER_COLOR,
+						"circle-stroke-width": 2,
+						"circle-stroke-color": MARKER_STROKE_COLOR
+					}
 				});
 
 				map.on("click", MARKER_LAYER_ID, (event) => {
@@ -179,17 +195,35 @@ export function createMapLibreAdapter(): MapAdapter {
 					type: "geojson",
 					data: toHotspotFeatureCollection(pendingHotspots)
 				});
-				map.addLayer({
-					id: HOTSPOT_LAYER_ID,
-					type: "circle",
-					source: HOTSPOT_SOURCE_ID,
-					paint: {
-						"circle-radius": 5,
-						"circle-color": HOTSPOT_MARKER_COLOR,
-						"circle-stroke-width": 1.5,
-						"circle-stroke-color": HOTSPOT_MARKER_STROKE_COLOR
-					}
-				});
+				// Hotspots are situational context, not the operator's own
+				// data: thousands of them arrive at once, so they are drawn
+				// small, translucent, and zoom-scaled, and inserted *beneath*
+				// the resource layers (beforeId) so they can never cover a
+				// resource marker.
+				map.addLayer(
+					{
+						id: HOTSPOT_LAYER_ID,
+						type: "circle",
+						source: HOTSPOT_SOURCE_ID,
+						paint: {
+							"circle-radius": [
+								"interpolate",
+								["linear"],
+								["zoom"],
+								3, 2,
+								6, 3,
+								10, 5,
+								14, 8
+							],
+							"circle-color": HOTSPOT_MARKER_COLOR,
+							"circle-opacity": 0.55,
+							"circle-stroke-width": 0.5,
+							"circle-stroke-color": HOTSPOT_MARKER_STROKE_COLOR,
+							"circle-stroke-opacity": 0.5
+						}
+					},
+					MARKER_LAYER_ID
+				);
 
 				// Deliberately not wired through options.onMarkerClick/
 				// selectMarker: a hotspot is never an application-managed

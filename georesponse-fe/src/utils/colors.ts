@@ -27,6 +27,8 @@
  *                        every resource-status hue (active/error/warning/
  *                        info), so the BMKG hotspot map layer is never
  *                        confused with resource status at a glance.
+ * - 1.5.0 (2026-09-20): Added map.selected/map.markerStroke so the map
+ *                        adapter and the legend share one definition.
  */
 
 /**
@@ -134,6 +136,12 @@ const colors = {
 	hotspot: {
 		marker: "#FF3EA5",
 		stroke: "#FFFFFF"
+	},
+
+	/** Map marker chrome: the selected-resource ring and marker outlines. */
+	map: {
+		selected: "#F97316",
+		markerStroke: "#FFFFFF"
 	},
 };
 

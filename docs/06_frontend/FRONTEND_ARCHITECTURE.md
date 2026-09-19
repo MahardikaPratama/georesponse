@@ -54,7 +54,7 @@ src/
 │   ├── resource-list/, resource-detail/, resource-filter-bar/,
 │   ├── resource-create-form/, resource-update-form/, resource-relocate-form/,
 │   ├── resource-delete-confirmation/, resource-history/,
-│   └── login-form/, role-management/, audit-log/, hotspot-toggle/
+│   └── login-form/, role-management/, audit-log/, hotspot-toggle/, map-legend/
 │
 ├── hooks/            # Shared, reusable hooks (one per query/mutation, plus utilities)
 │   ├── useResources.ts, useResource.ts, useResourceHistory.ts
@@ -261,7 +261,7 @@ Per `SYSTEM_ARCHITECTURE.md` section 3, the application is organized around thes
 | Feature | Responsibility | Directories |
 |---|---|---|
 | Resource Management | List, search, filter, create, update, delete resources; change status; view history | `resource-list/`, `resource-filter-bar/`, `resource-detail/`, `resource-create-form/`, `resource-update-form/`, `resource-delete-confirmation/`, `resource-history/` |
-| Map | Geospatial visualization of resources; select a resource from the map; create at a double-clicked location; relocate a resource | `resource-map/`, `resource-relocate-form/`, `hotspot-toggle/` |
+| Map | Geospatial visualization of resources; select a resource from the map; create at a double-clicked location; relocate a resource | `resource-map/`, `resource-relocate-form/`, `hotspot-toggle/`, `map-legend/` |
 | Access | Login, role/permission management, audit log | `login-form/`, `role-management/`, `audit-log/` |
 
 There is no separate dashboard feature; the app shell's list, filters, and map together provide the overview. Each feature area is a directory under `components/`. Features may compose `common/` primitives and call shared `hooks/`, but should not import from another feature's directory directly (the app shell, as the page, is the one place that composes them); shared behavior is promoted to `hooks/`, `utils/`, or `api/` instead.

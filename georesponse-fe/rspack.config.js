@@ -18,8 +18,19 @@
  *                        back to its DefinePlugin default (e.g. MAP_TILE_URL
  *                        always rendered with no basemap, whatever .env
  *                        said).
+ * - 1.2.0 (2026-09-20): MAP_TILE_URL now falls back to the .env.example
+ *                        basemap instead of "no base tiles" when unset.
  */
 const path = require("path");
+
+/**
+ * Base map used when MAP_TILE_URL is unset or empty. A map with no base
+ * tiles is never what an operator wants (a Docker build that forgot the
+ * variable used to ship a black map), so the .env.example provider is the
+ * fallback rather than "no basemap". Set MAP_TILE_URL to override.
+ */
+const DEFAULT_MAP_TILE_URL =
+	"https://api.maptiler.com/maps/darkmatter/{z}/{x}/{y}.png?key=lz4WxgHhicN8zMRvtbih";
 
 require("dotenv").config({ path: path.resolve(__dirname, ".env") });
 
@@ -40,7 +51,9 @@ const definedEnv = {
 	"process.env.API_BASE_URL": JSON.stringify(
 		process.env.API_BASE_URL || "http://localhost:8080/api/v1"
 	),
-	"process.env.MAP_TILE_URL": JSON.stringify(process.env.MAP_TILE_URL || ""),
+	"process.env.MAP_TILE_URL": JSON.stringify(
+		process.env.MAP_TILE_URL || DEFAULT_MAP_TILE_URL
+	),
 	"process.env.LOG_LEVEL": JSON.stringify(process.env.LOG_LEVEL || "debug")
 };
 
