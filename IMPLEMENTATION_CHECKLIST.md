@@ -866,6 +866,14 @@ individually as each feature completes (see section 2.1).
       flow). (`ResourceList`, message derived from `error.code` via the new
       `src/utils/apiErrorMessage.ts` — reusable by later 9.x error states —
       with a retry action, covered by `ResourceList.test.tsx`.)
+- [x] Push, open a PR, confirm CI passes, merge into `main`, delete the
+      branch (workflow: section 2.1). PR #11 (`feature/phase-6-resource-list-map`)
+      merged into `main` (squash commit `298dddf`); branch deleted (remote
+      and local). CI initially failed one test (`ResourceList`'s skeleton
+      test used `getAllByRole("listitem")`, which Testing Library's default
+      accessibility-tree filtering can't see through the skeleton's
+      intentional `aria-hidden` — fixed by querying it via `data-testid`
+      instead); fixed and re-pushed, then green.
 
 ### 9.2 Search & Filter (FR-016–019, UC-03, UC-04)
 
