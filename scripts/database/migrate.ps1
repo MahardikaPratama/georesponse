@@ -35,11 +35,24 @@ Set it to a PostgreSQL connection string, e.g.:
     exit 1
 }
 
+# golang-migrate's -path flag builds a "file://" source URL by naively
+# concatenating the scheme and the given path. An absolute Windows path like
+# "D:\foo\bar" breaks that URL no matter how it's escaped (the drive letter's
+# colon parses as a port, or the file driver mishandles the resulting
+# leading-slash path) — so migrate is invoked with a relative "." path from
+# inside the migrations directory instead, which sidesteps the drive letter
+# entirely.
 Write-Host "Applying pending migrations from $MigrationsDir ..."
-& migrate -path $MigrationsDir -database $env:DATABASE_URL up
-if ($LASTEXITCODE -ne 0) {
-    Write-Error "migrate up failed with exit code $LASTEXITCODE."
-    exit $LASTEXITCODE
+Push-Location $MigrationsDir
+try {
+    & migrate -path . -database $env:DATABASE_URL up
+    if ($LASTEXITCODE -ne 0) {
+        Write-Error "migrate up failed with exit code $LASTEXITCODE."
+        exit $LASTEXITCODE
+    }
+}
+finally {
+    Pop-Location
 }
 
 Write-Host "Migrations applied successfully."

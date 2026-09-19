@@ -1,0 +1,39 @@
+# docker-compose.yml
+#
+# Local orchestration for GeoResponse, per docs/11_devops/DOCKER_COMPOSE.md.
+#
+# Only georesponse-db is defined here for now: georesponse-be/Dockerfile and
+# georesponse-fe/Dockerfile are still empty placeholders (Phase 8 —
+# Containerization — has not started per IMPLEMENTATION_CHECKLIST.md section
+# 11), so those two services cannot be built yet. This file exists early,
+# ahead of its normal phase order, to give Phase 0's database bootstrap a
+# real PostgreSQL+PostGIS instance to migrate/seed against locally. The
+# georesponse-be and georesponse-fe services should be added here, matching
+# DOCKER_COMPOSE.md section 5 in full, when Phase 8 actually implements the
+# two Dockerfiles.
+name: georesponse
+
+services:
+  georesponse-db:
+    image: postgis/postgis:16-3.4
+    container_name: georesponse-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-georesponse}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-georesponse_dev_password}
+      POSTGRES_DB: ${POSTGRES_DB:-georesponse}
+    ports:
+      - "5432:5432"
+    volumes:
+      - georesponse-db-data:/var/lib/postgresql/data
+      - ./database/migrations:/docker-entrypoint-initdb.d/migrations:ro
+      - ./database/seeds:/docker-entrypoint-initdb.d/seeds:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-georesponse} -d ${POSTGRES_DB:-georesponse}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+volumes:
+  georesponse-db-data:
