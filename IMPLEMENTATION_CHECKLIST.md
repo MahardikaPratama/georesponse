@@ -614,17 +614,28 @@ individually as each feature completes (see section 2.1).
 
 **Branch:** `chore/phase-9-ci-quality` (see section 2.1)
 
-- [ ] Add the GitHub Actions workflow described in `CI_CD.md` (lint,
+- [x] Add the GitHub Actions workflow described in `CI_CD.md` (lint,
       type-check, build, test for both apps, triggered on push/PR to
-      `main`).
-- [ ] Implement `scripts/quality/sonar.sh`/`sonar.ps1` if static-analysis
+      `main`). (Done early, in `chore/phase-0-project-setup`, so that
+      phase's own PR could actually have a "confirm CI passes" step. The
+      Docker-build-verify job from `CI_CD.md` section 4.4 is deliberately
+      **not** included yet — both Dockerfiles are still empty placeholders
+      [Phase 8]; add that job when Phase 8 lands.)
+- [x] Implement `scripts/quality/sonar.sh`/`sonar.ps1` if static-analysis
       tooling is configured (optional per `CODE_QUALITY.md`'s
-      proportionate-scope framing).
+      proportionate-scope framing). (Done early, in Phase 0, per explicit
+      request for real SonarQube tooling — `sonar-project.properties` +
+      both scripts exist and check for `sonar-scanner`/`SONAR_TOKEN`
+      before running.)
 - [ ] Run `scripts/quality/check.sh` locally and confirm every gate in
-      `QUALITY_GATES.md` passes.
+      `QUALITY_GATES.md` passes. **Not verified** — requires Node.js and a
+      live database, neither available in this environment.
 - [ ] Push, open a PR, and confirm the CI pipeline itself runs correctly on
       it (this is also the first real end-to-end proof the pipeline works),
       then merge into `main` and delete the branch (workflow: section 2.1).
+      (The CI workflow file itself was already exercised by the Phase 0
+      PR; this item is about the remaining Phase 9 work — coverage
+      reporting, branch protection, etc. — once that's scoped.)
 
 ---
 
