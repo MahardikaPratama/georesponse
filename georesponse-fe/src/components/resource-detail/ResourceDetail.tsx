@@ -1,6 +1,6 @@
 /*
  * Author       : Mahardika Pratama
- * Version      : 1.4.0
+ * Version      : 1.5.0
  * Created Date : 2026-09-19
  * Description  : The resource detail panel (FR-003, FR-021, UC-02): shows
  *                the selected resource's identity, type, attributes,
@@ -30,8 +30,10 @@
  *                        to the Location field.
  * - 1.4.0 (2026-09-19): Added the delete action (Phase 6 section 9.8),
  *                        opening DeleteResourceConfirmation via onDelete.
+ * - 1.5.0 (2026-09-19): Added the history section (Phase 6 section 9.9),
+ *                        toggled open/closed as local client state.
  */
-import React from "react";
+import React, { useState } from "react";
 
 import { ApiError } from "@api/httpClient.types";
 import Dropdown from "@common/dropdowns/dropdown/Dropdown";
@@ -43,6 +45,7 @@ import {
 import { useChangeResourceStatus } from "@hooks/useChangeResourceStatus";
 import { useResource } from "@hooks/useResource";
 import RelocateResourceControl from "@components/resource-relocate-form/RelocateResourceControl";
+import ResourceHistoryView from "@components/resource-history/ResourceHistoryView";
 import { getApiErrorMessage } from "@utils/apiErrorMessage";
 
 // See resourceApi.ts for why this is a relative import, not "@types/...".
@@ -72,6 +75,7 @@ function CloseButton({ onClose }: { onClose?: () => void }) {
 function ResourceDetail({ resourceId, onClose, onEdit, onDelete }: ResourceDetailProps) {
 	const { data, status, error } = useResource(resourceId);
 	const changeStatus = useChangeResourceStatus(resourceId);
+	const [showHistory, setShowHistory] = useState(false);
 
 	if (status === "pending") {
 		return (
@@ -180,6 +184,17 @@ function ResourceDetail({ resourceId, onClose, onEdit, onDelete }: ResourceDetai
 					</dl>
 				</div>
 			)}
+
+			<div>
+				<button
+					type="button"
+					onClick={() => setShowHistory((current) => !current)}
+					className="text-xs text-primary-50 hover:underline"
+				>
+					{showHistory ? "Hide history" : "Show history"}
+				</button>
+				{showHistory && <ResourceHistoryView resourceId={resource.id} />}
+			</div>
 		</div>
 	);
 }

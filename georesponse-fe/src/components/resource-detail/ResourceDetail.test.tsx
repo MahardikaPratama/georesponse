@@ -1,6 +1,6 @@
 /*
  * Author       : Mahardika Pratama
- * Version      : 1.3.0
+ * Version      : 1.4.0
  * Created Date : 2026-09-19
  * Description  : Tests ResourceDetail's loading, "not found", generic
  *                error, and populated states, the status-change control's
@@ -24,6 +24,11 @@
  * - 1.3.0 (2026-09-19): Added an onDelete assertion for the new delete
  *                        action (Phase 6 section 9.8) — the confirmation
  *                        dialog itself is DeleteResourceConfirmation.test.tsx.
+ * - 1.4.0 (2026-09-19): Added a test for the history toggle (Phase 6
+ *                        section 9.9), with useResourceHistory now mocked
+ *                        too — ResourceHistoryView (mounted once toggled
+ *                        open) calls it; the view's own states are
+ *                        ResourceHistoryView.test.tsx's job.
  */
 import React from "react";
 import { fireEvent, render, screen } from "@testing-library/react";
@@ -33,6 +38,7 @@ import { ApiError } from "@api/httpClient.types";
 import { useChangeResourceStatus } from "@hooks/useChangeResourceStatus";
 import { useRelocateResource } from "@hooks/useRelocateResource";
 import { useResource } from "@hooks/useResource";
+import { useResourceHistory } from "@hooks/useResourceHistory";
 
 import ResourceDetail from "./ResourceDetail";
 
@@ -48,9 +54,14 @@ vi.mock("@hooks/useRelocateResource", () => ({
 	useRelocateResource: vi.fn()
 }));
 
+vi.mock("@hooks/useResourceHistory", () => ({
+	useResourceHistory: vi.fn()
+}));
+
 const mockedUseResource = vi.mocked(useResource);
 const mockedUseChangeResourceStatus = vi.mocked(useChangeResourceStatus);
 const mockedUseRelocateResource = vi.mocked(useRelocateResource);
+const mockedUseResourceHistory = vi.mocked(useResourceHistory);
 
 describe("ResourceDetail", () => {
 	beforeEach(() => {
@@ -66,6 +77,11 @@ describe("ResourceDetail", () => {
 			isError: false,
 			error: null
 		} as unknown as ReturnType<typeof useRelocateResource>);
+		mockedUseResourceHistory.mockReturnValue({
+			status: "success",
+			data: { data: { statusHistory: [], locationHistory: [], changeHistory: [] } },
+			error: null
+		} as unknown as ReturnType<typeof useResourceHistory>);
 	});
 
 	it("shows a loading placeholder while the query is pending", () => {
@@ -287,5 +303,33 @@ describe("ResourceDetail", () => {
 
 		expect(mutate).not.toHaveBeenCalled();
 		expect(screen.getByText("Latitude must be between -90 and 90.")).toBeInTheDocument();
+	});
+
+	it("toggles the history section open and closed", () => {
+		mockedUseResource.mockReturnValue({
+			status: "success",
+			data: {
+				data: {
+					id: "res-001",
+					name: "Ambulance 12",
+					type: "VEHICLE",
+					status: "AVAILABLE",
+					attributes: { vehicleType: "Ambulance", capacity: 4 },
+					location: { latitude: -6.2, longitude: 106.8166 }
+				}
+			},
+			error: null
+		} as unknown as ReturnType<typeof useResource>);
+
+		render(<ResourceDetail resourceId="res-001" />);
+
+		expect(screen.queryByText("No status changes yet.")).not.toBeInTheDocument();
+
+		fireEvent.click(screen.getByRole("button", { name: "Show history" }));
+		expect(useResourceHistory).toHaveBeenCalledWith("res-001");
+		expect(screen.getByText("No status changes yet.")).toBeInTheDocument();
+
+		fireEvent.click(screen.getByRole("button", { name: "Hide history" }));
+		expect(screen.queryByText("No status changes yet.")).not.toBeInTheDocument();
 	});
 });

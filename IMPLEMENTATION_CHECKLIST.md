@@ -1148,9 +1148,27 @@ individually as each feature completes (see section 2.1).
 
 ### 9.9 Resource History (FR-034–037, UC-13)
 
-- [ ] Implement `useResourceHistory(id)` hook.
-- [ ] Implement the history view (status/location/change tabs or sections).
-- [ ] Implement the empty-history state.
+- [x] Implement `useResourceHistory(id)` hook. (`src/hooks/useResourceHistory.ts`,
+      covered by `useResourceHistory.test.ts`.)
+- [x] Implement the history view (status/location/change tabs or sections).
+      (`src/components/resource-history/ResourceHistoryView.tsx`, using the
+      shared `Tabs` component, tab selection as local client state per
+      `FRONTEND_STATE.md` section 3. Each entry shows what changed, when,
+      and by whom when available, per `FRONTEND_UI_UX.md` section 5.
+      Toggled open/closed from a new "Show history"/"Hide history" control
+      in `ResourceDetail`.)
+- [x] Implement the empty-history state. (Per category — "No status
+      changes yet.", "No relocations yet.", "No other changes yet." —
+      rather than one blanket empty state, since a resource can have
+      history in one category and none in another. Covered by
+      `ResourceHistoryView.test.tsx`.)
+
+Committed directly to `main` (per updated workflow direction — no more
+per-sub-phase branches/PRs from here on; `main` is worked on directly and
+kept as the single up-to-date branch). Not yet verified with
+typecheck/lint/build/test: this environment has no Node.js/npm available
+(Go is available and was used to verify the BMKG backend fix earlier in
+this phase, but no equivalent frontend toolchain).
 
 ### 9.10 Authorization & Administration (FR-030–033, UC-12)
 

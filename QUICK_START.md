@@ -18,6 +18,7 @@ themselves are not yet implemented.
 
 ```bash
 cd georesponse-be
+set -a && source .env && set +a   # load .env into the shell (copy from .env.example first)
 go run ./cmd/api
 ```
 
