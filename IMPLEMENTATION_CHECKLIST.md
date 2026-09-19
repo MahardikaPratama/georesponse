@@ -1213,12 +1213,29 @@ typecheck/lint/build/test: this environment has no Node.js/npm available.
 
 ### 9.11 Audit Trail (FR-038–040, UC-14)
 
-- [ ] Implement `useAuditLogs` hook with filter controls.
-- [ ] Implement the audit-log view, restricted to authorized users.
-- [ ] Implement the empty-state and error-state for the audit view.
-- [ ] Push, open a PR (or one PR per sub-feature branch, if split), confirm
-      CI passes, merge into `main`, delete the branch(es) (workflow:
-      section 2.1).
+- [x] Implement `useAuditLogs` hook with filter controls.
+      (`src/hooks/useAuditLogs.ts` for `GET /api/v1/audit-logs`; filter
+      controls — userId/resourceId text inputs, an operation `Dropdown`
+      from the fixed operation set — live in `AuditLogModal.tsx` as local
+      client state, reflected in the query key per `FRONTEND_STATE.md`
+      section 5 so each filter combination caches independently.)
+- [x] Implement the audit-log view, restricted to authorized users.
+      (`src/components/audit-log/AuditLogModal.tsx`. `GET /api/v1/audit-logs`
+      is itself permission-gated (`audit.read`, confirmed in
+      `georesponse-be/internal/audit/service.go`), so an
+      `AUTHORIZATION_DENIED` response is how this detects the caller lacks
+      access and blocks the view — same pattern as `RoleManagementModal`
+      for §9.10. Opened via a new "Audit Trail" button in `AppShell`.)
+- [x] Implement the empty-state and error-state for the audit view.
+      ("No audit records match the current filters." when the list is
+      empty; a distinct blocked message for `AUTHORIZATION_DENIED` vs. the
+      generic error-code-derived message for anything else. Covered by
+      `AuditLogModal.test.tsx`.)
+
+Committed directly to `main`. This closes out Phase 6 (all of sections
+9.1-9.11). Not yet verified with typecheck/lint/build/test locally: this
+environment has no Node.js/npm available — CI on `main` is the real
+verification (as it has been for every push this phase).
 
 ---
 

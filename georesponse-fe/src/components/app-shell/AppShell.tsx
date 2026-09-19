@@ -1,6 +1,6 @@
 /*
  * Author       : Mahardika Pratama
- * Version      : 1.8.0
+ * Version      : 1.9.0
  * Created Date : 2026-09-19
  * Description  : The map-first application shell (FRONTEND_UI_UX.md
  *                section 3): top bar, resource list panel, map, and a
@@ -50,6 +50,11 @@
  *                        3's "side panel" option) — the bottom-bar layout
  *                        capped the panel's height and made its history
  *                        section awkward to read below the fold.
+ * - 1.9.0 (2026-09-19): Added an "Audit Trail" button opening
+ *                        AuditLogModal (Phase 6 section 9.11), gated the
+ *                        same way as "Manage Roles" — any authenticated
+ *                        user can open it, the modal itself blocks a
+ *                        caller lacking audit.read.
  */
 import React, { useMemo, useState } from "react";
 
@@ -58,6 +63,7 @@ import { useCurrentUser } from "@hooks/useCurrentUser";
 import { useHotspots } from "@hooks/useHotspots";
 import { useLogout } from "@hooks/useLogout";
 import { useResources } from "@hooks/useResources";
+import AuditLogModal from "@components/audit-log/AuditLogModal";
 import CreateResourceModal from "@components/resource-create-form/CreateResourceModal";
 import DeleteResourceConfirmation from "@components/resource-delete-confirmation/DeleteResourceConfirmation";
 import ResourceDetail from "@components/resource-detail/ResourceDetail";
@@ -86,6 +92,7 @@ function AppShell() {
 	const [deletingResource, setDeletingResource] = useState<Resource | null>(null);
 	const [hotspotLayerVisible, setHotspotLayerVisible] = useState(true);
 	const [isRoleManagementOpen, setIsRoleManagementOpen] = useState(false);
+	const [isAuditLogOpen, setIsAuditLogOpen] = useState(false);
 
 	const markers = useMemo<MapMarker[]>(
 		() =>
@@ -132,6 +139,13 @@ function AppShell() {
 						className="px-3 py-1 rounded-md bg-white/10 hover:bg-white/20"
 					>
 						Manage Roles
+					</button>
+					<button
+						type="button"
+						onClick={() => setIsAuditLogOpen(true)}
+						className="px-3 py-1 rounded-md bg-white/10 hover:bg-white/20"
+					>
+						Audit Trail
 					</button>
 					<button
 						type="button"
@@ -211,6 +225,8 @@ function AppShell() {
 			{isRoleManagementOpen && (
 				<RoleManagementModal onClose={() => setIsRoleManagementOpen(false)} />
 			)}
+
+			{isAuditLogOpen && <AuditLogModal onClose={() => setIsAuditLogOpen(false)} />}
 		</div>
 	);
 }
