@@ -1,22 +1,14 @@
 #!/usr/bin/env bash
 #
-# Author       : Mahardika Pratama
-# Version      : 1.0.0
-# Created Date : 2026-09-20
-# Description  : First-initialization hook for the georesponse-db container.
-#                The official postgres/postgis image runs every file in
-#                /docker-entrypoint-initdb.d exactly once, when the data
-#                volume is brand new. This script applies every
-#                database/migrations/*.up.sql in ascending order, records
-#                the resulting version in the same schema_migrations table
-#                the golang-migrate CLI and the backend's start-up migrator
-#                use, then loads database/seeds/*.sql so a fresh stack has
-#                demo resources and login accounts. On later starts (an
-#                existing volume) this does not run; the backend applies
-#                any newer migrations itself at start-up.
-#
-# Changelog:
-# - 1.0.0 (2026-09-20): Initial creation.
+# First-initialization hook for the georesponse-db container. The official
+# postgres/postgis image runs every file in /docker-entrypoint-initdb.d
+# exactly once, when the data volume is brand new. This script applies
+# every database/migrations/*.up.sql in ascending order, records the
+# resulting version in the same schema_migrations table the golang-migrate
+# CLI and the backend's start-up migrator use, then loads
+# database/seeds/*.sql so a fresh stack has demo resources and login
+# accounts. On later starts (an existing volume) this does not run; the
+# backend applies any newer migrations itself at start-up.
 
 set -euo pipefail
 

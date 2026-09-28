@@ -1,14 +1,10 @@
 #!/usr/bin/env bash
 #
-# Author       : Mahardika Pratama
-# Version      : 1.0.0
-# Created Date : 2026-09-20
-# Description  : Verifies a deployed (or locally running) GeoResponse stack
-#                is healthy: polls the backend's GET /health until it
-#                returns 200 with "database":"ok", then polls the
-#                frontend's root path until it returns 200. Exits non-zero
-#                if either does not become healthy within the timeout, so
-#                it can gate a deploy or a rollback decision.
+# Verifies a deployed (or locally running) GeoResponse stack is healthy:
+# polls the backend's GET /health until it returns 200 with
+# "database":"ok", then polls the frontend's root path until it returns
+# 200. Exits non-zero if either does not become healthy within the
+# timeout, so it can gate a deploy or a rollback decision.
 #
 # Usage:
 #   scripts/deployment/health-check.sh [--backend-url <url>] [--frontend-url <url>] [--timeout <seconds>]
@@ -17,9 +13,6 @@
 #   BACKEND_URL   default http://localhost:8080
 #   FRONTEND_URL  default http://localhost:5173
 #   HEALTH_TIMEOUT default 90
-#
-# Changelog:
-# - 1.0.0 (2026-09-20): Initial creation.
 
 set -uo pipefail
 

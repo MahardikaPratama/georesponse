@@ -1,15 +1,8 @@
 #!/usr/bin/env bash
 #
-# Author       : Mahardika Pratama
-# Version      : 1.0.0
-# Created Date : 2026-09-19
-# Description  : Rolls back the most recently applied migration(s) using
-#                golang-migrate's "down" mechanics. Accepts an optional
-#                numeric argument for the number of migrations to roll
-#                back (default: 1).
-#
-# Changelog:
-# - 1.0.0 (2026-09-19): Initial creation.
+# Rolls back the most recently applied migration(s) using golang-migrate's
+# "down" mechanics. Accepts an optional numeric argument for the number of
+# migrations to roll back (default: 1).
 
 set -euo pipefail
 

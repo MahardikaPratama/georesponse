@@ -1,21 +1,15 @@
 #!/usr/bin/env bash
 #
-# Author       : Mahardika Pratama
-# Version      : 1.0.0
-# Created Date : 2026-09-20
-# Description  : Builds the georesponse-fe and georesponse-be images from
-#                their Dockerfiles with the project's naming convention:
-#                <name>:<tag> plus <name>:latest, where <tag> defaults to
-#                the current git short SHA (immutable per build) and can be
-#                overridden with --tag <tag> or IMAGE_TAG. Frontend build
-#                arguments (API_BASE_URL, MAP_TILE_URL, LOG_LEVEL) are read
-#                from the environment, or from the root .env if present.
+# Builds the georesponse-fe and georesponse-be images from their
+# Dockerfiles with the project's naming convention: <name>:<tag> plus
+# <name>:latest, where <tag> defaults to the current git short SHA
+# (immutable per build) and can be overridden with --tag <tag> or
+# IMAGE_TAG. Frontend build arguments (API_BASE_URL, MAP_TILE_URL,
+# LOG_LEVEL) are read from the environment, or from the root .env if
+# present.
 #
 # Usage:
 #   scripts/docker/build.sh [--tag <tag>] [--fe-only|--be-only]
-#
-# Changelog:
-# - 1.0.0 (2026-09-20): Initial creation.
 
 set -euo pipefail
 

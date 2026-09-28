@@ -1,20 +1,9 @@
 #!/usr/bin/env bash
 #
-# Author       : Mahardika Pratama
-# Version      : 1.0.0
-# Created Date : 2026-09-19
-# Description  : Runs frontend tests (npm test), backend tests
-#                (go test ./...), and — when GEORESPONSE_API_URL points at
-#                a running stack — the API integration tests under
-#                tests/integration/. Frontend tests are skipped with a
-#                clear message when npm is unavailable, rather than
-#                failing the whole script.
-#
-# Changelog:
-# - 1.0.0 (2026-09-19): Initial creation.
-# - 1.1.0 (2026-09-20): Added the tests/integration/ suite, run only when
-#                        GEORESPONSE_API_URL is set (it needs a live
-#                        backend + database).
+# Runs frontend tests (npm test), backend tests (go test ./...), and —
+# when GEORESPONSE_API_URL points at a running stack — the API integration
+# tests under tests/integration/. Frontend tests are skipped with a clear
+# message when npm is unavailable, rather than failing the whole script.
 
 set -euo pipefail
 

@@ -1,28 +1,20 @@
 #!/usr/bin/env bash
 #
-# Author       : Mahardika Pratama
-# Version      : 1.0.0
-# Created Date : 2026-09-20
-# Description  : Deploys (or redeploys) the georesponse-be and georesponse-fe
-#                containers on the current Docker host using the compose
-#                topology in docker-compose.yml. By default it builds the
-#                images for the current commit (scripts/docker/build.sh),
-#                then (re)starts only the two application services with
-#                that tag, leaving georesponse-db running. Pass
-#                --tag <tag> to deploy an already-built image tag instead
-#                (the rollback path: point at the previous known-good tag),
-#                and --no-build to skip building entirely. Afterwards run
-#                scripts/deployment/health-check.sh to verify.
+# Deploys (or redeploys) the georesponse-be and georesponse-fe containers on
+# the current Docker host using the compose topology in docker-compose.yml.
+# By default it builds the images for the current commit
+# (scripts/docker/build.sh), then (re)starts only the two application
+# services with that tag, leaving georesponse-db running. Pass --tag <tag>
+# to deploy an already-built image tag instead (the rollback path: point at
+# the previous known-good tag), and --no-build to skip building entirely.
+# Afterwards run scripts/deployment/health-check.sh to verify.
 #
-#                Migrations: the backend applies pending migrations itself
-#                at start-up when APP_ENV=development. For any other
-#                APP_ENV run scripts/database/migrate.sh before this script.
+# Migrations: the backend applies pending migrations itself at start-up
+# when APP_ENV=development. For any other APP_ENV run
+# scripts/database/migrate.sh before this script.
 #
 # Usage:
 #   scripts/deployment/deploy.sh [--tag <tag>] [--no-build]
-#
-# Changelog:
-# - 1.0.0 (2026-09-20): Initial creation.
 
 set -euo pipefail
 

@@ -93,25 +93,11 @@ Changelog:
 #>
 ```
 
-### Bash (`.sh`)
-
-Bash has no block-comment syntax — `#` per line is the only mechanism the language provides, so it remains the correct form here (this is a language limitation, not an exception to the rule above). The shebang stays on line 1, above the header:
-
-```bash
-#!/usr/bin/env bash
-#
-# Author       : Mahardika Pratama
-# Version      : 1.0.0
-# Created Date : 2026-09-19
-# Description  : Bash equivalent of the corresponding .ps1 script.
-#
-# Changelog:
-# - 1.0.0 (2026-09-19): Initial creation.
-```
-
-### Pure configuration files — no header
+### Pure configuration files, shell scripts, and env files — no header
 
 **`.gitignore`, `.prettierignore`, `.prettierrc.json`, `.golangci.yml`, `sonar-project.properties`, `tsconfig.json`, `package.json`, GitHub Actions workflow YAML, and similar declarative configuration files do not get a file header at all.** They hold data/settings, not logic, and a header adds noise without adding information a `git log`/`git blame` on the file doesn't already give more precisely. This is different from executable configuration-as-code files that contain real logic (`rspack.config.js`, `tailwind.config.js`, `postcss.config.js`, `vitest.config.ts`, `eslint.config.js`) — those are source files and do get the standard header in their language's block-comment form.
+
+**Bash scripts (`.sh`) and environment files (`.env`, `.env.example`) also do not get a file header.** Unlike other executable source files, `.sh` scripts are operational tooling (run/build/deploy helpers), not domain source code, and Bash's lack of a real block-comment syntax made the five-field header awkward to keep readable — a brief top-of-file comment describing the script's purpose is enough where one is useful. `.env`/`.env.example` files hold key-value configuration, not logic, same as the pure configuration files above.
 
 The `Description` should state **what the file is responsible for**, not repeat its implementation. Every subsequent change to the file adds one line to `Changelog` (new version, date, one-line summary) rather than rewriting history.
 

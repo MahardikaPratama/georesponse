@@ -1,14 +1,7 @@
 #!/usr/bin/env bash
 #
-# Author       : Mahardika Pratama
-# Version      : 1.0.0
-# Created Date : 2026-09-19
-# Description  : Applies all pending golang-migrate "up" migrations in
-#                database/migrations/ against the database identified by
-#                DATABASE_URL.
-#
-# Changelog:
-# - 1.0.0 (2026-09-19): Initial creation.
+# Applies all pending golang-migrate "up" migrations in database/migrations/
+# against the database identified by DATABASE_URL.
 
 set -euo pipefail
 

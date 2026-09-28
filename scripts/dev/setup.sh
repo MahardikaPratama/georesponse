@@ -1,17 +1,10 @@
 #!/usr/bin/env bash
 #
-# Author       : Mahardika Pratama
-# Version      : 1.0.0
-# Created Date : 2026-09-19
-# Description  : One-shot local dev environment bootstrap: installs
-#                frontend and backend dependencies, then applies database
-#                migrations and seed data if a database is configured.
-#                Degrades gracefully (prints a clear skip message rather
-#                than failing) when npm, Go modules, or
-#                DATABASE_URL/migrate are not available.
-#
-# Changelog:
-# - 1.0.0 (2026-09-19): Initial creation.
+# One-shot local dev environment bootstrap: installs frontend and backend
+# dependencies, then applies database migrations and seed data if a
+# database is configured. Degrades gracefully (prints a clear skip message
+# rather than failing) when npm, Go modules, or DATABASE_URL/migrate are
+# not available.
 
 set -euo pipefail
 

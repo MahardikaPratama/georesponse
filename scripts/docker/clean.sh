@@ -1,20 +1,13 @@
 #!/usr/bin/env bash
 #
-# Author       : Mahardika Pratama
-# Version      : 1.0.0
-# Created Date : 2026-09-20
-# Description  : Removes locally built GeoResponse images (every
-#                georesponse-fe:* and georesponse-be:* tag) and the dangling
-#                build layers they left behind, without touching unrelated
-#                images, containers, or volumes on the machine. Stops the
-#                compose stack's containers first so the images are not in
-#                use. The database volume is kept unless --volumes is given.
+# Removes locally built GeoResponse images (every georesponse-fe:* and
+# georesponse-be:* tag) and the dangling build layers they left behind,
+# without touching unrelated images, containers, or volumes on the
+# machine. Stops the compose stack's containers first so the images are
+# not in use. The database volume is kept unless --volumes is given.
 #
 # Usage:
 #   scripts/docker/clean.sh [--volumes]
-#
-# Changelog:
-# - 1.0.0 (2026-09-20): Initial creation.
 
 set -euo pipefail
 

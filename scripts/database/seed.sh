@@ -1,18 +1,10 @@
 #!/usr/bin/env bash
 #
-# Author       : Mahardika Pratama
-# Version      : 1.0.0
-# Created Date : 2026-09-19
-# Description  : Loads seed data from database/seeds/ into the database
-#                identified by DATABASE_URL, after migrations have been
-#                applied. Seed files are applied via `psql`, since it is
-#                the standard PostgreSQL client for running plain SQL
-#                files and needs no additional dependency beyond a
-#                PostgreSQL client install (already assumed for local
-#                Postgres/PostGIS development).
-#
-# Changelog:
-# - 1.0.0 (2026-09-19): Initial creation.
+# Loads seed data from database/seeds/ into the database identified by
+# DATABASE_URL, after migrations have been applied. Seed files are applied
+# via `psql`, since it is the standard PostgreSQL client for running plain
+# SQL files and needs no additional dependency beyond a PostgreSQL client
+# install (already assumed for local Postgres/PostGIS development).
 
 set -euo pipefail
 

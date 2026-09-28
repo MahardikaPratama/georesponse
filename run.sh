@@ -1,26 +1,18 @@
 #!/usr/bin/env bash
 #
-# Author       : Mahardika Pratama
-# Version      : 1.0.0
-# Created Date : 2026-09-20
-# Description  : One-command local run for GeoResponse. Verifies Docker is
-#                installed and running; creates .env, georesponse-fe/.env
-#                and georesponse-be/.env from their .env.example files
-#                only when the .env does not already exist (never
-#                overwrites a developer's local values); builds and starts
-#                the full stack (frontend, backend, PostgreSQL + PostGIS)
-#                with `docker compose up --build`, waits until every
-#                service reports healthy — the database schema is migrated
-#                and seeded automatically along the way — and prints the
-#                access URLs.
+# One-command local run for GeoResponse. Verifies Docker is installed and
+# running; creates .env, georesponse-fe/.env and georesponse-be/.env from
+# their .env.example files only when the .env does not already exist (never
+# overwrites a developer's local values); builds and starts the full stack
+# (frontend, backend, PostgreSQL + PostGIS) with `docker compose up --build`,
+# waits until every service reports healthy — the database schema is
+# migrated and seeded automatically along the way — and prints the access
+# URLs.
 #
 # Usage:
 #   ./run.sh              # build, start in the background, print URLs
 #   ./run.sh --foreground # same, but stay attached to the compose logs
 #   ./run.sh --down       # stop the stack (keeps the database volume)
-#
-# Changelog:
-# - 1.0.0 (2026-09-20): Initial creation.
 
 set -euo pipefail
 

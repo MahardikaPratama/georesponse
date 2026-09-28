@@ -1,18 +1,10 @@
 #!/usr/bin/env bash
 #
-# Author       : Mahardika Pratama
-# Version      : 1.0.0
-# Created Date : 2026-09-19
-# Description  : Runs the full local quality gate mirroring the CI
-#                pipeline's stages and merge-gate criteria (G1-G7):
-#                frontend lint/type-check/build, backend
-#                gofmt/vet/build/test. Frontend gates are skipped with a
-#                clear message (not a hard failure) when npm is
-#                unavailable. Prints a pass/fail summary per gate and
-#                exits non-zero if any required gate fails.
-#
-# Changelog:
-# - 1.0.0 (2026-09-19): Initial creation.
+# Runs the full local quality gate mirroring the CI pipeline's stages and
+# merge-gate criteria (G1-G7): frontend lint/type-check/build, backend
+# gofmt/vet/build/test. Frontend gates are skipped with a clear message
+# (not a hard failure) when npm is unavailable. Prints a pass/fail summary
+# per gate and exits non-zero if any required gate fails.
 
 set -uo pipefail
 
