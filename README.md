@@ -201,7 +201,7 @@ GeoResponse is implemented end to end and runs with one command
   double-click on the map), update, status change, relocate, delete,
   history view, role management, audit trail view, and the hotspot overlay.
 - **Database** (`database/`) — seven migration pairs and three seed files
-  (sample resources plus two demo accounts, see `AKUN.md`).
+  (sample resources plus two demo accounts, see `DEMO_ACCOUNTS.md`).
 - **Containerization** — real multi-stage `Dockerfile`s for both apps, a
   root `docker-compose.yml` (PostGIS with first-run migration + seeding,
   backend with healthcheck, nginx-served frontend), `run.sh`/`run.ps1`, and
@@ -231,7 +231,7 @@ with the take-home brief's requirement to document any incomplete feature,
 rather than left implicit.
 
 <h2 id="demo-accounts">Demo Accounts</h2>
-<p>There is no hosted demo; run the stack locally (one command, see below) and open <a href="http://localhost:5173">http://localhost:5173</a>. The database is seeded with two local-development-only accounts (see <a href="AKUN.md"><code>AKUN.md</code></a>):</p>
+<p>There is no hosted demo; run the stack locally (one command, see below) and open <a href="http://localhost:5173">http://localhost:5173</a>. The database is seeded with two local-development-only accounts (see <a href="DEMO_ACCOUNTS.md"><code>DEMO_ACCOUNTS.md</code></a>):</p>
 
 <p><strong>As an Administrator</strong> (full access):</p>
 <ul>
@@ -409,7 +409,7 @@ georesponse/
 ├── geo-map-benchmark/     # Standalone benchmark: Leaflet vs OpenLayers vs MapLibre GL JS
 ├── docs/                  # Authoritative, spec-driven project documentation (01_product … 13_ai)
 ├── IMPLEMENTATION_CHECKLIST.md  # Checkbox-level record of what was built and verified
-├── AKUN.md                # Demo accounts (local development only)
+├── DEMO_ACCOUNTS.md       # Demo accounts (local development only)
 ├── AGENTS.md / CLAUDE.md  # Operating rules for AI coding agents working in this repository
 └── README.md              # This file
 ```

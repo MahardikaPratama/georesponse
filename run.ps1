@@ -100,7 +100,7 @@ try {
     Write-Host "  Health    -> http://localhost:8080/health"
     Write-Host ""
     Write-Host 'Demo login (local development only, from database\seeds): identifier "user-001",'
-    Write-Host 'password "ChangeMe123!" (administrator). See AKUN.md for the read-only account.'
+    Write-Host 'password "ChangeMe123!" (administrator). See DEMO_ACCOUNTS.md for the read-only account.'
     Write-Host ""
     Write-Host "  Follow logs   -> docker compose logs -f"
     Write-Host "  Stop          -> .\run.ps1 -Down        (or: docker compose down)"

@@ -40,7 +40,7 @@ the URLs:
 On a brand-new database volume the schema is migrated and the demo data
 seeded automatically. Log in with `user-001` / `ChangeMe123!` (administrator)
 or `user-002` / `ChangeMe123!` (coordinator, read-only) — local-development placeholders,
-see `AKUN.md`. Stop with `./run.sh --down` (`.\run.ps1 -Down`); reset the
+see `DEMO_ACCOUNTS.md`. Stop with `./run.sh --down` (`.\run.ps1 -Down`); reset the
 database with `docker compose down -v`.
 
 ### Running each application directly (day-to-day development)

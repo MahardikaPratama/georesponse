@@ -104,7 +104,7 @@ cat <<EOF
   Health    → http://localhost:8080/health
 
 Demo login (local development only, from database/seeds): identifier "user-001",
-password "ChangeMe123!" (administrator). See AKUN.md for the read-only account.
+password "ChangeMe123!" (administrator). See DEMO_ACCOUNTS.md for the read-only account.
 
   Follow logs   → docker compose logs -f
   Stop          → ./run.sh --down        (or: docker compose down)
