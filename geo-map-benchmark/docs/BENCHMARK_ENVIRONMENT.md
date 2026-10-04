@@ -1,6 +1,6 @@
 # Benchmark Environment
 
-## Hardware
+## 1. Hardware
 
 | Component | Specification                  |
 | --------- | ------------------------------ |
@@ -10,9 +10,7 @@
 | Display   | 1920 × 1080 @ 60 Hz            |
 | Storage   | SanDisk SD8SN8U-512G-1006      |
 
-The benchmark should be executed on the same machine for all candidates.
-
-## Operating System
+## 2. Operating System
 
 | Component | Specification         |
 | --------- | --------------------- |
@@ -20,47 +18,48 @@ The benchmark should be executed on the same machine for all candidates.
 | Build     | 19045                 |
 | DirectX   | DirectX 12            |
 
-## Software
+## 3. Software
 
-The following versions must be recorded before benchmarking:
+Recorded before benchmarking:
 
-| Software        | Version |
-| --------------- | ------- |
-| Node.js         | v24.21.0 |
-| Package Manager | v10.19.1 |
+| Software        | Version                                        |
+| --------------- | ---------------------------------------------- |
+| Node.js         | v24.21.0                                       |
+| Package Manager | v10.19.1                                       |
 | Browser         | Chrome 153.0.8010.48 (Official Build) (64-bit) |
-| React           | 19.3.0     |
-| TypeScript      | 7.0.2     |
+| React           | 19.3.0                                         |
+| TypeScript      | 7.0.2                                          |
 
-## Map Libraries
+## 4. Map Libraries
 
 | Library        | Version |
 | -------------- | ------- |
-| Leaflet        | 1.9.4     |
-| OpenLayers     | 10.10.0     |
-| MapLibre GL JS | 6.10.0     |
+| Leaflet        | 1.9.4   |
+| OpenLayers     | 10.10.0 |
+| MapLibre GL JS | 6.10.0  |
 
 Library versions must remain fixed throughout the benchmark.
 
 **Correction (2026-09-19):** the OpenLayers and MapLibre GL JS version
 numbers were originally transcribed swapped relative to what
-`package.json` actually pins and what was installed and benchmarked. The
-table above reflects the corrected, verified values. See
-`BENCHMARK_RESULTS.md` section 1 and `DECISION_RECORD.md`.
+`package.json` pins and what was installed and benchmarked. The table above
+shows the corrected, verified values. See `BENCHMARK_RESULTS.md` section 1
+and `DECISION_RECORD.md`.
 
-## Browser Configuration
+## 5. Browser Configuration
 
-The following configuration should remain consistent:
+Keep consistent:
 
-* Same browser and version
-* Same viewport size
-* Same browser zoom level
-* No unnecessary browser extensions
-* Same hardware acceleration setting
-* No other benchmark applications running
+- Same browser and version
+- Same viewport size
+- Same browser zoom level
+- No unnecessary browser extensions
+- Same hardware acceleration setting
+- No other benchmark applications running
 
-## Benchmark Environment Rule
+## 6. Environment Rule
 
-All candidates must be benchmarked on the same hardware, operating system, browser, viewport, dataset, and test configuration.
-
-Any environment change during benchmarking must be documented and may require repeating previous measurements.
+All candidates must be benchmarked on the same machine, operating system,
+browser, viewport, dataset, and test configuration. Any environment change
+during benchmarking must be documented and may require repeating previous
+measurements.

@@ -1,14 +1,12 @@
-# Demo Accounts (Local Development)
+# Demo Accounts
 
-These accounts are created by the seeds `database/seeds/0002_sample_auth.sql`
-and `0003_sample_auth_coordinator.sql`, and are only valid against the local
-database (Docker `georesponse-db`). **Never use these outside a local
-environment** — the password below is a development placeholder, not a
-production credential.
+The local database is seeded with two accounts so you can test both full
+access and the "access denied" path (FR-032, BR-027). They exist only in the
+local database (the Docker `georesponse-db` service or a local PostgreSQL you
+seeded yourself).
 
-There are two accounts with different roles, so the "access denied" scenario
-(FR-032, BR-027 — see `IMPLEMENTATION_CHECKLIST.md` section 9.10) can be
-tested too, not just the full-access scenario:
+**Use these accounts only in a local environment.** The password is a
+development placeholder, not a production credential.
 
 | Field | Administrator | Response Coordinator |
 |---|---|---|
@@ -16,29 +14,30 @@ tested too, not just the full-access scenario:
 | Password | `ChangeMe123!` | `ChangeMe123!` |
 | Name | Demo Administrator | Demo Response Coordinator |
 | Role | `administrator` | `coordinator` |
-| Permission | All: `resource.create/read/update/delete`, `role.read`, `role.manage`, `permission.read`, `audit.read` | Only `resource.read` (read-only, per `docs/01_product/DOMAIN_MODEL.md`'s "Response Coordinator": monitors, does not manage resources) |
+| Permissions | All: `resource.create`, `resource.read`, `resource.update`, `resource.delete`, `role.read`, `role.manage`, `permission.read`, `audit.read` | `resource.read` only |
 
-Logging in as `user-002` must be **denied** (403) for every write operation
-(create/update/delete/relocate/change-status on a resource) and every admin
-screen (roles/permissions/audit-logs) — that is the correct behavior, not a
-bug.
+The coordinator matches the Response Coordinator in
+[`docs/01_product/DOMAIN_MODEL.md`](docs/01_product/DOMAIN_MODEL.md): someone
+who monitors resources but does not manage them. Signed in as `user-002`,
+every write (create, update, delete, relocate, or change status) and every
+admin screen (roles, permissions, audit trail) returns 403. That is the
+expected behavior.
 
-## How to use
+## How to Use
 
-1. Make sure the database has been migrated and seeded:
-   ```powershell
-   scripts\database\migrate.ps1
-   scripts\database\seed.ps1
-   ```
-2. Run the backend (`georesponse-be`) and frontend (`georesponse-fe`).
-3. On the login page, enter one of the identifier/password pairs above.
+1. Start the stack with `./run.sh` (or `.\run.ps1` on Windows). A new
+   database volume is migrated and seeded automatically. If you run a native
+   PostgreSQL instead, apply the migrations and seeds with
+   `scripts/database/migrate.sh` and `scripts/database/seed.sh` (`.ps1` on
+   Windows).
+2. Open <http://localhost:5173>.
+3. Sign in with one of the identifier and password pairs above.
 
 ## Sources
 
-- These credentials are defined in `database/seeds/0002_sample_auth.sql`
-  (administrator) and `database/seeds/0003_sample_auth_coordinator.sql`
-  (coordinator).
-- Login endpoint: `POST /api/v1/auth/login` (see
-  `docs/04_contracts/API_CONTRACT.md` section 5).
-- Session mechanism: HttpOnly cookie containing a signed token (see the
-  Phase 4 notes in `IMPLEMENTATION_CHECKLIST.md` section 7).
+- Seeds: `database/seeds/0002_sample_auth.sql` (administrator) and
+  `database/seeds/0003_sample_auth_coordinator.sql` (coordinator).
+- Login endpoint: `POST /api/v1/auth/login`, see
+  `docs/04_contracts/API_CONTRACT.md` section 5.
+- Session: an HttpOnly cookie that holds a signed token, also described in
+  `docs/04_contracts/API_CONTRACT.md` section 5.

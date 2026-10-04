@@ -1,66 +1,48 @@
 # geo-map-benchmark
 
 A standalone benchmark that compares **Leaflet**, **OpenLayers**, and
-**MapLibre GL JS** against the specific map workloads the main
-[GeoResponse](../README.md) application needs, in order to select which
-library `georesponse-fe` should use.
+**MapLibre GL JS** against the map workloads the main
+[GeoResponse](../README.md) application needs, to select the library
+`georesponse-fe` uses.
 
-This is not part of the running GeoResponse application — it's the evidence
-that informed one of its technology decisions. The application only consumes
-the *result* (MapLibre GL JS), isolated behind a Map Adapter.
+It is not part of the running GeoResponse application. It is the evidence
+behind one of its technology decisions; the application consumes only the
+result (MapLibre GL JS), isolated behind a Map Adapter.
 
 ## Why this exists
 
 GeoResponse displays disaster-response resources (vehicles, facilities,
-equipment, IoT devices — potentially large numbers of them) on an interactive
-map. Map rendering is a core workload where implementation choice can
-materially affect user experience, so instead of picking a map library by
-familiarity or popularity, this project measures point/marker rendering,
-GeoJSON rendering, polygon rendering, multiple layers, increasing feature
-counts (up to 10,000 features), pan/zoom interaction, memory usage, frame
-rate, and bundle size — under identical conditions for all three candidates.
+equipment, IoT devices, potentially in large numbers) on an interactive
+map. Map rendering is a core workload where the library choice can
+materially affect user experience, so instead of choosing by familiarity
+or popularity, this project measured the candidates under identical
+conditions across seven scenarios: basic map initialization, points,
+GeoJSON, polygons, multiple layers, increasing feature counts (up to 10,000
+features), and pan/zoom interaction, recording timing, FPS, memory, and
+bundle size.
 
-See [`docs/PROJECT_CONTEXT.md`](docs/PROJECT_CONTEXT.md) and
-[`docs/BENCHMARK_SCENARIOS.md`](docs/BENCHMARK_SCENARIOS.md) for the full
-scope and scenario definitions.
+Scope and scenarios: [`docs/PROJECT_CONTEXT.md`](docs/PROJECT_CONTEXT.md),
+[`docs/BENCHMARK_SCOPE.md`](docs/BENCHMARK_SCOPE.md), and
+[`docs/BENCHMARK_SCENARIOS.md`](docs/BENCHMARK_SCENARIOS.md).
 
 ## Running the benchmark
 
-This is a React + TypeScript app built with Rspack, using its standard npm
-scripts:
+The benchmark is a React + TypeScript app built with Rspack.
 
 ```sh
 npm install
-```
-
-Start the interactive benchmark app (dev server with hot reload):
-
-```sh
-npm run dev
-```
-
-Run the full test suite (unit tests, then component tests):
-
-```sh
-npm test
-```
-
-Or individually:
-
-```sh
+npm run dev               # interactive benchmark app with hot reload
+npm test                  # unit tests, then component tests
 npm run test:unit         # node --test, plain unit tests
-npm run test:components   # Vitest + React Testing Library, component tests
-```
-
-Type-check and build for production (build also runs the type check first):
-
-```sh
+npm run test:components   # Vitest + React Testing Library
 npm run typecheck
-npm run build
+npm run build             # runs the type check first
 ```
 
-The app itself lets you select a scenario and a candidate library, run it,
-and view the collected measurements.
+In the app, select a scenario and a candidate library, run it, and view the
+collected measurements. The automated, headless run that produced the
+recorded results (`scripts/runBenchmarks.mjs`) is described in
+[`docs/DECISION_RECORD.md`](docs/DECISION_RECORD.md) section 5.
 
 ## Project structure
 
@@ -69,51 +51,60 @@ geo-map-benchmark/
 ├── src/
 │   ├── app/            # App shell
 │   ├── components/     # Benchmark controls, map container, metric panel
-│   ├── benchmarks/      # One isolated implementation per candidate
+│   ├── engine/         # Benchmark Engine: timing, measurement, lifecycle
+│   ├── benchmarks/     # One isolated adapter per candidate
 │   │   ├── leaflet/
 │   │   ├── openlayers/
 │   │   └── maplibre/
-│   ├── hooks/, utils/, types/, constants/
+│   ├── hooks/, utils/, types/, constants/, styles/
+│   ├── harness.ts      # Headless entry used by the automated runner
 │   └── main.tsx
-├── docs/                # Benchmark methodology, scope, results, decision record
-├── AGENT.md / CLAUDE.md  # AI-agent instructions scoped to this sub-project
+├── scripts/            # Automated benchmark runners
+├── benchmarks/results/ # Raw per-run measurements (JSON)
+├── docs/               # Scope, methodology, results, decision record
+├── AGENT.md            # AI-agent instructions for this sub-project
+├── CLAUDE.md           # Claude Code entry point (imports AGENT.md)
 └── package.json
 ```
 
-Each map library has its own isolated adapter under `src/benchmarks/`; the
-benchmark engine (timing, measurement collection, scenario orchestration)
-stays generic and independent of any single library.
+The Benchmark Engine stays generic; all library-specific code lives in the
+adapters under `src/benchmarks/`.
+
+## Documentation
+
+| Document | Covers |
+| --- | --- |
+| [`PROJECT_CONTEXT.md`](docs/PROJECT_CONTEXT.md) | Target application and requirements |
+| [`BENCHMARK_SCOPE.md`](docs/BENCHMARK_SCOPE.md) | What is and is not benchmarked |
+| [`BENCHMARK_CRITERIA.md`](docs/BENCHMARK_CRITERIA.md) | Evaluation criteria and relevance |
+| [`BENCHMARK_SCENARIOS.md`](docs/BENCHMARK_SCENARIOS.md) | Scenarios S01 to S07 |
+| [`BENCHMARK_METHODOLOGY.md`](docs/BENCHMARK_METHODOLOGY.md) | Measurement procedure and statistics |
+| [`BENCHMARK_ENVIRONMENT.md`](docs/BENCHMARK_ENVIRONMENT.md) | Hardware, software, and library versions |
+| [`TECHNOLOGY_CANDIDATES.md`](docs/TECHNOLOGY_CANDIDATES.md) | The three candidate libraries |
+| [`BENCHMARK_RESULTS.md`](docs/BENCHMARK_RESULTS.md) | Measured results |
+| [`TECHNOLOGY_SELECTION.md`](docs/TECHNOLOGY_SELECTION.md) | Selection reasoning against the evidence |
+| [`DECISION_RECORD.md`](docs/DECISION_RECORD.md) | Implementation and methodology decisions |
 
 ## Results and decision
 
-- Methodology and raw/aggregated measurements:
-  [`docs/BENCHMARK_RESULTS.md`](docs/BENCHMARK_RESULTS.md)
-- Technology selection reasoning, evaluated against the measured evidence:
-  [`docs/TECHNOLOGY_SELECTION.md`](docs/TECHNOLOGY_SELECTION.md)
-- Architectural and technical decisions made along the way (e.g. what the
-  benchmark deliberately did and didn't cover):
-  [`docs/DECISION_RECORD.md`](docs/DECISION_RECORD.md)
+**Outcome: MapLibre GL JS.** The deciding factor was rendering
+scalability: in the large-feature-count scenario, MapLibre stayed
+essentially flat from 100 to 10,000 features while Leaflet and OpenLayers
+both degraded significantly (OpenLayers also showed a large, reproducible
+outlier at 10,000 features). MapLibre also led point, GeoJSON, polygon, and
+multi-layer rendering. The trade-offs are real: Leaflet initializes faster
+and ships a far smaller bundle. Both are covered in
+[`docs/TECHNOLOGY_SELECTION.md`](docs/TECHNOLOGY_SELECTION.md).
 
-**Outcome: MapLibre GL JS.** The deciding factor was rendering scalability —
-in the large-feature-count scenario, MapLibre stayed essentially flat from
-100 to 10,000 features while Leaflet and OpenLayers both degraded
-significantly (OpenLayers also showed a large, reproducible outlier at
-10,000 features). MapLibre also led point, GeoJSON, polygon, and
-multi-layer rendering. This came with real trade-offs — Leaflet initializes
-faster and ships a far smaller bundle — documented in full in
-`docs/TECHNOLOGY_SELECTION.md`.
-
-This result is what `georesponse-fe` builds on: MapLibre GL JS, integrated
-through a Map Adapter so the rest of the application isn't coupled to its
-specific API. See the main
+`georesponse-fe` builds on this result, integrating MapLibre GL JS through
+a Map Adapter so the rest of the application is not coupled to its API. See
+the main
 [`docs/05_engineering/TECHNOLOGY_SELECTION.md`](../docs/05_engineering/TECHNOLOGY_SELECTION.md)
-for how that decision is reflected in the application's own technology
-choices.
+for how the decision is reflected in the application's technology choices.
 
 ## Working on this sub-project
 
-If you're modifying the benchmark itself (not just reading its results), see
-[`AGENT.md`](AGENT.md) and [`CLAUDE.md`](CLAUDE.md) for the rules that apply
-here specifically — most importantly, benchmark integrity: measurements must
-never be fabricated, adjusted to favor a candidate, or compared under
-inconsistent conditions.
+Before modifying the benchmark itself, read [`AGENT.md`](AGENT.md).
+Its most important rule is benchmark integrity: measurements must never be
+fabricated, adjusted to favor a candidate, or compared under inconsistent
+conditions.

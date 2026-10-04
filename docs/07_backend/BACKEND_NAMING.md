@@ -2,9 +2,13 @@
 
 ## 1. Purpose
 
-This document defines Go-specific naming conventions for `georesponse-be`,
-extending `CODING_STANDARDS.md` sections 3, 4, and 14 with concrete backend
-patterns for packages, files, handlers, use cases, repositories, and tests.
+This document defines the Go naming conventions for `georesponse-be`:
+packages, files, handlers, use cases, repositories, DTOs, and tests. General
+casing rules are in `CODING_STANDARDS.md` section 4 and Go rules in
+section 14. Database table and column naming is in
+`docs/08_database/DATABASE_SCHEMA.md` section 2, JSON field naming in
+`DATA_CONTRACT.md` section 2, and the frontend counterpart of this document
+is `docs/06_frontend/FRONTEND_NAMING.md`.
 
 ---
 
@@ -20,10 +24,11 @@ patterns for packages, files, handlers, use cases, repositories, and tests.
   does not clearly belong to a feature package, it belongs in
   `internal/platform/<concern>` (e.g. `internal/platform/logging`), named
   after the concern it addresses.
-- Do not name a package after its layer alone (e.g. no package literally
-  called `service` or `handler`); the feature name (`resource`, `auth`) is
-  the package, and layer is expressed through the file within it
-  (`service.go`, `handler.go`).
+- Do not name a package after its layer alone (no package literally called
+  `service` or `handler`). The feature name (`resource`, `auth`) is the
+  package, and the layer is expressed by the file within it (`service.go`,
+  `repository.go`). HTTP handlers are the exception: they live in
+  `internal/http`, not in the feature package (section 3).
 
 ---
 
@@ -49,16 +54,16 @@ including authentication, lives in `internal/http/middleware/<concern>.go`
 
 Repository implementations live under `internal/repository/postgres/` as
 `<feature>_repository.go` (e.g. `resource_repository.go`), not inside the
-feature package itself — this keeps the database driver import out of the
-feature package (`BACKEND_DEPENDENCIES.md` section 4). The exception is
-`user_repository.go` (implementing `auth.Repository`) and
-`authorization_repository.go` (holding both `RoleRepository` and
-`PermissionRepository`), named after the table/domain noun rather than the
-package.
+feature package, which keeps the database driver import out of the feature
+package (`BACKEND_DEPENDENCIES.md` section 4). Two files differ from the
+pattern: `user_repository.go` implements `auth.Repository` and is named
+after the domain noun rather than the package, and
+`authorization_repository.go` holds both `RoleRepository` and
+`PermissionRepository`. The BMKG hotspot implementation follows the same
+pattern under `internal/repository/bmkg/`.
 
-File names use `snake_case.go`, consistent with standard Go tooling
-conventions (`gofmt`/`go vet` do not enforce this, but it is the prevailing
-convention across the Go ecosystem and this project follows it).
+File names use `snake_case.go`. Go tooling does not enforce this, but it is
+the prevailing Go convention.
 
 ---
 
@@ -109,11 +114,11 @@ func NewResourceRepository(conn db) *ResourceRepository {
 Handler methods are named after the operation, matching the API action, not
 the HTTP verb alone: `List`, `Get`, `Create`, `Update`, `Delete`,
 `ChangeStatus`, `Relocate` on `ResourceHandler`, and `Get` on
-`ResourceHistoryHandler` — mirroring the endpoints in `API_CONTRACT.md`
-sections 6–9.
+`ResourceHistoryHandler`, mirroring the endpoints in `API_CONTRACT.md`
+sections 6 to 9.
 
-Service methods use the same verbs, qualified with the domain noun, so the
-mapping from handler to use case is immediately traceable:
+Service methods use the same verbs qualified with the domain noun, so each
+handler maps visibly to its use case:
 
 ```go
 func (h *ResourceHandler) Relocate(w http.ResponseWriter, r *http.Request) { /* ... */ }
@@ -129,12 +134,10 @@ the resulting history/audit records without reaching into HTTP context.
 ## 6. Domain Types vs. Request/Response DTOs
 
 Domain structures and transport (DTO) structures are named distinctly and
-kept in separate files, per `CODING_STANDARDS.md` section 8 (Go: "Keep
-transport/request/response structures separate from domain structures when
-appropriate"):
+kept in separate files (`CODING_STANDARDS.md` section 8):
 
 ```go
-// internal/resource/resource.go — domain type
+// internal/resource/resource.go: domain type
 type Resource struct {
     ID         string
     Name       string
@@ -147,7 +150,7 @@ type Resource struct {
 ```
 
 ```go
-// internal/http/resource_handler.go — transport types (unexported: only
+// internal/http/resource_handler.go: transport types (unexported, only
 // the handler in the same package ever names them)
 type createResourceRequest struct {
     ID         string         `json:"id"`
@@ -178,24 +181,21 @@ Naming rules:
   `(req createResourceRequest) toDomain()`), so wire format changes do not
   ripple into the domain type.
 - Timestamps are formatted with the shared `timeFormat` constant in
-  `internal/http/common.go` (RFC 3339 / ISO 8601), never with ad hoc
-  layouts per handler.
+  `internal/http/common.go` (RFC 3339 / ISO 8601), never with a per-handler
+  layout.
 - Field names in DTOs mirror `DATA_CONTRACT.md`'s `camelCase` JSON naming
   exactly.
 
 ---
 
-## 7. General Naming (from Coding Standards)
+## 7. Constants
 
-`CODING_STANDARDS.md` section 4 already covers nouns-for-types,
-verbs-for-functions, and avoiding generic names/unestablished abbreviations;
-those rules apply to Go as written and are not restated here. The one
-backend-specific addition `CODING_STANDARDS.md` does not cover is Go
-constant casing:
-
-- Constants use `SCREAMING_SNAKE_CASE` only when mirroring an external
-  contract value verbatim (e.g. HTTP header names); ordinary Go constants use
-  `PascalCase` or `camelCase` per Go convention and are grouped by concern:
+General naming rules (nouns for types, verbs for functions, no generic names
+or unestablished abbreviations) are in `CODING_STANDARDS.md` section 4 and
+apply to Go unchanged. The Go-specific addition is constant casing:
+ordinary constants use `PascalCase` or `camelCase` per Go convention and are
+grouped by concern. `SCREAMING_SNAKE_CASE` is used only when mirroring an
+external contract value verbatim (e.g. HTTP header names).
 
 ```go
 type Status string
@@ -212,59 +212,14 @@ const (
 
 ## 8. Test File and Test Case Naming
 
-- Test files are named `<file>_test.go`, colocated with the file under test
-  (`CODING_STANDARDS.md` section 15).
-- Test functions: `Test<Type>_<Method>` or `Test<Function>` —
-  `TestService_Relocate`, `TestValidateLocation`.
+- Test files are named `<file>_test.go` and colocated with the file under
+  test.
+- Test functions are named `Test<Type>_<Method>` or `Test<Function>`, with
+  an optional scenario suffix: `TestLocation_Validate`,
+  `TestValidateLocation`,
+  `TestService_RelocateResource_PreservesIdentityTypeStatus`.
 - Table-driven tests use a `tests` (or `cases`) slice of anonymous structs
-  with a `name` field describing the scenario in plain language, and
-  `t.Run(tt.name, ...)`:
-
-```go
-func TestValidateLocation(t *testing.T) {
-    tests := []struct {
-        name    string
-        lat     float64
-        lng     float64
-        wantErr error
-    }{
-        {name: "valid coordinates", lat: -6.9147, lng: 107.6098, wantErr: nil},
-        {name: "latitude above range", lat: 90.1, lng: 0, wantErr: resource.ErrInvalidLocation},
-        {name: "longitude below range", lat: 0, lng: -180.1, wantErr: resource.ErrInvalidLocation},
-    }
-
-    for _, tt := range tests {
-        t.Run(tt.name, func(t *testing.T) {
-            err := resource.ValidateLocation(tt.lat, tt.lng)
-            if !errors.Is(err, tt.wantErr) && tt.wantErr != nil {
-                t.Fatalf("got %v, want %v", err, tt.wantErr)
-            }
-        })
-    }
-}
-```
-
-Test case names describe the scenario being verified (`"latitude above
-range"`), not the assertion mechanics (`"test case 1"`).
-
----
-
-## 9. Scope Boundary
-
-This document does not define:
-
-- database table/column naming (owned by future database design
-  documentation);
-- JSON field naming for the API (owned by `DATA_CONTRACT.md` section 2);
-- frontend naming conventions (owned by `CODING_STANDARDS.md` section 4,
-  TypeScript/React subsections).
-
----
-
-## 10. Naming Principle
-
-A name should tell a reader which layer it belongs to and what it is
-responsible for, without needing to open the file.
-
-> If a name needs a comment to explain what kind of thing it is, the name is
-> wrong.
+  with a `name` field and `t.Run(tt.name, ...)`. See `BACKEND_TESTING.md`
+  section 3 for an example.
+- Test case names describe the scenario being verified
+  (`"latitude above 90"`), not the assertion mechanics (`"test case 1"`).

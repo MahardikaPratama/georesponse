@@ -2,17 +2,18 @@
 
 ## 1. Purpose
 
-This document defines the basic dependency rules for the project.
-
-The goal is to prevent unnecessary coupling between components and layers.
-
-Keep these rules simple and consistent.
+This document defines the allowed dependency direction between layers in
+the backend and frontend, and when to isolate an external library or
+create shared code. Layer responsibilities are described in
+`SYSTEM_ARCHITECTURE.md`; concrete folder and package layouts are in
+`FRONTEND_ARCHITECTURE.md` and `BACKEND_ARCHITECTURE.md`.
 
 ---
 
 ## 2. Backend Dependency Direction
 
-Layer responsibilities (what each layer does) are described in `SYSTEM_ARCHITECTURE.md` section 4. This section defines only the allowed dependency direction between those layers:
+Layer responsibilities are described in `SYSTEM_ARCHITECTURE.md` section 4.
+This section defines only the allowed dependency direction:
 
 ```text
 HTTP Handler
@@ -28,7 +29,7 @@ Repository Implementation
 Database
 ```
 
-### Rules
+### 2.1 Rules
 
 1. Handlers may depend on application/use-case code.
 2. Application code may depend on domain code.
@@ -42,7 +43,8 @@ Database
 
 ## 3. Frontend Dependency Direction
 
-Frontend layer responsibilities are described in `SYSTEM_ARCHITECTURE.md` section 3. This section defines only the allowed dependency direction:
+Frontend layer responsibilities are described in `SYSTEM_ARCHITECTURE.md`
+section 3. This section defines only the allowed dependency direction:
 
 ```text
 Page / Feature
@@ -54,22 +56,25 @@ API / Map Adapter
 External System
 ```
 
-### Rules
+### 3.1 Rules
 
-1. Components should focus on presentation and user interaction.
-2. Reusable application logic should be placed in hooks or utilities.
-3. API communication should be isolated from UI components.
-4. Map-library-specific logic should be isolated in the map adapter.
-5. Components should not directly manipulate low-level MapLibre APIs unless the component is specifically responsible for map integration.
+1. Components focus on presentation and user interaction.
+2. Reusable application logic goes in hooks or utilities.
+3. API communication is isolated from UI components (in `api/`).
+4. Map-library-specific logic is isolated in the map adapter
+   (`components/resource-map/map-adapter/`). Only code inside that
+   directory may import `maplibre-gl`.
+5. No other component calls MapLibre APIs directly, including the
+   component that hosts the map (`ResourceMap.tsx`); it uses the adapter's
+   interface and callbacks.
 6. Do not duplicate API or map logic across multiple components.
 
 ---
 
 ## 4. External Dependency Rule
 
-External libraries should be isolated when they represent an important infrastructure concern.
-
-Examples:
+External libraries are isolated when they represent an important
+infrastructure concern:
 
 ```text
 MapLibre
@@ -85,23 +90,21 @@ HTTP Framework
 HTTP Handler
 ```
 
-The purpose is not to create an abstraction for every library.
-
-Create an abstraction when it provides a clear boundary or prevents application code from becoming tightly coupled to an external technology.
+The goal is not an abstraction for every library. Create one when it
+provides a clear boundary or prevents application code from becoming
+tightly coupled to an external technology.
 
 ---
 
 ## 5. Shared Code
 
-Shared code should only be created when it is genuinely reused.
-
-Do not create:
+Create shared code only when it is genuinely reused. Do not create:
 
 - Generic utility modules without a clear use case
 - Large shared components for unrelated features
 - Abstractions only because they might be useful in the future
 
-Prefer small and explicit modules.
+Prefer small, explicit modules.
 
 ---
 
@@ -113,5 +116,3 @@ When adding a dependency, ask:
 2. Can the code work without coupling another layer to it?
 3. Does the dependency make the architecture easier to understand?
 4. Is the dependency justified by the current requirements?
-
-Avoid unnecessary dependencies and unnecessary abstraction.

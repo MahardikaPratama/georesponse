@@ -2,9 +2,12 @@
 
 ## 1. Purpose
 
-This document defines GeoResponse's security posture: the practical controls applied at each boundary of the system.
-
-The posture is proportionate to the project's scope — a take-home submission evaluated in a local/controlled environment — while still satisfying the baseline expectations in `NON_FUNCTIONAL_REQUIREMENTS.md` section 7 (Security). It is not written as enterprise compliance documentation, and it does not claim controls that are not actually implemented.
+This document describes the security controls GeoResponse applies at each
+boundary of the system and addresses `NON_FUNCTIONAL_REQUIREMENTS.md`
+section 7 (Security). It lists only controls that are implemented. The
+`User`/`Role`/`Permission` schema is in
+`docs/08_database/DATABASE_SCHEMA.md`, and deployment-level network
+security (TLS, firewalls) is in `docs/11_devops/DEPLOYMENT.md`.
 
 ---
 
@@ -12,93 +15,99 @@ The posture is proportionate to the project's scope — a take-home submission e
 
 ### 2.1 Backend Is the Trust Boundary
 
-The frontend is never trusted as an enforcement point. Every security-relevant decision — validation, authentication, authorization — is re-checked on the backend regardless of what the frontend already checked or hid from the user, per `DATA_CONTRACT.md` section 7 and section 13.
+The frontend is never an enforcement point. Validation, authentication,
+and authorization are checked on the backend regardless of what the
+frontend checked or hid (`DATA_CONTRACT.md` sections 7 and 13).
 
 ### 2.2 Fail Closed
 
-When a security check cannot be completed confidently (missing token, unknown role, malformed request), the operation is denied rather than allowed by default.
-
-### 2.3 Proportionate Controls
-
-Controls match the project's actual exposure. GeoResponse does not implement enterprise controls (SSO federation, hardware security modules, formal penetration testing) that would be disproportionate to a take-home project, but it does not skip the fundamentals either.
+When a security check cannot be completed (missing or invalid token,
+unknown role, malformed request), the operation is denied.
 
 ---
 
 ## 3. Input Validation
 
-All state-changing API endpoints validate input on the backend before it reaches business logic or persistence, per `API_CONTRACT.md` section 12 and `DATA_CONTRACT.md`.
-
-Validated inputs include, where applicable:
-
-```text
-identifier
-name
-resource type      (must be one of the DOMAIN_MODEL.md enum values)
-resource status    (must be one of the DOMAIN_MODEL.md enum values)
-geographic coordinates (valid latitude/longitude ranges)
-resource attributes
-authorization context
-```
-
-Frontend validation exists for user experience (immediate feedback), but it is never treated as authoritative. Invalid data must not reach persistence regardless of what the frontend allowed through, satisfying `NFR-REL-001` and `NFR-SEC-003`.
+The backend validates every state-changing request before it reaches
+business logic or persistence; frontend validation is for user feedback
+only. Field rules are in `API_CONTRACT.md` section 12, and the layering and
+check order are in `docs/07_backend/BACKEND_VALIDATION.md`. This addresses
+`NFR-REL-001` and `NFR-SEC-003`.
 
 ---
 
 ## 4. Authentication
 
-GeoResponse authenticates users through the `POST /api/v1/auth/login` endpoint defined in `API_CONTRACT.md` section 5. A successful login establishes an authenticated context that is presented on subsequent requests (token-based authentication).
+Users log in with `POST /api/v1/auth/login` (`API_CONTRACT.md` section 5),
+sending an `identifier` (the user's `id`) and a password.
 
-This document describes authentication generically rather than over-specifying an implementation detail that belongs elsewhere:
+- **Password storage:** passwords are stored only as bcrypt hashes
+  (`users.password_hash`) and checked with
+  `bcrypt.CompareHashAndPassword` (`internal/auth/service.go`). An unknown
+  user and a wrong password return the same `401 AUTHENTICATION_FAILED`, so
+  the response cannot be used to enumerate valid identifiers.
+- **Token:** on success the backend issues a stateless token containing the
+  user id and an expiry timestamp, signed with HMAC-SHA256 using
+  `TOKEN_SECRET` (`internal/auth/token.go`). The lifetime is `TOKEN_TTL`,
+  default 24 hours. There is no session table.
+- **Transport:** the token is set in the `georesponse_token` cookie:
+  `HttpOnly`, `SameSite=Lax`, `Secure` when `APP_ENV=production`, with
+  `Max-Age` equal to the token lifetime. The frontend never reads the
+  token.
+- **Verification:** the `RequireAuth` middleware
+  (`internal/http/middleware/auth.go`) checks the cookie's signature and
+  expiry on every protected route. A missing, invalid, or expired token
+  returns `401 AUTHENTICATION_FAILED`.
+- **Logout:** `POST /api/v1/auth/logout` clears the cookie. Because tokens
+  are stateless, the server keeps no revocation list; a copy of a token
+  stays valid until it expires.
+- Credentials and tokens are never logged (`OBSERVABILITY.md` section 5).
 
-- credentials are never logged, per `OBSERVABILITY.md` section 5;
-- credentials are never stored in plaintext;
-- the exact token/session mechanism (its format, expiry, and storage) is an implementation decision made at the point authentication is built, and is not fixed by this document — `API_CONTRACT.md` section 15 explicitly excludes authentication token implementation details from the contract layer.
-
-Protected endpoints require a valid authenticated context. An unauthenticated request to a protected endpoint returns `401`, per `API_CONTRACT.md` section 3.
+`TOKEN_SECRET` and `TOKEN_TTL` are described in
+`docs/11_devops/ENVIRONMENT_MANAGEMENT.md` section 5.
 
 ---
 
 ## 5. Authorization
 
-Authorization is enforced **server-side, on every protected operation** — never inferred from what the frontend UI shows or hides.
+Authorization is enforced server-side on every protected operation, never
+inferred from what the UI shows or hides.
 
 ```text
 User → Role → Permission → Protected Operation
 ```
 
-Rules:
-
-- The frontend may hide a button or disable an action for UX purposes, but that is a convenience, not a security control. The backend independently checks the acting user's permissions before executing the operation, per `DATA_CONTRACT.md` section 7: "The backend is responsible for enforcing permissions. Frontend visibility controls are not sufficient for authorization."
-- An authenticated-but-unauthorized request to a protected operation returns `403`, per `API_CONTRACT.md` section 3.
-- Administrative operations (role and permission management, per `API_CONTRACT.md` section 10) are restricted to users holding the required permission, and changes to roles/permissions are themselves recorded in the audit trail.
+- The frontend may hide or disable an action for usability, but the
+  backend checks the acting user's permissions before executing the
+  operation (`DATA_CONTRACT.md` section 7).
+- An authenticated request without the required permission returns
+  `403 AUTHORIZATION_DENIED` (`API_CONTRACT.md` section 13).
+- Role and permission management (`API_CONTRACT.md` section 10) requires
+  the corresponding permission, and every change is recorded in the audit
+  trail (`ROLE_CHANGED`, `PERMISSION_CHANGED`).
 
 ---
 
 ## 6. Error Disclosure
 
-API errors follow the structured error contract in `API_CONTRACT.md` section 13 and `BACKEND_ERROR_HANDLING.md`:
+API errors follow the error contract in `API_CONTRACT.md` sections 4 and
+13, mapped in Go as described in
+`docs/07_backend/BACKEND_ERROR_HANDLING.md`.
 
-```json
-{
-  "error": {
-    "code": "VALIDATION_ERROR",
-    "message": "Invalid resource data",
-    "details": []
-  }
-}
-```
-
-- Stable, machine-readable `code` values are returned to the client; internal implementation details (stack traces, SQL errors, file paths, internal package names) are never included in the response body.
-- Internal error detail is logged server-side (per `OBSERVABILITY.md` section 3.2), not exposed to the caller.
-- `500` responses return a generic persistence/server-failure message — the underlying cause stays server-side.
+- Clients receive stable `code` values. Stack traces, SQL errors, file
+  paths, and internal package names never appear in a response body.
+- An unexpected error returns `500 PERSISTENCE_ERROR` with a generic
+  message; the underlying cause is logged server-side
+  (`OBSERVABILITY.md` section 3.2).
 
 ---
 
 ## 7. Secrets and Configuration
 
-- All secrets (database credentials, any authentication signing secret) are supplied through environment variables, never hard-coded in source, per `NFR-SEC-004` and `docs/11_devops/ENVIRONMENT_MANAGEMENT.md`.
-- `.env` files containing real values are never committed; only `.env.example` with placeholder values is version-controlled, per `GIT_MANAGEMENT.md` section 7.
-- Configuration is separated from source code so the same build can run against different environment values without a code change, per `NFR-DEP-003`.
+Secrets (database credentials, `TOKEN_SECRET`) come from environment
+variables and are never hard-coded or committed (`NFR-SEC-004`). The
+`.env` / `.env.example` convention is in
+`docs/11_devops/ENVIRONMENT_MANAGEMENT.md` section 6.
 
 ---
 
@@ -106,53 +115,51 @@ API errors follow the structured error contract in `API_CONTRACT.md` section 13 
 
 ### 8.1 CORS
 
-The backend restricts Cross-Origin Resource Sharing to the frontend's configured origin(s) rather than allowing all origins (`*`). The allowed origin is environment-configurable, following the same convention as other environment-specific configuration in `docs/11_devops/ENVIRONMENT_MANAGEMENT.md`.
+The backend allows cross-origin requests only from the origins listed in
+`CORS_ALLOWED_ORIGINS` (default `http://localhost:5173`), never `*`. A
+specific origin is required because the auth cookie is sent with
+credentials. See `docs/11_devops/ENVIRONMENT_MANAGEMENT.md` section 5.
 
 ### 8.2 SQL Injection
 
-All database access uses parameterized queries. Raw string concatenation of user input into SQL is not permitted at any layer, per `CODING_STANDARDS.md` and the repository boundary in `DEPENDENCY_RULES.md`.
+All database access uses parameterized queries. User input is never
+concatenated into SQL; queries built dynamically (such as the audit-log
+filters) add only `$n` placeholders and pass values as arguments.
 
 ### 8.3 Dependency Hygiene
 
-- Dependencies are pinned through the project's lockfiles (`go.sum`, frontend lockfile) so builds are reproducible, per `NFR-REPRO-001`.
-- New dependencies are added only when justified by a concrete requirement, per `DEPENDENCY_RULES.md` section 6 — a smaller dependency surface is also a smaller attack surface.
-- Dependency updates are reviewed as their own focused change (`chore:` commits per `GIT_MANAGEMENT.md`), not silently bundled into unrelated feature work.
+- Dependencies are pinned through lockfiles (`go.sum`,
+  `package-lock.json`) so builds are reproducible (`NFR-REPRO-001`).
+- New dependencies are added only for a concrete requirement
+  (`DEPENDENCY_RULES.md` section 6); a smaller dependency surface is also a
+  smaller attack surface.
+- Dependency updates are reviewed as their own focused change (`chore:`
+  commits, per `GIT_MANAGEMENT.md`).
 
 ---
 
-## 9. Audit Trail as a Security Control
+## 9. Audit Trail
 
-Security-sensitive operations — authentication failures, authorization denials, resource creation/update/deletion, status changes, relocations, role/permission changes — are recorded in the audit trail defined in `API_CONTRACT.md` section 11, satisfying `NFR-SEC-006`. The audit trail is restricted to users holding the required permission to view it.
+The audit trail (`DATA_CONTRACT.md` section 9) records resource creation,
+update, status change, relocation, and deletion, plus role and permission
+changes, addressing `NFR-SEC-006`. Viewing it requires the `audit.read`
+permission.
 
----
-
-## 10. Explicitly Out of Scope
-
-Consistent with the project's take-home scope and `TECHNOLOGY_SELECTION.md`'s principle of avoiding premature infrastructure, the following are **not** part of this project's security posture:
-
-- formal penetration testing or a third-party security audit;
-- a web application firewall or dedicated DDoS mitigation layer;
-- compliance certification (SOC 2, ISO 27001, or similar);
-- multi-factor authentication or SSO federation;
-- secrets-management infrastructure (Vault or equivalent) beyond environment variables.
-
-These are not rejected as bad practice in general — they are simply disproportionate to a take-home project with a single controlled deployment target. If GeoResponse's scope grew into a real production system, this section is what should be revisited first.
+Authentication failures and authorization denials are **not** written to
+the audit trail. They appear only as `401` and `403` entries in the
+backend request log (`OBSERVABILITY.md` section 3.1).
 
 ---
 
-## 11. Scope Boundary
+## 10. Out of Scope
 
-This document does not define:
+The following are not part of the security posture for a take-home project
+with a single local deployment target. They are the first things to
+revisit if GeoResponse becomes a production system:
 
-- the exact authentication token format or signing algorithm — an implementation detail, per `API_CONTRACT.md` section 15;
-- password hashing algorithm choice — an implementation detail;
-- the database schema for `User`/`Role`/`Permission` — see `docs/08_database/DATABASE_SCHEMA.md`;
-- deployment-level network security (TLS termination, firewall rules) — see `docs/11_devops/DEPLOYMENT.md`.
-
----
-
-## 12. Security Principle
-
-> Validate everything at the backend boundary, trust nothing the frontend claims about permissions, and never let an internal error detail leak to the client.
-
-Security controls in this project exist to make the documented trust boundary real in the running system, not to perform compliance theater disproportionate to a take-home submission.
+- formal penetration testing or a third-party security audit
+- a web application firewall or dedicated DDoS mitigation
+- compliance certification (SOC 2, ISO 27001, or similar)
+- multi-factor authentication or SSO federation
+- secrets-management infrastructure (Vault or equivalent) beyond
+  environment variables

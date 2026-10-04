@@ -2,23 +2,31 @@
 
 ## 1. Purpose
 
-This document defines how the GeoResponse frontend is tested.
-
-It expands `TECHNOLOGY_SELECTION.md` section 14.1 and `CODING_STANDARDS.md` sections 15 and 17 into concrete frontend testing conventions: what to test, what not to test, file placement, and how the map adapter is handled.
+This document defines how the GeoResponse frontend is tested: tooling,
+file placement, what to test and what not to, and how the map adapter is
+handled. The overall strategy and the end-to-end suite are in
+`TESTING_STRATEGY.md` (section 5) and `tests/README.md`; the backend
+counterpart is `docs/07_backend/BACKEND_TESTING.md`. Performance testing
+(covered by the map benchmark for MapLibre itself) and visual regression
+testing are not part of this document.
 
 ---
 
 ## 2. Tooling
 
-**Vitest + React Testing Library**, per `TECHNOLOGY_SELECTION.md` section 14.1.
+**Vitest + React Testing Library** (`TECHNOLOGY_SELECTION.md`
+section 14.1).
 
-React Testing Library encourages testing components through their rendered output and user interaction rather than internal implementation details, which is why the conventions below are phrased in terms of observable behavior rather than component internals.
+React Testing Library tests components through rendered output and user
+interaction, so the conventions below are phrased in terms of observable
+behavior rather than component internals.
 
 ---
 
 ## 3. Test File Placement
 
-Tests are colocated with the source file they cover, never placed in a separate `__tests__` directory, matching `CODING_STANDARDS.md` section 4 and the existing `utils/logger/logger.test.ts` example.
+Tests are colocated with the source file they cover, never in a separate
+`__tests__` directory.
 
 ```text
 components/resource-list/
@@ -40,7 +48,11 @@ utils/logger/
 └── logger.test.ts
 ```
 
-Naming pattern: `<SourceFileName>.test.ts` or `.test.tsx`, matching the case of the file under test (`ResourceList.test.tsx` for a component, `httpClient.test.ts` for a module-level file). Vitest is configured with `globals: true` (`vitest.config.ts`), so `describe`/`it`/`expect`/`vi` may be used without importing them; importing them explicitly is also fine.
+Naming pattern: `<SourceFileName>.test.ts` or `.test.tsx`, matching the
+case of the file under test (`ResourceList.test.tsx` for a component,
+`httpClient.test.ts` for a module). Vitest runs with `globals: true`
+(`vitest.config.ts`), so `describe`/`it`/`expect`/`vi` can be used without
+importing them; importing them explicitly is also fine.
 
 ---
 
@@ -48,63 +60,106 @@ Naming pattern: `<SourceFileName>.test.ts` or `.test.tsx`, matching the case of 
 
 ### 4.1 Rendering
 
-- The component renders expected content given a set of props (resource name, type, status, location).
-- Conditional rendering branches (loading, error, empty, populated) render the correct output.
+- The component renders expected content for a set of props (resource
+  name, type, status, location).
+- Conditional branches (loading, error, empty, populated) render the
+  correct output.
 
 ### 4.2 User Interaction
 
-- Clicking, typing, and selecting produce the expected callback calls or visible state changes (for example, selecting a resource card calls `onSelect(resource.id)`).
-- Keyboard interaction for interactive elements where relevant (form submission, dismissing a dialog).
+- Clicking, typing, and selecting produce the expected callback calls or
+  visible state changes (for example, selecting a resource calls
+  `onSelect(resource.id)`).
+- Keyboard interaction where relevant (form submission, dismissing a
+  dialog).
 
 ### 4.3 Form Validation
 
-- Required-field, coordinate-range, and status-enum validation (see `DATA_CONTRACT.md` section 11 and `API_CONTRACT.md` section 12) surface the correct inline feedback before submission.
+- Required-field, coordinate-range, and enum validation surface the
+  correct inline feedback before submission. The rules themselves are in
+  `API_CONTRACT.md` section 12 and `DATA_CONTRACT.md` section 2.
 - A submit attempt with invalid data does not call the mutation.
 
 ### 4.4 State Transitions
 
-- A status-change action moves the UI from the current status to the requested one after a successful mutation.
-- An optimistic relocation (`FRONTEND_STATE.md` section 7) rolls back correctly on a failed mutation.
+- A status change moves the UI to the requested status after a successful
+  mutation.
+- An optimistic relocation (`FRONTEND_STATE.md` section 7) rolls back on a
+  failed mutation.
 
 ### 4.5 API-Boundary Mocking
 
-- Hooks and components that call `api/resources/resourceApi.ts` are tested with that module mocked (or with a mocked `httpClient`), asserting:
-  - the correct endpoint/method/payload is used for a given action;
-  - a success response updates the UI as expected;
-  - an error response with a given `code` (`VALIDATION_ERROR`, `RESOURCE_NOT_FOUND`, ...) produces the corresponding user-facing message, not a raw/unhandled error.
-- The envelope handling lives in `httpClient.ts` and is tested there (`api/httpClient.test.ts`) against a mocked `fetch`, asserting it builds the correct request and correctly unwraps the `{ data, meta }` / `{ error }` envelopes from `API_CONTRACT.md` section 4; the per-domain `*Api.ts` modules are thin and are exercised through the hook tests (`hooks/use*.test.ts`) with `httpClient` mocked.
+- Hooks and components are tested with the per-domain API module mocked
+  (for example `vi.mock("@api/resources/resourceApi", ...)` in
+  `hooks/useResources.test.ts`), asserting:
+  - the correct API function and payload are used for a given action
+  - a success response updates the UI or cache as expected
+  - an error with a given `code` (`VALIDATION_ERROR`,
+    `RESOURCE_NOT_FOUND`, ...) produces the matching user-facing message,
+    not a raw or unhandled error
+- Envelope handling lives in `httpClient.ts` and is tested in
+  `api/httpClient.test.ts` against a stubbed global `fetch`, asserting the
+  request is built correctly and the `{ data, meta }` / `{ error }`
+  envelopes (`API_CONTRACT.md` section 4) are unwrapped correctly. The
+  per-domain `*Api.ts` modules are thin wrappers over `httpClient` and have
+  no tests of their own.
 
 ---
 
 ## 5. What Not to Test
 
-- MapLibre GL JS internals (tile loading, WebGL rendering, its own event system). MapLibre is a third-party library; its correctness is not GeoResponse's responsibility to verify.
-- Exact pixel positions, CSS computed styles, or animation timing.
-- Implementation details that do not affect observable behavior (internal variable names, non-exported helper functions in isolation when they have no independent contract).
-- TanStack Query's own caching/retry mechanics — trust the library; test how the application uses it (query keys, invalidation, derived UI state).
+- MapLibre GL JS internals (tile loading, WebGL rendering, its event
+  system). It is a third-party library.
+- Exact pixel positions, computed CSS styles, or animation timing.
+- Implementation details that do not affect observable behavior (internal
+  variable names, non-exported helpers with no independent contract).
+- TanStack Query's own caching and retry mechanics. Test how the
+  application uses it (query keys, invalidation, derived UI state).
 
 ---
 
 ## 6. Testing the Map Adapter
 
-The map adapter (`components/resource-map/map-adapter/MapAdapter.ts`) is the one place `maplibre-gl` is imported, per `FRONTEND_ARCHITECTURE.md` section 8. It is tested at its boundary rather than through a real MapLibre instance:
+The map adapter (`components/resource-map/map-adapter/MapAdapter.ts`) is
+the only place `maplibre-gl` is imported (`FRONTEND_ARCHITECTURE.md`
+section 8). It is tested at its boundary, not through a real MapLibre
+instance:
 
-- `maplibre-gl` is mocked in the adapter's test file (`MapAdapter.test.ts`, `vi.mock("maplibre-gl", ...)`), exposing the small surface the adapter uses (`Map`, `addSource`, `addLayer`, `on`, `remove`, ...).
-- Tests assert the adapter's own contract: given the markers derived from `Resource[]`, it builds the expected GeoJSON feature collection (correct `[longitude, latitude]` order per `DATA_CONTRACT.md` section 2); given a MapLibre click event on the marker layer, it calls the adapter's `onMarkerClick` callback with the correct resource id (which `ResourceMap.tsx` surfaces to its parent as `onResourceSelect`).
-- Tests do not assert anything about MapLibre's actual rendering output.
+- `MapAdapter.test.ts` mocks `maplibre-gl` with `vi.mock("maplibre-gl",
+  ...)`, exposing the small surface the adapter uses (`Map`, `addSource`,
+  `addLayer`, `on`, `remove`, ...).
+- Tests assert the adapter's own contract: input data becomes the
+  expected GeoJSON feature collection in `[longitude, latitude]` order
+  (`DATA_CONTRACT.md` section 2), and MapLibre events become the right
+  callbacks (`onMarkerClick`, which `ResourceMap.tsx` surfaces as
+  `onResourceSelect`, and `onMapDoubleClick`). The current tests cover the
+  hotspot feature collection, layer visibility, click routing, and
+  double-click handling; resource-marker conversion has no direct test
+  yet.
+- Tests assert nothing about MapLibre's rendering output.
 
-A test for a feature component that uses the map adapter (`ResourceMap.tsx`) mocks the adapter module itself, the same way hook tests mock the API modules, so component tests stay independent of both the network and the map engine.
+`ResourceMap.tsx` has no test of its own today. A test for it, or for any
+component that uses the adapter, should mock the adapter module, the same
+way hook tests mock the API modules, so component tests stay independent
+of both the network and the map engine.
 
 ---
 
 ## 7. Example Test File
 
-```ts
-// ResourceCard.test.tsx
-/**
- * Tests for the ResourceCard component.
+Every test file carries the standard file header from
+`CODING_STANDARDS.md` section 3.
+
+```tsx
+/*
+ * Author       : Mahardika Pratama
+ * Version      : 1.0.0
+ * Created Date : 2026-09-19
+ * Description  : Tests for the ResourceCard component: rendering by
+ *                resource status and the select interaction.
  *
- * Covers rendering by resource status and the select interaction.
+ * Changelog:
+ * - 1.0.0 (2026-09-19): Initial creation.
  */
 import { render, screen, fireEvent } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
@@ -158,25 +213,13 @@ describe("ResourceCard", () => {
 
 ## 8. Determinism
 
-- No arbitrary `setTimeout`/sleep-based waits; use React Testing Library's `findBy*`/`waitFor` utilities, which poll rather than guess a fixed delay.
-- Mock the system clock explicitly when a test depends on `updatedAt`/`changedAt` timestamps.
-- Tests must not depend on execution order or shared mutable module state between test files.
+- No `setTimeout`/sleep-based waits; use React Testing Library's
+  `findBy*`/`waitFor`, which poll instead of guessing a delay.
+- Mock the system clock when a test depends on timestamps such as
+  `changedAt`.
+- Tests must not depend on execution order or on shared mutable module
+  state between test files.
 
----
-
-## 9. Scope Boundary
-
-This document does not define:
-
-- backend testing conventions (`CODING_STANDARDS.md` section 15, "Backend");
-- end-to-end/browser-automation testing (the Playwright golden-path suite in `tests/e2e/` is covered by `TESTING_STRATEGY.md` section 5 and `tests/README.md`);
-- performance/load testing (covered separately by the map benchmark methodology for MapLibre itself, not the application);
-- visual regression testing.
-
----
-
-## 10. Testing Principle
-
-Tests describe what a user or another module can observe: rendered content, interaction outcomes, and the result of calling a hook or API function — never MapLibre's internals and never a component's private implementation details.
-
-> If a refactor that preserves behavior breaks a test, the test was testing the wrong thing.
+A test should break only when observable behavior changes. If a
+behavior-preserving refactor breaks a test, the test was checking
+implementation details.

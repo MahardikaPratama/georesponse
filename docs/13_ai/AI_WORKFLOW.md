@@ -2,17 +2,23 @@
 
 ## 1. Purpose
 
-This document describes **how** Agentic AI tooling (Claude Code or similar) is used, and should be used, to build and maintain GeoResponse.
+This document covers the AI-specific parts of working on GeoResponse with
+agentic tooling (Claude Code or similar): what to read first, how to report
+back, and how AI assistance was used to build the project (section 5).
 
-Where `AI_OPERATION_RULES.md` defines the durable rules an AI agent must follow, this document defines the concrete working procedure — the sequence of steps an agent (or a human following the same discipline) goes through for a typical unit of work.
+The general sequence from branch to merge is in
+`docs/12_workflow/DEVELOPMENT_WORKFLOW.md`, the done checklist is in
+`docs/12_workflow/DEFINITION_OF_DONE.md`, and the rules an agent must follow
+are in `AI_OPERATION_RULES.md`.
 
 ---
 
 ## 2. Working Procedure
 
-### Step 1 — Read
+An agent follows `DEVELOPMENT_WORKFLOW.md` and `DEFINITION_OF_DONE.md` like
+any contributor. The steps below add what is specific to AI-assisted work.
 
-Before touching code, read the documents relevant to the task:
+### 2.1 Read Before Changing Anything
 
 ```text
 Always:      docs/01_product/PRODUCT_CONTEXT.md, DOMAIN_MODEL.md
@@ -24,63 +30,43 @@ If touching architecture or a new module boundary:
              docs/03_architecture/SYSTEM_ARCHITECTURE.md, DEPENDENCY_RULES.md
 ```
 
-### Step 2 — Identify the Affected Layer/Boundary
+Then identify which layer owns the change (backend handler, use case,
+domain, or repository; frontend page, component, hook, API client, or Map
+Adapter) and follow the existing pattern for similar code
+(`CODING_STANDARDS.md` section 2).
 
-Determine where the change belongs before writing anything:
+### 2.2 Verify Only What Actually Ran
 
-```text
-Backend:  Handler / Application-UseCase / Domain / Repository?
-Frontend: Page-Feature / Component / Hook / API / Map Adapter?
-```
+Run the gates in `QUALITY_GATES.md` section 3 for the affected
+application. Only checks that were executed may be reported as passing (see
+`AI_OPERATION_RULES.md` section 9).
 
-If the task seems to require touching more than one boundary, confirm that each part of the change stays on its correct side of the dependency rules in `DEPENDENCY_RULES.md` rather than blending responsibilities.
+### 2.3 Report
 
-### Step 3 — Check Existing Code and Conventions
+Every report back to the operator states:
 
-Look at how similar functionality is already implemented in the codebase (naming, error handling, test structure, component composition) and follow the existing pattern rather than introducing a new one, per `CODING_STANDARDS.md` section 2.
-
-### Step 4 — Make the Smallest Correct Change
-
-Implement only what the task requires. Prefer extending an existing module over creating a new abstraction, unless the existing structure genuinely cannot accommodate the change.
-
-### Step 5 — Run Tests, Build, and Lint
-
-Before considering the change complete:
-
-```text
-Backend:   gofmt, go vet/lint, go test ./..., go build ./...
-Frontend:  formatter, linter, type-check, vitest, build
-```
-
-Only checks that were actually executed may be reported as passing. See `AI_OPERATION_RULES.md` section 9.
-
-### Step 6 — Update Documentation if Contracts Changed
-
-If the change altered an API shape, a data shape, a domain rule, or an architectural decision, update the corresponding document (`API_CONTRACT.md`, `DATA_CONTRACT.md`, `DOMAIN_MODEL.md`, `BUSINESS_RULES.md`, `ARCHITECTURE_DECISION_RECORDS.md`) in the same change, per `DEFINITION_OF_DONE.md` section 6.
-
-### Step 7 — Report
-
-Report back clearly:
-
-- what changed, and which files;
-- why it changed (which requirement/use case/bug it addresses);
-- what was actually verified (tests run and their result, build run and its result, manual check performed);
+- what changed, and in which files;
+- why it changed (the requirement, use case, or bug it addresses);
+- what was verified (tests run and their result, build run and its result,
+  manual checks performed);
 - any assumption made where documentation was silent or ambiguous;
 - any unresolved issue or known limitation.
 
-A report that only describes intent, without stating what was verified, is incomplete.
+A report that describes intent without stating what was verified is
+incomplete.
 
 ---
 
 ## 3. Example Walkthrough
 
-A representative task: "add relocation history tracking to the resource detail view."
+A representative task: "add relocation history tracking to the resource
+detail view."
 
 ```text
 1. Read:    PRODUCT_CONTEXT.md, DOMAIN_MODEL.md (ResourceHistory),
             API_CONTRACT.md section 9 (Resource History)
-2. Layer:   Backend — Application/UseCase + Repository (history read);
-            Frontend — Feature component + hook + API client
+2. Layer:   Backend - Application/UseCase + Repository (history read);
+            Frontend - Feature component + hook + API client
 3. Check:   existing resource-detail component structure,
             existing repository query patterns
 4. Change:  add history query to the use case and repository,
@@ -96,7 +82,9 @@ A representative task: "add relocation history tracking to the resource detail v
 
 ## 4. Working Procedure Priority
 
-When a task touches multiple concerns at once, address them in this order:
+When a task touches several concerns at once, address them in this order,
+and do not move to polish before correctness and boundary compliance are
+satisfied:
 
 ```text
 1. Correctness against the documented requirement/use case
@@ -106,38 +94,75 @@ When a task touches multiple concerns at once, address them in this order:
 5. Code style/polish
 ```
 
-Do not skip ahead to polish before correctness and boundary compliance are satisfied.
-
 ---
 
-## 5. Disclosure — AI Assistance Used in This Project
+## 5. Disclosure: AI Assistance Used in This Project
 
-In keeping with the take-home assignment's requirement to document Agentic AI usage, this section states plainly how AI assistance was used to build GeoResponse.
+The take-home assignment asks for Agentic AI usage to be documented. This
+section states how AI assistance was used to build GeoResponse.
 
-The `docs/` tree — from `docs/01_product` through this document, `docs/13_ai` — was substantially authored with the assistance of Claude Code, an Agentic AI coding tool, under human direction and review. The human operator defined the product scope, requirements, and structure; the AI agent was used to draft, structure, and fill in documentation content following that direction, with the operator reviewing and directing revisions.
+### 5.1 Documentation
 
-The application codebase was subsequently produced the same way, phase by phase per `IMPLEMENTATION_CHECKLIST.md`: the Phase 0 scaffolding (`georesponse-fe/` config, `georesponse-be/`'s minimal server, `database/migrations/`, `scripts/`), then the backend domain, repository, use-case, and HTTP layers (Phases 1–4), the frontend foundation and every feature (Phases 5–6, including the BMKG hotspot overlay added beyond the documented scope — see `SCOPE.md` section 11.5), the integration and e2e suites (Phase 7), containerization and the one-command run (Phase 8), CI (Phase 9), and this documentation reconciliation (Phase 10). The map-library benchmark in `geo-map-benchmark/` was produced the same way, but before implementation began — it was committed together with the initial `docs/` set and its result fed `TECHNOLOGY_SELECTION.md`. In each phase the AI agent drafted the code, tests, and doc updates following the working procedure in Section 2, while the operator specified the decisions (module path, migration tool, dependency choices, UI behaviour, what to defer or leave out of scope) and reviewed and directed revisions before anything was committed.
+The `docs/` tree, from `docs/01_product` through `docs/13_ai`, was largely
+written with Claude Code, an agentic AI coding tool, under human direction
+and review. The operator designed the spec-driven workflow itself (docs
+first, a fixed source-of-truth precedence, and the agent operating rules in
+this folder and in `AGENTS.md`) and defined the product scope,
+requirements, and document structure. The agent drafted and filled in the
+content, and the operator reviewed it and directed revisions. The root
+`README.md` "AI-Assisted Development" section summarizes who did what.
 
-Verification was always reported as what actually ran, never assumed: backend checks (`go build`, `go vet`, `gofmt`, `go test`, repository tests against a live PostGIS container) ran locally in every phase; frontend checks (`npm run lint`/`typecheck`/`build`/`test`) ran locally when Node.js was available and otherwise in CI on `main`; the `tests/integration/` suite runs in CI against a live backend and PostGIS service container; and checks that could not be run in a given environment (for example the Playwright e2e suite, which is not a CI stage, the composed stack as a single `run.sh` / `docker compose up --build` run, or `scripts/dev/setup.sh` as a single end-to-end run) are marked as unverified in `IMPLEMENTATION_CHECKLIST.md` rather than checked off. The root `README.md` "Implementation Status" section and that checklist are the exact, current record of what has and has not been verified, and `SCOPE.md` section 11 records every requirement or use case that is only partially implemented at submission.
+### 5.2 Application Code
 
-This disclosure is factual, not a caveat on quality: the working procedure, operation rules, and quality gates defined in this `docs/` tree apply identically regardless of whether a given line of code or documentation was typed by the human operator or drafted by an AI agent under their direction. The human operator remains responsible for reviewing and accepting all AI-assisted output before it is considered part of the project.
+The codebase was built the same way, phase by phase per
+`IMPLEMENTATION_CHECKLIST.md`:
 
-A shorter, operational `AGENTS.md` / `CLAUDE.md` at the repository root points back to this document and to `AI_OPERATION_RULES.md` as the canonical source of AI operation policy for anyone (human or AI) continuing to work on this repository.
+- Phase 0: scaffolding (`georesponse-fe/` config, the minimal
+  `georesponse-be/` server, `database/migrations/`, `scripts/`).
+- Phases 1 to 4: the backend domain, repository, use-case, and HTTP layers.
+- Phases 5 and 6: the frontend foundation and every feature, including the
+  BMKG hotspot overlay added beyond the documented scope (see `SCOPE.md`
+  section 11.5).
+- Phase 7: the integration and e2e suites.
+- Phase 8: containerization and the one-command run.
+- Phase 9: CI.
+- Phase 10: documentation reconciliation.
 
----
+The map-library benchmark in `geo-map-benchmark/` was produced the same
+way, but before implementation began. It was committed with the initial
+`docs/` set, and its result fed `TECHNOLOGY_SELECTION.md`.
 
-## 6. Scope Boundary
+In each phase the agent drafted code, tests, and doc updates following
+section 2. The operator made the decisions (module path, migration tool,
+dependency choices, UI behaviour, what to defer or leave out of scope) and
+reviewed and directed revisions before anything was committed.
 
-This document describes the **working procedure** for using AI assistance on this project. It does not define:
+### 5.3 Verification
 
-- the rules an AI agent must follow while doing so — see `AI_OPERATION_RULES.md`;
-- the general (non-AI-specific) development workflow — see `docs/12_workflow/DEVELOPMENT_WORKFLOW.md`;
-- the quality gates a change must pass — see `QUALITY_GATES.md`.
+Verification was always reported as what actually ran:
 
----
+- Backend checks (`go build`, `go vet`, `gofmt`, `go test`, repository tests
+  against a live PostGIS container) ran locally in every phase.
+- Frontend checks (`npm run lint`, `typecheck`, `build`, `test`) ran locally
+  when Node.js was available, and otherwise in CI on `main`.
+- The `tests/integration/` suite runs in CI against a live backend and a
+  PostGIS service container.
+- Checks that could not be run in a given environment are marked unverified
+  in `IMPLEMENTATION_CHECKLIST.md` instead of checked off. Examples: the
+  Playwright e2e suite (not a CI stage), the composed stack as a single
+  `run.sh` / `docker compose up --build` run, and `scripts/dev/setup.sh` as
+  a single end-to-end run.
 
-## 7. Principle
+The root `README.md` "Implementation Status" section and that checklist are
+the current record of what has and has not been verified. `SCOPE.md`
+section 11 records every requirement or use case that is only partially
+implemented.
 
-> Read first, change the smallest correct thing, verify what actually ran, update the docs that describe it, and report honestly.
+### 5.4 Responsibility
 
-This is the same discipline expected of any contributor to this repository — the AI-specific documents exist to make it explicit and enforceable for Agentic AI tooling specifically.
+The working procedure, operation rules, and quality gates in `docs/` apply
+the same way whether a line was typed by the operator or drafted by an
+agent. The operator is responsible for reviewing and accepting all
+AI-assisted output before it becomes part of the project. The root
+`AGENTS.md` (imported by `CLAUDE.md`) points anyone continuing the work,
+human or AI, to this document and `AI_OPERATION_RULES.md`.

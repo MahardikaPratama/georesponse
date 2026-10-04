@@ -2,38 +2,37 @@
 
 ## 1. Purpose
 
-This document defines how environment-specific configuration is managed across GeoResponse's frontend, backend, and database, and how that configuration is kept separate from source code and version control (NFR-DEP-003).
+This document describes how GeoResponse's frontend, backend, and database
+receive environment-specific configuration, and how that configuration and
+its secrets are kept out of source code and version control (NFR-DEP-003,
+NFR-SEC-004). It owns the environment-variable tables (section 5) and the
+`.env` / secrets convention (section 6). It does not define staging or
+production environments, credentials, or infrastructure, because none
+exist.
 
 ---
 
-## 2. Scope Boundary
+## 2. Environments
 
-This take-home currently defines exactly **one** real environment: **local development**, which is also what is used to evaluate the submission. There is no deployed staging or production environment.
-
-This document therefore describes:
-
-- The configuration variables that exist and differ per environment in principle (even though only one environment instance exists today).
-- The `.env` / `.env.example` convention used to supply them.
-- How a CI/test context is configured, since CI does run against a real (if ephemeral) database.
-
-It deliberately does **not** invent staging or production environment definitions, credentials, or infrastructure that do not exist. If GeoResponse were extended beyond the take-home, additional environments would be added following the same pattern described here — new `.env` files with different values, not a different configuration mechanism.
-
----
-
-## 3. Environments Defined
+Only local development exists as a real environment, and it is also the
+environment used to evaluate the submission.
 
 | Environment | Status | Purpose |
-|---|---|---|
+| --- | --- | --- |
 | Local development | Active | Developer machine, via `docker compose up` or running each app directly |
-| CI / test | Active | Ephemeral environment used by the GitHub Actions pipeline (`CI_CD.md`) to run automated tests |
-| Staging | Not defined | Would follow the same variable set with different values if introduced |
-| Production | Not defined | Would follow the same variable set with different values if introduced |
+| CI / test | Active | Ephemeral environment in the GitHub Actions pipeline (section 7) |
+| Staging | Not defined | Would use the same variables with different values |
+| Production | Not defined | Would use the same variables with different values |
+
+A new environment would add new `.env` values, not a different
+configuration mechanism.
 
 ---
 
-## 4. Configuration Principle
+## 3. Configuration Principle
 
-**Environment-specific values are supplied at runtime via environment variables, never hardcoded in source and never baked into a Docker image at build time** (see `CONTAINERIZATION.md` section 7). This is what allows the same built frontend and backend images to run correctly whether started via `docker compose`, a script, or (in principle) a future deployment target.
+Environment-specific values come from environment variables and are never
+hardcoded in source:
 
 ```text
 Source Code (environment-agnostic)
@@ -45,116 +44,153 @@ Environment Variables (.env, compose, or shell)
 Running Container / Process (environment-specific behavior)
 ```
 
+The backend and database read their variables at process start, so one
+backend image runs in any environment. The frontend is the exception: its
+values are fixed at build time (section 4).
+
+---
+
+## 4. Frontend Build-Time Configuration
+
+The frontend is served as static assets, so Rspack's `DefinePlugin`
+inlines its variables into the bundle as `process.env.API_BASE_URL` and so
+on (`georesponse-fe/rspack.config.js`). They are not `VITE_`-prefixed,
+because the build tool is Rspack, not Vite.
+
+- Outside Docker, `rspack.config.js` loads `georesponse-fe/.env` with
+  `dotenv` before reading them.
+- In Docker, `georesponse-fe/Dockerfile` takes them as build `ARG`s.
+  `docker-compose.yml` feeds them from the root `.env` through
+  `build.args`, and `scripts/docker/build.sh` / `.ps1` pass them as
+  `--build-arg`, reading the environment or the root `.env`.
+
+A frontend image is therefore tied to the values it was built with.
+Changing them without a rebuild would need a config file injected at
+runtime next to the assets, which the current scope does not need. These
+values are public (they ship to the browser), so none of them is a secret.
+
 ---
 
 ## 5. Variables That Differ Per Environment
 
 ### 5.1 Frontend (`georesponse-fe`)
 
-| Variable | Purpose | Default if unset (`rspack.config.js`) | Local Dev Example |
-|---|---|---|---|
-| `API_BASE_URL` | Base URL the frontend calls for the backend REST API | `http://localhost:8080/api/v1` | `http://localhost:8080/api/v1` |
-| `MAP_TILE_URL` | Raster tile URL template for the MapLibre base map; left unset or empty, the build falls back to the provider URL in `georesponse-fe/.env.example` (a map without base tiles is never intended) | the `.env.example` provider URL | same |
-| `LOG_LEVEL` | Client-side logger verbosity, read by `src/utils/logger/logger.ts` | `debug` (the Dockerfile `ARG` default is `info`; compose passes `debug`) | `debug` |
-
-The frontend build tool is Rspack, not Vite, so these are **not** `VITE_`-prefixed (that convention is Vite-specific and does not apply here). Rspack's `DefinePlugin` injects them at build time as `process.env.API_BASE_URL` etc., per `georesponse-fe/rspack.config.js`, which loads `georesponse-fe/.env` (via `dotenv`) first when running outside Docker. Because the frontend is served as static assets, these values are fixed per build: the Docker image takes them as build arguments (`georesponse-fe/Dockerfile` `ARG`s, fed from the root `.env` by `docker-compose.yml`'s `build.args`, or passed as `--build-arg` by `scripts/docker/build.sh`/`.ps1`, which read them from the environment or the root `.env`). Values that need to differ without rebuilding (rare for a static SPA) would require a runtime-injected config file served alongside the assets, which is not currently needed at this scope.
+| Variable | Purpose | Default if unset (`rspack.config.js`) | Local dev example |
+| --- | --- | --- | --- |
+| `API_BASE_URL` | Base URL of the backend REST API | `http://localhost:8080/api/v1` | `http://localhost:8080/api/v1` |
+| `MAP_TILE_URL` | Raster tile URL template for the MapLibre base map | the provider URL from `georesponse-fe/.env.example` (unset or empty never means "no base map") | same |
+| `LOG_LEVEL` | Client-side logger verbosity (`src/utils/logger/logger.ts`) | `debug` (the Dockerfile `ARG` default is `info`; compose passes `debug`) | `debug` |
 
 ### 5.2 Backend (`georesponse-be`)
 
-| Variable | Purpose | Required / default (`internal/platform/config`) | Local Dev Example |
-|---|---|---|---|
-| `APP_ENV` | Declares which environment the process is running as; only `development` auto-migrates at start-up (`DOCKER_COMPOSE.md` section 6.5) and `production` marks the auth cookie `Secure` | default `development` | `development` |
-| `HTTP_PORT` | Port the Go HTTP server listens on | default `8080` | `8080` |
+| Variable | Purpose | Required / default (`internal/platform/config`) | Local dev example |
+| --- | --- | --- | --- |
+| `APP_ENV` | Which environment the process runs as. Only `development` auto-migrates at start-up (`DATABASE_MIGRATIONS.md` section 4.2); `production` marks the auth cookie `Secure` | default `development` | `development` |
+| `HTTP_PORT` | Port the HTTP server listens on | default `8080` | `8080` |
 | `DATABASE_URL` | PostgreSQL/PostGIS connection string | **required** | `postgres://georesponse:georesponse_dev_password@georesponse-db:5432/georesponse?sslmode=disable` |
 | `LOG_LEVEL` | Structured logging verbosity (NFR-OBS-001): `debug`, `info`, `warn`, `error` | default `info` | `debug` |
-| `CORS_ALLOWED_ORIGINS` | Comma-separated browser origins allowed to call the API cross-origin (SECURITY.md section 8.1); never a wildcard | default `http://localhost:5173` | `http://localhost:5173` |
-| `BMKG_BASE_URL` | BMKG's public GeoHotspot ArcGIS REST layer, queried by GET /api/v1/hotspots | default `https://datacuaca.bmkg.go.id/arcgis/rest/services/production/geohotspot/MapServer/0` | same |
-| `BMKG_TIMEOUT` | Timeout for a single request to BMKG | default `10s` | `10s` |
-| `TOKEN_SECRET` | Signs and verifies authentication tokens (HMAC); must be kept confidential | **required** | local-dev placeholder only |
-| `TOKEN_TTL` | How long a signed authentication token remains valid | default `24h` | `24h` |
-| `MIGRATIONS_DIR` | Directory of `NNNN_*.up.sql` files the backend applies at start-up when `APP_ENV=development` (`DOCKER_COMPOSE.md` section 6.5) | default `../database/migrations` (relative to `georesponse-be/`); must exist when `APP_ENV=development` | `../database/migrations` (`go run` from `georesponse-be/`); `/migrations` in the container |
+| `CORS_ALLOWED_ORIGINS` | Comma-separated browser origins allowed to call the API cross-origin (`docs/05_engineering/SECURITY.md` section 8.1); never a wildcard | default `http://localhost:5173` | `http://localhost:5173` |
+| `BMKG_BASE_URL` | BMKG's public GeoHotspot ArcGIS REST layer, queried by `GET /api/v1/hotspots` | default `https://datacuaca.bmkg.go.id/arcgis/rest/services/production/geohotspot/MapServer/0` | same |
+| `BMKG_TIMEOUT` | Timeout for a single BMKG request | default `10s` | `10s` |
+| `TOKEN_SECRET` | HMAC-SHA256 key that signs and verifies authentication tokens (`auth.HMACTokenSigner`); confidential | **required** | local-dev placeholder only |
+| `TOKEN_TTL` | How long a signed token remains valid | default `24h` | `24h` |
+| `MIGRATIONS_DIR` | Directory of `NNNN_*.up.sql` files applied at start-up when `APP_ENV=development` | default `../database/migrations` (relative to `georesponse-be/`); must exist when `APP_ENV=development` | `../database/migrations` with `go run`; `/migrations` in the container |
 
-Any further variable follows the same convention — environment variable, never hardcoded, documented here and in `georesponse-be/.env.example`.
+New variables follow the same convention: read from the environment, never
+hardcoded, and documented here and in `georesponse-be/.env.example`.
 
 ### 5.3 Database (`georesponse-db`)
 
-| Variable | Purpose | Local Dev Example |
-|---|---|---|
+| Variable | Purpose | Local dev example |
+| --- | --- | --- |
 | `POSTGRES_USER` | Database role used by the backend | `georesponse` |
 | `POSTGRES_PASSWORD` | Database role password | local-dev placeholder only |
 | `POSTGRES_DB` | Database name | `georesponse` |
 
+The root `.env.example` also sets `IMAGE_TAG` (the image tag compose builds
+and starts, see `CONTAINERIZATION.md` section 6).
+
 ---
 
-## 6. `.env` / `.env.example` Convention
+## 6. `.env` Files and Secrets
 
-Three `.env`/`.env.example` pairs are intended, one per place configuration is actually consumed:
+There are three `.env` / `.env.example` pairs, one per place configuration
+is consumed:
 
 ```text
-.env.example                (committed — compose-level variables: DB credentials,
-                              ports, IMAGE_TAG, and the values docker-compose.yml
-                              substitutes into each service; see DOCKER_COMPOSE.md
-                              section 6.4)
-.env                        (gitignored — actual local values, created by run.sh/
-                              run.ps1 or manually by the developer)
+.env.example                (committed: compose-level variables substituted
+                              into docker-compose.yml, including DB
+                              credentials, ports, IMAGE_TAG, and the
+                              frontend build arguments)
+.env                        (gitignored: actual local values)
 
-georesponse-fe/.env.example (committed — variables the frontend reads when run
-                              directly with `npm run dev`, outside Docker)
+georesponse-fe/.env.example (committed: read by `npm run dev` / `npm run
+                              build` outside Docker)
 georesponse-fe/.env          (gitignored)
 
-georesponse-be/.env.example (committed — variables the backend reads when run
-                              directly with `go run`, outside Docker)
+georesponse-be/.env.example (committed: read when running the backend with
+                              `go run` outside Docker)
 georesponse-be/.env          (gitignored)
 ```
 
-The root pair exists because `docker compose` only auto-loads a file literally
-named `.env` in the same directory as `docker-compose.yml` (the repository
-root); the per-app pairs exist so each application can also be run directly,
-without Docker, during day-to-day development. The variable names and values
-are the same concepts either way — only how they're delivered to the process
-differs.
+The root pair exists because `docker compose` only auto-loads a file named
+`.env` next to `docker-compose.yml`. The per-app pairs let each application
+run directly without Docker. The variables are the same either way; only
+the delivery differs.
 
 Rules:
 
-1. Every `.env.example` file is committed to version control and lists every
-   variable its context reads, with a safe placeholder or an obviously-fake
-   local-dev default — never a real secret.
-2. Every `.env` file (root and per-app) is excluded via `.gitignore` and is
-   never committed. This is the concrete mechanism satisfying NFR-SEC-004:
-   the root `.gitignore` lists `.env` (covering every directory, including
-   `georesponse-be/`, which has no `.gitignore` of its own) and
-   `georesponse-fe/.gitignore` lists it again.
-3. A developer sets up their environment by copying each example file
-   (`cp .env.example .env`, once per pair) and adjusting values only if
-   their local setup deviates from the default (e.g. a non-standard port
-   already in use). `run.sh`/`run.ps1` (see `DOCKER_COMPOSE.md` section 7.1)
-   do this automatically for all three pairs, without overwriting a `.env`
-   that already exists.
-4. When running via `docker compose`, only the root `.env` is actually read
-   by the containers (through `docker-compose.yml`'s `${VAR}` substitution,
-   see `DOCKER_COMPOSE.md` section 6.4) — the per-app `.env` files matter
-   when running that application directly, outside Docker.
-
-This satisfies NFR-SEC-004 (credentials must not be hard-coded or committed) and NFR-DEP-003 (environment-specific configuration must be separated from source code).
+1. Every `.env.example` is committed and lists every variable its context
+   reads, with a safe placeholder or an obviously fake local-dev value,
+   never a real secret.
+2. Every `.env` is gitignored and never committed. The root `.gitignore`
+   lists `.env` (covering every directory, including `georesponse-be/`,
+   which has no `.gitignore` of its own), and `georesponse-fe/.gitignore`
+   lists it again.
+3. To set up, copy each example (`cp .env.example .env`, once per pair) and
+   change values only if your setup differs, for example a port already in
+   use. `run.sh` / `run.ps1` do this for all three pairs and never
+   overwrite an existing `.env` (`DOCKER_COMPOSE.md` section 7.1).
+4. Under `docker compose`, only the root `.env` reaches the containers,
+   through `${VAR}` substitution in `docker-compose.yml`
+   (`DOCKER_COMPOSE.md` section 6.4). The per-app `.env` files matter only
+   when running an application directly.
+5. Secrets (`POSTGRES_PASSWORD`, `TOKEN_SECRET`) reach the backend and
+   database only as environment variables at container start. They are
+   never copied into an image; both `.dockerignore` files exclude `.env`
+   and `.env.*` (`CONTAINERIZATION.md` section 7).
 
 ---
 
 ## 7. CI / Test Environment
 
-The CI pipeline (`CI_CD.md`) does not use `.env` files at all for the unit-test stages, since frontend and backend unit tests are designed to run without a live database dependency (NFR-TEST-002 — unit tests must not depend on external services). Any configuration values unit tests need are supplied directly as job-level environment variables in the GitHub Actions workflow, or as safe in-code test defaults.
+CI does not use `.env` files. Frontend and backend unit tests run without
+a live database (NFR-TEST-002), using job-level environment variables or
+in-code test defaults where needed.
 
-The integration test suite in `tests/integration/` runs in CI's `integration` job (`CI_CD.md` section 4.3) against an ephemeral PostGIS service container provisioned within the job itself (a GitHub Actions `services:` block), with a throwaway `DATABASE_URL`, `TOKEN_SECRET`, and `APP_ENV=development` set as job-level environment variables — never pointing at a shared or persistent database. The suite itself only needs `GEORESPONSE_API_URL` (see `tests/README.md`).
+The `integration` job (`CI_CD.md` section 4.3) runs `tests/integration/`
+against an ephemeral PostGIS service container defined in the job, with
+throwaway `DATABASE_URL`, `TOKEN_SECRET`, and `APP_ENV=development` values
+set in the workflow. It never points at a shared or persistent database.
+The suite itself only needs `GEORESPONSE_API_URL` (see `tests/README.md`).
 
 ---
 
-## 8. Startup Validation
+## 8. Start-Up Validation
 
-Per NFR-DEP-004, the backend must fail startup clearly when required configuration is missing or invalid, rather than starting in a partially-configured state and failing unpredictably on the first request. `georesponse-be/internal/platform/config` implements this: `config.Load()` runs before anything else in `cmd/api/main.go` and exits with an error naming the offending variable when `DATABASE_URL` is unset or not a `postgres://host/database` URL, `TOKEN_SECRET` is unset, `HTTP_PORT` is not a TCP port, `LOG_LEVEL` is not one of `debug|info|warn|error`, `TOKEN_TTL`/`BMKG_TIMEOUT` are not positive durations, `BMKG_BASE_URL` is not an absolute http(s) URL, or — in `APP_ENV=development` — `MIGRATIONS_DIR` is not a readable directory. This is an application-level responsibility rather than an environment-management infrastructure concern, but it depends on this document's convention: every required variable must be documented in `.env.example` so the validation logic and the documentation stay in sync.
+Per NFR-DEP-004, the backend fails at start-up with a clear error rather
+than running partially configured. `config.Load()` in
+`georesponse-be/internal/platform/config` runs first in `cmd/api/main.go`
+and exits with an error naming the offending variable when:
 
----
+- `DATABASE_URL` is unset or not a `postgres://host/database` URL
+- `TOKEN_SECRET` is unset
+- `HTTP_PORT` is not a TCP port
+- `LOG_LEVEL` is not one of `debug`, `info`, `warn`, `error`
+- `TOKEN_TTL` or `BMKG_TIMEOUT` is not a positive duration
+- `BMKG_BASE_URL` is not an absolute http(s) URL
+- `MIGRATIONS_DIR` is not a readable directory (only when
+  `APP_ENV=development`)
 
-## 9. Principle
-
-> Configuration changes between environments; code does not.
-
-Only one environment is defined today (local development, doubling as the take-home evaluation environment), but the variable-based mechanism described here is designed to extend to additional environments without changing how the application reads its configuration.
+Every required variable must therefore also be documented in
+`georesponse-be/.env.example`.

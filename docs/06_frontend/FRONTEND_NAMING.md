@@ -2,9 +2,13 @@
 
 ## 1. Purpose
 
-This document defines the naming and file-structure conventions used inside `georesponse-fe/src`.
-
-It expands `CODING_STANDARDS.md` section 4 (Naming) into frontend-specific detail, with concrete examples. Where this document and `CODING_STANDARDS.md` overlap, `CODING_STANDARDS.md` is the source of truth; this document exists to make the convention unambiguous when applied to a real component tree.
+This document defines the file, directory, and suffix conventions used
+inside `georesponse-fe/src`, with concrete examples. Identifier casing per
+language and the general naming rules are owned by `CODING_STANDARDS.md`
+section 4; this file owns the frontend file-naming and suffix list. The
+folder/layer architecture is in `FRONTEND_ARCHITECTURE.md`, state
+conventions in `FRONTEND_STATE.md`, test conventions in
+`FRONTEND_TESTING.md`, and the backend counterpart is `BACKEND_NAMING.md`.
 
 ---
 
@@ -19,7 +23,8 @@ components/resource-map/map-adapter/
 utils/logger/
 ```
 
-This applies to feature directories, shared primitive directories, and any subfolder grouping multiple related files for a single concern (see section 6).
+This applies to feature directories, shared primitive directories, and any
+subfolder grouping related files for a single concern (see section 6).
 
 ---
 
@@ -35,47 +40,49 @@ This applies to feature directories, shared primitive directories, and any subfo
 | Shared/global hook | `useCamelCase.ts` | `useResources.ts`, `useDebouncedValue.ts` |
 | Shared/global types | `camelCase.types.ts` | `resource.types.ts` |
 | Shared/global constants | `camelCase.constants.ts` | `resourceStatus.constants.ts` |
-| Shared/global utility | `camelCase.ts` | `cn.ts`, `withTimeOut.ts` |
+| Shared/global utility, or any other non-component source file | `camelCase.ts` | `cn.ts`, `withTimeOut.ts` |
 | API module | `<domain>Api.ts` + `<domain>Api.types.ts` + `<domain>Keys.ts` in `api/<domain>/` | `resourceApi.ts`, `resourceKeys.ts` |
 | Store (none exists yet; see section 7) | `useXStore.ts` | `useAlertStore.ts` |
 | Test | colocated `*.test.ts` / `*.test.tsx` | `ResourceList.test.tsx`, `httpClient.test.ts` |
 
-Constant *values* inside a `.constants.ts` file use `SCREAMING_SNAKE_CASE`, per `CODING_STANDARDS.md` section 4:
+Constant values inside a `.constants.ts` file use `SCREAMING_SNAKE_CASE`:
 
 ```ts
 export const MAX_RESOURCE_NAME_LENGTH = 100;
 export const DEFAULT_PAGE_SIZE = 20;
 ```
 
-Never create a `__tests__/` directory. Tests live next to the file they cover, as already established by `utils/logger/logger.test.ts`.
+Never create a `__tests__/` directory. Tests live next to the file they
+cover (see `FRONTEND_TESTING.md` section 3).
 
 ---
 
 ## 4. Naming Inside Code
 
-The base naming rules (casing per identifier kind, nouns for data/types, verbs for actions, avoiding generic names) are defined in `CODING_STANDARDS.md` section 4 and apply as-is to `georesponse-fe`. Applied to the concrete domain, that gives examples such as:
-
-- Components: `ResourceCard`, `StatusIndicator`.
-- Types/interfaces: `Resource`, `ResourceFilters`, `ResourceCardProps`.
-- Functions/variables: `getResources`, `selectedResourceId`.
-- Constants: `DEFAULT_PAGE_SIZE`.
-- Hooks: `useResources`, `useRelocateResource`, `useDebouncedValue`.
-- Avoid generic names (`data`, `item`, `value`, `result`) when a more specific name is available — prefer `resource`, `resourceFilters`, `selectedResource`.
+Identifier casing and the general rules (nouns for data and types, verbs
+for actions, no generic names) are in `CODING_STANDARDS.md` section 4.
+Applied to this domain: `ResourceCard`, `ResourceFilters`,
+`getResources`, `selectedResourceId`, `DEFAULT_PAGE_SIZE`,
+`useRelocateResource`; prefer `resource` or `selectedResource` over
+`data` or `item`.
 
 ---
 
 ## 5. Component Directory Layout and Encapsulation
 
-Every component that has more than a single file gets its own `kebab-case` directory. The directory's public API is the single file matching the component's `PascalCase` name; everything else in the directory is private to that component.
+Every component with more than one file gets its own `kebab-case`
+directory. The directory's public API is the single file matching the
+component's `PascalCase` name; everything else in the directory is private
+to that component.
 
 Example for a hypothetical `resource-card` component:
 
 ```text
 components/resource-card/
-├── ResourceCard.tsx              # Public API — imported by other modules
-├── ResourceCard.types.ts         # Props, local types — private
-├── ResourceCard.constants.ts     # e.g. status → label mapping — private
-├── useResourceCardActions.ts     # Local hook (edit/delete handlers) — private
+├── ResourceCard.tsx              # Public API, imported by other modules
+├── ResourceCard.types.ts         # Props, local types (private)
+├── ResourceCard.constants.ts     # e.g. status → label mapping (private)
+├── useResourceCardActions.ts     # Local hook for edit/delete handlers (private)
 └── ResourceCard.test.tsx         # Colocated test
 ```
 
@@ -85,7 +92,7 @@ Correct import from outside the directory:
 import ResourceCard from "@components/resource-card/ResourceCard";
 ```
 
-Incorrect — never reach into a component's private files from outside it:
+Incorrect: never reach into a component's private files from outside it.
 
 ```ts
 import { ResourceCardProps } from "@components/resource-card/ResourceCard.types";
@@ -93,7 +100,8 @@ import { ResourceCardProps } from "@components/resource-card/ResourceCard.types"
 
 ### 5.1 Promotion Rule
 
-A private file is promoted out of a component directory only when a second, unrelated component genuinely needs it:
+A private file is promoted out of a component directory only when a
+second, unrelated component needs it:
 
 | Private file | Promoted to | New name |
 |---|---|---|
@@ -103,13 +111,21 @@ A private file is promoted out of a component directory only when a second, unre
 | A presentational fragment reused by another feature | `common/` | `common/resource-badge/ResourceBadge.tsx` |
 | Cross-cutting UI state | `store/` | `useResourceSelectionStore.ts` |
 
-Do not promote a file speculatively. Follow `DEPENDENCY_RULES.md` section 5: shared code is created only when it is genuinely reused, not because it might be useful later.
+Do not promote a file speculatively. Shared code is created only when it
+is actually reused (`DEPENDENCY_RULES.md` section 5).
+
+The location of a file tells the reader its reach: anything imported from
+outside its directory lives in `common/`, `hooks/`, `utils/`, `types/`,
+`constants/`, `api/`, or `store/`; anything used by one component stays in
+that component's directory, prefixed with its name.
 
 ---
 
 ## 6. Multi-File Utilities
 
-When a single concern needs more than one file (implementation, types, tests), give it its own directory instead of prefixing files, following the existing `utils/logger/` example:
+When a single concern needs more than one file (implementation, types,
+tests), give it its own directory instead of prefixing files, as
+`utils/logger/` does:
 
 ```text
 utils/logger/
@@ -118,49 +134,35 @@ utils/logger/
 └── logger.test.ts
 ```
 
-The same pattern applies to the map adapter, since it has an implementation file and may need its own types:
+The map adapter follows the same pattern:
 
 ```text
 components/resource-map/map-adapter/
 ├── MapAdapter.ts
-└── MapAdapter.types.ts
+├── MapAdapter.types.ts
+└── MapAdapter.test.ts
 ```
 
 ---
 
 ## 7. Store Naming
 
-`store/` is currently empty (a `.gitkeep` placeholder) — no store has been needed, see `FRONTEND_STATE.md` section 8. If one is introduced, it lives directly under `store/` (not in its own subdirectory, unless it later grows multiple files) and is named `useXStore.ts`, for example:
+`store/` is empty (a `.gitkeep` placeholder); no store has been needed (see
+`FRONTEND_STATE.md` section 8). If one is introduced, it lives directly
+under `store/` (in its own subdirectory only if it grows multiple files)
+and is named `useXStore.ts`:
 
 ```text
 store/
 └── useAlertStore.ts
 ```
 
-The store's default export is the hook itself (`useAlertStore`). See `FRONTEND_STATE.md` for when introducing a store is appropriate.
+The store's default export is the hook itself (`useAlertStore`).
 
 ---
 
 ## 8. Barrel Files
 
-Do not introduce `index.ts` barrel files purely to shorten import paths. Import directly from the file that defines the export. This keeps import boundaries aligned with the module's responsibility, per `CODING_STANDARDS.md` section 6.
-
----
-
-## 9. Scope Boundary
-
-This document does not define:
-
-- general naming principles (`CODING_STANDARDS.md` section 4);
-- the folder/layer architecture itself (`FRONTEND_ARCHITECTURE.md`);
-- state-management conventions (`FRONTEND_STATE.md`);
-- test-writing conventions beyond file naming (`FRONTEND_TESTING.md`);
-- backend or Go naming (`CODING_STANDARDS.md` section 14).
-
----
-
-## 10. Naming Principle
-
-A file's name and location should tell another developer whether it is public or private, and whether it belongs to one component or to the whole application, without needing to open it.
-
-> If a file is imported from outside its directory, its name says so by living in `common/`, `hooks/`, `utils/`, `types/`, `constants/`, `api/`, or `store/`. If it is only used inside one component, it stays there, prefixed with that component's name.
+Do not add `index.ts` barrel files to shorten import paths. Import directly
+from the file that defines the export, so import boundaries match module
+responsibility (`CODING_STANDARDS.md` section 6).

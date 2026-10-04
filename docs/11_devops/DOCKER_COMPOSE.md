@@ -2,39 +2,32 @@
 
 ## 1. Purpose
 
-This document defines how GeoResponse's frontend, backend, and database are orchestrated together for local development using Docker Compose.
-
-Because the application is a modular monolith with exactly three runtime components (frontend, backend, database), a single `docker compose` file is sufficient orchestration. No service mesh, orchestrator, or multi-cluster setup is needed.
-
----
-
-## 2. Scope Boundary
-
-In scope:
-
-- A single root-level `docker-compose.yml` wiring together `georesponse-fe`, `georesponse-be`, and a `postgis/postgis` database service.
-- Local development and take-home evaluation use only — not a production orchestration definition.
-- Volume-based database persistence and a healthcheck for the database service.
-
-Out of scope:
-
-- Multiple compose override files for different environments (`docker-compose.prod.yml`, etc.) — only one environment (local/dev) currently exists, per `ENVIRONMENT_MANAGEMENT.md`.
-- Compose Swarm mode or any multi-host orchestration.
+This document describes how GeoResponse's frontend, backend, and database
+run together locally with Docker Compose, and owns the local ports and run
+commands. A single root-level `docker-compose.yml` is enough for a modular
+monolith with three runtime components. It is a local development
+definition only: there are no per-environment override files (only one
+environment exists, see `ENVIRONMENT_MANAGEMENT.md`) and no Swarm or
+multi-host orchestration. Image design is in `CONTAINERIZATION.md`.
 
 ---
 
-## 3. Current State
+## 2. Files
 
-The compose file and its supporting assets are implemented:
-
-- `docker-compose.yml` — at the repository root (what `docker compose up` looks for by default), defining `georesponse-db`, `georesponse-be`, and `georesponse-fe` as listed in section 5.
-- `docker/postgres/init/01-init-schema-and-seeds.sh` — the one-time database initialization script the compose file mounts into the PostGIS container's `docker-entrypoint-initdb.d` (see section 6.1).
-- `georesponse-fe/nginx.conf` — the frontend runtime image's nginx server block, kept next to its Dockerfile because that Dockerfile's build context is `georesponse-fe/`.
-- `run.sh` / `run.ps1` — the one-command wrapper described in section 7.1.
+- `docker-compose.yml` (repository root): defines `georesponse-db`,
+  `georesponse-be`, and `georesponse-fe`. The file and its header comments
+  are the source of truth for the service definitions summarized in
+  section 5.
+- `docker/postgres/init/01-init-schema-and-seeds.sh`: the one-time database
+  initialization script mounted into the PostGIS container (section 6.1).
+- `georesponse-fe/nginx.conf`: the frontend runtime image's nginx server
+  block, kept next to its Dockerfile because the build context is
+  `georesponse-fe/`.
+- `run.sh` / `run.ps1`: the one-command wrapper (section 7.1).
 
 ---
 
-## 4. Service Topology
+## 3. Service Topology
 
 ```text
 ┌───────────────────────────────────────────────────────────┐
@@ -53,147 +46,109 @@ The compose file and its supporting assets are implemented:
                                                           - migrations
 ```
 
-`georesponse-be` depends on `georesponse-db` being healthy before starting, and `georesponse-fe` depends on `georesponse-be` being available, so that the compose stack comes up in a working order without manual intervention.
+The browser loads the frontend from nginx and calls the backend directly at
+`API_BASE_URL`; nginx does not proxy the API.
 
 ---
 
-## 5. Illustrative `docker-compose.yml`
+## 4. Start-Up Order
 
-The listing below mirrors the real root-level `docker-compose.yml` (the real file, with its explanatory header comments, is the source of truth). Points worth noticing: `TOKEN_SECRET`/`TOKEN_TTL`/`CORS_ALLOWED_ORIGINS` are passed to the backend; `MIGRATIONS_DIR=/migrations` with `database/migrations` bind-mounted read-only (section 6.5); `image: georesponse-<app>:${IMAGE_TAG:-latest}` on both built services (so `scripts/deployment/deploy.sh --tag` can start a specific tag); the frontend's `build.args` (`API_BASE_URL`, `MAP_TILE_URL`, `LOG_LEVEL` — inlined at build time, see `CONTAINERIZATION.md` section 4.2); `georesponse-fe` waits for `georesponse-be` to be *healthy* rather than merely started; and the database initialization mounts are described in section 6.1.
+Both dependencies use `depends_on` with `condition: service_healthy`:
 
-```yaml
-# docker-compose.yml (mirrors the real root-level file)
-# Reads ./.env automatically (docker compose's default behavior for a file
-# named ".env" next to the compose file) — see section 6.4 and
-# ENVIRONMENT_MANAGEMENT.md section 6 for the root .env/.env.example pair
-# this file depends on. No credential is hardcoded below; the ${VAR:-default}
-# fallbacks exist only so the stack still starts with an obviously-fake value
-# if a developer runs `docker compose up` without creating .env first —
-# ./run.sh always creates it from .env.example, so this fallback path should
-# not normally be exercised.
-name: georesponse
+1. `georesponse-db` must pass its `pg_isready` healthcheck before
+   `georesponse-be` starts.
+2. `georesponse-be` must pass its `GET /health` healthcheck (which pings the
+   database) before `georesponse-fe` starts.
 
-services:
-  georesponse-db:
-    image: postgis/postgis:16-3.4
-    container_name: georesponse-db
-    restart: unless-stopped
-    environment:
-      POSTGRES_USER: ${POSTGRES_USER:-georesponse}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-georesponse_dev_password}
-      POSTGRES_DB: ${POSTGRES_DB:-georesponse}
-    ports:
-      - "5432:5432"
-    volumes:
-      - georesponse-db-data:/var/lib/postgresql/data
-      # Runs once, on first initialisation of an empty data volume only.
-      - ./docker/postgres/init:/docker-entrypoint-initdb.d:ro
-      - ./database/migrations:/georesponse/migrations:ro
-      - ./database/seeds:/georesponse/seeds:ro
-    healthcheck:
-      # Over TCP on purpose: during first-run initialisation the image runs
-      # a temporary server that only listens on the unix socket, so a
-      # socket-based pg_isready would report "healthy" before the init
-      # scripts (migrations + seeds) have finished and the real server is up.
-      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U ${POSTGRES_USER:-georesponse} -d ${POSTGRES_DB:-georesponse}"]
-      interval: 5s
-      timeout: 5s
-      retries: 20
-      start_period: 30s
-
-  georesponse-be:
-    build:
-      context: ./georesponse-be
-      dockerfile: Dockerfile
-    image: georesponse-be:${IMAGE_TAG:-latest}
-    container_name: georesponse-be
-    restart: unless-stopped
-    environment:
-      APP_ENV: ${APP_ENV:-development}
-      HTTP_PORT: ${HTTP_PORT:-8080}
-      DATABASE_URL: postgres://${POSTGRES_USER:-georesponse}:${POSTGRES_PASSWORD:-georesponse_dev_password}@georesponse-db:5432/${POSTGRES_DB:-georesponse}?sslmode=disable
-      LOG_LEVEL: ${LOG_LEVEL:-debug}
-      TOKEN_SECRET: ${TOKEN_SECRET:-dev-only-secret-do-not-use-in-production}
-      TOKEN_TTL: ${TOKEN_TTL:-24h}
-      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:5173}
-      MIGRATIONS_DIR: /migrations
-    ports:
-      - "${HTTP_PORT:-8080}:${HTTP_PORT:-8080}"
-    volumes:
-      - ./database/migrations:/migrations:ro
-    depends_on:
-      georesponse-db:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://localhost:${HTTP_PORT:-8080}/health"]
-      interval: 10s
-      timeout: 3s
-      retries: 5
-      start_period: 5s
-
-  georesponse-fe:
-    build:
-      context: ./georesponse-fe
-      dockerfile: Dockerfile
-      args:
-        # Inlined into the static bundle at build time (rspack DefinePlugin).
-        API_BASE_URL: ${API_BASE_URL:-http://localhost:8080/api/v1}
-        MAP_TILE_URL: ${MAP_TILE_URL:-}
-        LOG_LEVEL: ${LOG_LEVEL:-debug}
-    image: georesponse-fe:${IMAGE_TAG:-latest}
-    container_name: georesponse-fe
-    restart: unless-stopped
-    ports:
-      - "5173:80"
-    depends_on:
-      georesponse-be:
-        condition: service_healthy
-
-volumes:
-  georesponse-db-data:
-```
+The stack therefore comes up in a working order without manual
+intervention.
 
 ---
 
-## 6. Notes on the Listing Above
+## 5. Service Definitions
 
-### 6.1 Database Volume and Migrations
+| Service | Image | Key settings |
+| --- | --- | --- |
+| `georesponse-db` | `postgis/postgis:16-3.4` | `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB` from `.env`; named volume `georesponse-db-data`; init mounts (section 6.1); TCP `pg_isready` healthcheck |
+| `georesponse-be` | built from `georesponse-be/`, tagged `georesponse-be:${IMAGE_TAG:-latest}` | `APP_ENV`, `HTTP_PORT`, `DATABASE_URL` (built from the `POSTGRES_*` values, host `georesponse-db`), `LOG_LEVEL`, `TOKEN_SECRET`, `TOKEN_TTL`, `CORS_ALLOWED_ORIGINS`, `MIGRATIONS_DIR=/migrations`; `database/migrations` mounted read-only at `/migrations`; `wget` healthcheck on `/health` |
+| `georesponse-fe` | built from `georesponse-fe/`, tagged `georesponse-fe:${IMAGE_TAG:-latest}` | `build.args` `API_BASE_URL`, `MAP_TILE_URL`, `LOG_LEVEL` (inlined into the bundle at build time, see `CONTAINERIZATION.md` section 4) |
 
-- `georesponse-db-data` is a named volume providing persistence across `docker compose down`/`up` cycles (data is only lost on an explicit `docker compose down -v`).
-- On **first initialization only** (an empty data volume), the official Postgres/PostGIS image runs the scripts in `docker-entrypoint-initdb.d`. The compose file mounts `docker/postgres/init/` there, and `database/migrations` / `database/seeds` read-only at `/georesponse/migrations` and `/georesponse/seeds`; the init script applies every `*.up.sql` in ascending order, records the resulting version in the same `schema_migrations(version, dirty)` bookkeeping table the golang-migrate CLI uses, then loads every seed file — so a brand-new stack starts with demo resources and the demo login accounts. (Mounting the migration directories *directly* into `docker-entrypoint-initdb.d` would not work: the entrypoint only executes files at the top level of that directory, and it would have tried to run the `.down.sql` files too.)
-- This first-run hook is a convenience for a brand-new volume, not the primary migration mechanism. On every `georesponse-be` startup in `APP_ENV=development`, the backend itself applies any migration newer than the database's recorded version before it starts serving requests (section 6.5), so the schema is always current without a manual step. `scripts/database/migrate.sh`/`.ps1` remain available for running migrations independently of starting the server (see `DATABASE_MIGRATIONS.md`).
+All services use `restart: unless-stopped`. The `IMAGE_TAG` substitution
+lets `scripts/deployment/deploy.sh --tag` start a specific image tag (see
+`DEPLOYMENT.md` section 4). Variable meanings and defaults are in
+`ENVIRONMENT_MANAGEMENT.md` section 5.
+
+---
+
+## 6. Configuration Details
+
+### 6.1 Database Volume and First-Run Initialization
+
+- `georesponse-db-data` is a named volume, so data survives
+  `docker compose down` / `up`. Only `docker compose down -v` removes it.
+- On first initialization of an empty volume, the PostGIS image runs the
+  scripts in `docker-entrypoint-initdb.d`. The compose file mounts
+  `docker/postgres/init/` there, plus `database/migrations` and
+  `database/seeds` read-only at `/georesponse/migrations` and
+  `/georesponse/seeds`. The init script applies every `*.up.sql`, records
+  the version in `schema_migrations`, and loads every seed file, so a new
+  stack starts with demo resources and the demo login accounts.
+- The migration directories are not mounted directly into
+  `docker-entrypoint-initdb.d` because the entrypoint only runs top-level
+  files there and would also run the `.down.sql` files.
+- This hook only covers a brand-new volume. Schema updates on an existing
+  volume come from the backend start-up runner (section 6.5) or
+  `scripts/database/migrate.sh` / `.ps1`. See
+  `docs/08_database/DATABASE_MIGRATIONS.md` section 4.
 
 ### 6.2 Health Checks
 
-- The database healthcheck uses `pg_isready`, the standard Postgres readiness probe, and gates `georesponse-be`'s startup via `depends_on: condition: service_healthy`.
-- The backend healthcheck calls its own `/health` endpoint (see `DEPLOYMENT.md`), satisfying NFR-AVAIL-002 (the backend must expose sufficient health information) and NFR-OBS-003 (operational visibility) at the container level.
+- Database: `pg_isready -h 127.0.0.1`. It runs over TCP because during
+  first-run initialization the image starts a temporary server that only
+  listens on the unix socket; a socket check would report healthy before
+  migrations and seeds finish.
+- Backend: `wget -qO- http://localhost:${HTTP_PORT}/health` inside the
+  container. The endpoint contract is in `DEPLOYMENT.md` section 6.
+- Frontend: no compose healthcheck; the image defines its own `HEALTHCHECK`
+  (`CONTAINERIZATION.md` section 4).
 
 ### 6.3 Ports
 
-| Service | Container Port | Host Port | Notes |
-|---|---|---|---|
-| `georesponse-fe` | 80 (nginx) | 5173 | Chosen to match a typical local frontend dev port; adjustable |
+| Service | Container port | Host port | Notes |
+| --- | --- | --- | --- |
+| `georesponse-fe` | 80 (nginx) | 5173 | Matches the usual local frontend dev port |
 | `georesponse-be` | `HTTP_PORT` (default 8080) | same as container port | REST API; both sides follow `HTTP_PORT` from the root `.env` |
 | `georesponse-db` | 5432 | 5432 | Standard Postgres port |
 
 ### 6.4 Environment Variables
 
-The compose file no longer hardcodes any value — every variable is substituted from a root-level `.env` file (which `docker compose` loads automatically when it sits next to `docker-compose.yml`), with an obviously-fake `${VAR:-default}` fallback only so the stack still starts if `.env` is missing. `run.sh`/`run.ps1` create this file from `.env.example` on first run. The `${...:-default}` values shown in section 5 (`georesponse_dev_password`, etc.) are local-development-only placeholders, never a real secret, and are never committed in their real form. See `ENVIRONMENT_MANAGEMENT.md` section 6 for the full `.env`/`.env.example` convention, including the root-level pair this compose file reads.
+Every value is substituted from the root `.env`, which `docker compose`
+loads automatically from the directory of `docker-compose.yml`. Each
+variable has an obviously fake `${VAR:-default}` fallback so the stack still
+starts if `.env` is missing; `run.sh` / `run.ps1` create `.env` from
+`.env.example` on first run. The `.env` convention is in
+`ENVIRONMENT_MANAGEMENT.md` section 6.
 
-### 6.5 Automatic Migration on Backend Startup
+### 6.5 Automatic Migration on Backend Start-Up
 
-When `APP_ENV=development` (the value set for `georesponse-be` in section 5), the backend applies pending database migrations before it binds its HTTP port — `cmd/api/main.go` calls `internal/platform/postgres.Migrate`, which reads `NNNN_*.up.sql` files from `MIGRATIONS_DIR` (`/migrations` in the container, bind-mounted from `database/migrations`; `../database/migrations` by default when run with `go run` from `georesponse-be/`) and applies each one newer than the database's recorded version in its own transaction, using golang-migrate's single-row `schema_migrations(version, dirty)` table so the CLI-driven `scripts/database/migrate.sh` and the start-up runner can be mixed freely against one database. A `dirty` row (a previous run failed part-way) makes the backend refuse to start with a clear error rather than guess at the schema's state. This is what lets `./run.sh` / `docker compose up` bring up a fully migrated, ready-to-use stack with no separate migration step for local development.
+With `APP_ENV=development` (the compose default), `cmd/api/main.go` calls
+`internal/platform/postgres.Migrate` before binding the HTTP port. It reads
+`NNNN_*.up.sql` files from `MIGRATIONS_DIR` (`/migrations`, bind-mounted
+read-only from `database/migrations`), applies each one newer than the
+recorded version in `schema_migrations`, and refuses to start if that row is
+`dirty`. This is why `./run.sh` and `docker compose up` produce a migrated
+stack with no separate migration step. Full behaviour, including how it
+coexists with the CLI scripts, is in
+`docs/08_database/DATABASE_MIGRATIONS.md` section 4.
 
-This behavior is intentionally scoped to local/dev: `DEPLOYMENT.md` keeps migration as an explicit, separate step ahead of a real deployment, since auto-migrating on every process start is a reasonable local-development convenience but not a safe default for an environment with real data.
+Auto-migration is limited to development. For any other `APP_ENV`,
+migration is a separate step before deployment (`DEPLOYMENT.md` section 5).
 
 ---
 
 ## 7. Running the Stack Locally
 
 ### 7.1 Recommended: `run.sh` / `run.ps1`
-
-A single wrapper script at the repository root is the recommended entry
-point:
 
 ```bash
 ./run.sh        # macOS/Linux
@@ -203,21 +158,22 @@ point:
 .\run.ps1       # Windows
 ```
 
-The script checks that Docker is installed and its daemon is running,
-performs steps 1–3 and 5 below automatically (env setup, build, start —
-detached, waiting until every service reports healthy — and schema
-migration/seeding), then prints the access URLs from step 4 and the demo
-login, so a developer only runs one command. `./run.sh --foreground`
-(`.\run.ps1 -Foreground`) stays attached to the compose logs instead, and
-`./run.sh --down` (`.\run.ps1 -Down`) stops the stack while keeping the
-database volume. Section 7.2 documents what it does under the hood — useful
-for debugging or for running the stack without the wrapper.
+The script checks that Docker and the Compose v2 plugin are installed and
+the daemon is running, creates the three `.env` files from their examples
+(never overwriting an existing one), runs
+`docker compose up --build --detach --wait`, and prints the access URLs and
+the demo login. Options:
 
-### 7.2 Manual / Under-the-Hood Steps
+- `./run.sh --foreground` (`.\run.ps1 -Foreground`): stay attached to the
+  compose logs.
+- `./run.sh --down` (`.\run.ps1 -Down`): stop the stack and keep the
+  database volume.
+
+### 7.2 Manual Steps
 
 ```text
 1. Copy environment defaults (run.sh/run.ps1 does this automatically,
-   skipping any .env that already exists so local overrides are preserved):
+   skipping any .env that already exists):
      cp georesponse-fe/.env.example georesponse-fe/.env
      cp georesponse-be/.env.example georesponse-be/.env
      cp .env.example .env
@@ -233,28 +189,15 @@ for debugging or for running the stack without the wrapper.
      Backend   → http://localhost:8080/api/v1
      Health    → http://localhost:8080/health
 
-5. Database migrations run automatically as part of georesponse-be's
-   container startup (see section 6.5) when APP_ENV=development, so no
-   separate migration step is needed for local development. To run
-   migrations independently of starting the server — for example against a
-   database not managed by this compose file — use
-   scripts/database/migrate.sh (or migrate.ps1 on Windows); see
-   DATABASE_MIGRATIONS.md.
+5. Migrations run automatically at backend start-up (section 6.5). To run
+   them separately, for example against a database outside this compose
+   file, use scripts/database/migrate.sh (or migrate.ps1).
 
 6. Stop the stack:
      docker compose down
-     (add -v to also remove the persisted database volume)
+     (add -v to also remove the database volume)
 ```
 
-This gives a single-command local environment (`./run.sh` wrapping
-`docker compose up`) that matches NFR-DEP-001 (reproducible environment) and
-NFR-DEP-002 (frontend and backend must be executable using the project's
-documented containerization approach).
-
----
-
-## 8. Principle
-
-> Local development should be reproducible with a single command, using the same container images and configuration shape that a real deployment would use.
-
-The compose file is the local analogue of the deployment target described in `DEPLOYMENT.md` — it exercises the same images, the same environment-variable-driven configuration, and the same health-check expectations, just on a developer's machine instead of a deployment host.
+This single-command setup meets NFR-DEP-001 (reproducible environment) and
+NFR-DEP-002 (frontend and backend run through the documented
+containerization approach).

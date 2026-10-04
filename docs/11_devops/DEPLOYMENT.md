@@ -2,28 +2,27 @@
 
 ## 1. Purpose
 
-This document defines the deployment model for GeoResponse: how the frontend, backend, and database are deployed together, how health is verified after deployment, how database migrations are sequenced relative to deployment, and how a deployment is rolled back if needed.
+This document describes how GeoResponse would be deployed to a single
+container host: the deployment scripts, the order of migration and
+deployment, the health check used to verify a deployment, and how to roll
+back. It reuses the images from `CONTAINERIZATION.md` and the orchestration
+from `DOCKER_COMPOSE.md`.
 
 ---
 
-## 2. Scope Boundary
+## 2. Status and Limits
 
-GeoResponse is a take-home test with no persistent hosted environment. This document intentionally describes a **single-environment, single-host, containerized deployment model** proportionate to that scope:
-
-In scope:
-
-- Deploying the three containerized components (frontend, backend, PostgreSQL+PostGIS) to a single container host, using the same images described in `CONTAINERIZATION.md` and the same orchestration shape described in `DOCKER_COMPOSE.md`.
-- A basic backend health-check contract.
-- Migration-before-deploy ordering.
-- A rollback approach based on redeploying a previous image tag.
-
-Out of scope — not claimed, not implemented:
-
-- Multi-region or highly-available infrastructure.
-- Auto-scaling.
-- Blue/green or canary deployment strategies.
-- A managed cloud deployment target (this document describes the deployment *approach*; it does not claim a specific cloud provider is provisioned).
-- Automatic deployment from CI (see `CI_CD.md` section 7 — deployment remains a deliberate, manually-triggered action for this take-home).
+- GeoResponse is not deployed anywhere. The scripts below have only been
+  run against a local Docker host.
+- The target is a single host with a single environment. There is no
+  multi-region or high-availability setup, no auto-scaling, no blue/green
+  or canary rollout, and no managed cloud target.
+- Deployment is a manual, scripted operator action. CI does not deploy
+  (`CI_CD.md` section 2).
+- There is no load balancer, reverse proxy beyond the frontend's own nginx
+  container, or TLS termination. NFR-SEC-005 (secure transport) would apply
+  once the system is exposed beyond a trusted local environment.
+- The database is a single PostgreSQL + PostGIS container.
 
 ---
 
@@ -42,29 +41,43 @@ Out of scope — not claimed, not implemented:
 └─────────────────────────────────────────────────────────────┘
 ```
 
-Because GeoResponse is a modular monolith (one frontend, one backend, one database — see `docs/03_architecture/SYSTEM_ARCHITECTURE.md`), the deployment unit is intentionally simple: the same three containers defined for local development in `DOCKER_COMPOSE.md` are the same three containers deployed to any target host. There is no separate "deployment architecture" distinct from the local compose topology — only the host and the environment variable values change (per `ENVIRONMENT_MANAGEMENT.md`).
+The deployed containers are the same three defined for local development
+in `DOCKER_COMPOSE.md`. Only the host and the environment variable values
+change (`ENVIRONMENT_MANAGEMENT.md`). Because the frontend's configuration
+is inlined at build time, a frontend image must be built with the target
+host's `API_BASE_URL` (`CONTAINERIZATION.md` section 4.2).
 
 ---
 
 ## 4. Deployment Entry Points
 
-Deployment and health verification are intended to be performed through dedicated scripts rather than ad hoc commands, so the process is repeatable:
+Each script is a `.sh` / `.ps1` pair with the same behaviour.
 
 | Script | Purpose |
-|---|---|
-| `scripts/deployment/deploy.sh` / `deploy.ps1` | Pull/build the target image tags and (re)start the stack on the target host |
-| `scripts/deployment/health-check.sh` / `health-check.ps1` | Verify the deployed services are reachable and healthy after `deploy` runs |
-| `scripts/database/migrate.sh` / `migrate.ps1` | Apply pending database migrations before the new backend version starts serving traffic |
-| `scripts/database/rollback.sh` / `rollback.ps1` | Revert the most recent migration if a rollback requires it |
-| `scripts/database/seed.sh` / `seed.ps1` | Populate reference/seed data (primarily for local/demo use) |
+| --- | --- |
+| `scripts/deployment/deploy.sh` / `deploy.ps1` | Build or select image tags and (re)start the application containers |
+| `scripts/deployment/health-check.sh` / `health-check.ps1` | Verify the deployed services are healthy |
+| `scripts/database/migrate.sh` / `migrate.ps1` | Apply pending migrations before the new backend serves traffic |
+| `scripts/database/rollback.sh` / `rollback.ps1` | Revert the most recent migration |
+| `scripts/database/seed.sh` / `seed.ps1` | Load seed data (local and demo use) |
 
-All of these scripts are implemented, each as a `.sh`/`.ps1` pair with the same behaviour:
-
-- `deploy.sh`/`deploy.ps1` — by default builds both images for the current commit (via `scripts/docker/build.sh`/`.ps1`, tagged with the git short SHA), then (re)starts only `georesponse-be` and `georesponse-fe` from `docker-compose.yml` with that tag (`IMAGE_TAG`), leaving `georesponse-db` running. `--tag <tag>` / `-Tag <tag>` skips the build and starts an already-built tag — the rollback path in section 7 — and refuses if that tag does not exist locally; `--no-build` / `-NoBuild` does the same for the current commit's tag (`IMAGE_TAG` is honoured as the default tag).
-- `health-check.sh`/`health-check.ps1` — polls `GET /health` on the backend until it returns `200` with `"database":"ok"`, then the frontend's root path until it returns `200`, and exits non-zero if either does not become healthy within the timeout (`--timeout`/`-TimeoutSeconds` or `HEALTH_TIMEOUT`, default 90 s). URLs default to the local compose ports and can be overridden with `--backend-url`/`--frontend-url` (`-BackendUrl`/`-FrontendUrl`, or `BACKEND_URL`/`FRONTEND_URL`).
-- `migrate`, `rollback`, and `seed` are documented in `docs/08_database/DATABASE_MIGRATIONS.md` section 4.
-
-Because the backend applies pending migrations itself when `APP_ENV=development` (`DOCKER_COMPOSE.md` section 6.5), step 2 of the sequence below is only a separate action for a non-development `APP_ENV`.
+- `deploy`: by default builds both images for the current commit through
+  `scripts/docker/build.sh` / `.ps1` (tagged with the git short SHA), then
+  restarts only `georesponse-be` and `georesponse-fe` from
+  `docker-compose.yml` with that `IMAGE_TAG`, leaving `georesponse-db`
+  running. `--tag <tag>` (`-Tag`) skips the build and starts an existing
+  tag, failing if it does not exist locally; this is the rollback path.
+  `--no-build` (`-NoBuild`) does the same for the current commit's tag.
+  `IMAGE_TAG` sets the default tag.
+- `health-check`: polls backend `GET /health` until it returns `200` with
+  `"database":"ok"`, then the frontend root until it returns `200`, and
+  exits non-zero if either fails within the timeout (`--timeout` /
+  `-TimeoutSeconds` or `HEALTH_TIMEOUT`, default 90 s). URLs default to the
+  local compose ports and can be overridden with `--backend-url` /
+  `--frontend-url` (`-BackendUrl` / `-FrontendUrl`, or `BACKEND_URL` /
+  `FRONTEND_URL`).
+- `migrate`, `rollback`, and `seed` are documented in
+  `docs/08_database/DATABASE_MIGRATIONS.md` section 4.
 
 ---
 
@@ -80,57 +93,63 @@ Because the backend applies pending migrations itself when `APP_ENV=development`
 
 3. Deploy the new containers
       scripts/deployment/deploy.sh
-      - stop/replace georesponse-be and georesponse-fe with the new tag
-      - georesponse-db is left running (it is not redeployed per release
-        unless the Postgres/PostGIS version itself changes)
+      - replace georesponse-be and georesponse-fe with the new tag
+      - georesponse-db keeps running (it is only redeployed when the
+        Postgres/PostGIS version changes)
 
 4. Verify health
       scripts/deployment/health-check.sh
-      - polls georesponse-be's /health endpoint
-      - polls georesponse-fe's root path
-      - fails loudly (non-zero exit) if either does not become healthy
-        within a defined timeout
+      - exits non-zero if the backend or frontend is not healthy
+        within the timeout
 
-5. If health check fails → roll back (see section 7)
+5. If the health check fails, roll back (section 7)
 ```
+
+With `APP_ENV=development` the backend applies pending migrations itself
+at start-up (`DATABASE_MIGRATIONS.md` section 4.2), so step 2 is only a separate
+action for any other `APP_ENV`.
 
 ### 5.1 Why Migrate Before Deploy
 
-Migrations run before the new backend container starts serving traffic so that the backend never runs against a schema it does not expect. This satisfies NFR-REPRO-003 (the schema must be reproducible from version-controlled migrations) and avoids the failure mode where a new backend version queries columns or tables that do not exist yet.
+Running migrations first means the new backend never starts against a
+schema it does not expect, and it keeps the schema reproducible from
+version-controlled migrations (NFR-REPRO-003).
 
-Migrations are additive-first where practical (new nullable columns, new tables) so that, if a rollback of the backend image is later needed, the previous backend version can generally keep running against the migrated schema without also requiring an immediate schema rollback. Destructive migrations (dropping/renaming columns in use) need explicit care, since they remove that safety margin (see the migration rules in `docs/08_database/DATABASE_MIGRATIONS.md` section 5).
-
----
-
-## 6. Health Check Contract
-
-Per NFR-AVAIL-002 and NFR-DEP-005, the backend exposes a health endpoint (`internal/http/router.go`, outside `/api/v1`):
-
-```text
-GET /health
-
-200 OK
-{
-  "status": "ok",
-  "database": "ok"
-}
-```
-
-The endpoint checks that the process is running and that it can reach the configured PostgreSQL/PostGIS database (a connection-pool ping with a short timeout). If the ping fails it returns `503 Service Unavailable` with both fields set to `"unavailable"`. A non-2xx response, or a response where `database` is not `"ok"`, indicates the deployment is not ready to serve traffic.
-
-`scripts/deployment/health-check.sh` / `.ps1` are the intended entry point for checking this endpoint after a deploy, and the same endpoint is used as the Docker Compose healthcheck target in local development (`DOCKER_COMPOSE.md` section 6.2), so the health contract is identical in both contexts.
-
-The frontend, being a static asset server, is considered healthy if it responds to a basic HTTP GET on its root path with a 200 status.
+Migrations are additive where practical (new nullable columns, new tables),
+so a previous backend image can usually keep running against the migrated
+schema if the application is rolled back. Destructive migrations (dropping
+or renaming columns in use) remove that margin and need extra care (see
+`docs/08_database/DATABASE_MIGRATIONS.md` section 5).
 
 ---
 
-## 7. Rollback Approach
+## 6. Health Check
 
-Rollback is deliberately simple, matching the take-home scope:
+The backend's `GET /health` endpoint (outside `/api/v1`) returns `200`
+with `{"status": "ok", "database": "ok"}` when the process is up and a
+short database ping succeeds, and `503` with both fields `"unavailable"`
+otherwise (contract in `docs/04_contracts/API_CONTRACT.md` section 2). It
+satisfies NFR-AVAIL-002 and NFR-DEP-005.
 
-1. **Application rollback** — redeploy the previous known-good image tag for `georesponse-fe` and/or `georesponse-be` using `scripts/deployment/deploy.sh` with that tag. Because images are tagged immutably per build (`CONTAINERIZATION.md` section 6), this is a matter of pointing the deploy script at the prior tag rather than rebuilding.
+A non-2xx response, or `database` other than `"ok"`, means the deployment
+is not ready for traffic. The same endpoint is the compose healthcheck
+target (`DOCKER_COMPOSE.md` section 6.2), so the check is identical locally
+and after a deploy.
 
-2. **Database rollback (only if required)** — if the release included a migration that must be reverted (for example, it caused a defect and the previous application version can no longer run against the new schema), run `scripts/database/rollback.sh` to revert the most recent migration, then redeploy the previous application image tag.
+The frontend is healthy when its root path returns `200`.
+
+---
+
+## 7. Rollback
+
+1. **Application rollback.** Redeploy the previous known-good tag with
+   `scripts/deployment/deploy.sh --tag <previous>`. Tags are immutable per
+   build (`CONTAINERIZATION.md` section 6), so nothing is rebuilt.
+2. **Database rollback, only if required.** If the release's migration
+   must be reverted (for example, the previous application version cannot
+   run against the new schema), run `scripts/database/rollback.sh`, then
+   redeploy the previous tag.
+3. **Verify.** Run `scripts/deployment/health-check.sh` again.
 
 ```text
 Rollback decision:
@@ -149,24 +168,4 @@ Rollback decision:
                                   then redeploy previous image tag
 ```
 
-3. **Verify** — run `scripts/deployment/health-check.sh` again after any rollback action to confirm the system has returned to a healthy state.
-
-No automated rollback trigger exists (e.g. an automatic revert on failed health check); rollback is a deliberate operator action for this take-home's scope, consistent with `CI_CD.md`'s decision not to implement continuous deployment.
-
----
-
-## 8. Explicitly Out of Scope
-
-To avoid overstating the maturity of this deployment story:
-
-- No claim is made that GeoResponse is currently deployed anywhere. This document describes the deployment approach and the scripts that carry it out; they have been exercised against a local Docker host only.
-- No load balancer, reverse proxy beyond the frontend's own nginx container, or TLS termination layer is described, since none is provisioned for this take-home. NFR-SEC-005 (secure transport) would apply if the system were exposed beyond a trusted local environment, but that exposure does not currently exist.
-- No multi-instance/HA database setup is described; a single PostgreSQL+PostGIS container is the documented target, consistent with `docs/05_engineering/TECHNOLOGY_SELECTION.md`'s decision boundaries (no premature infrastructure).
-
----
-
-## 9. Principle
-
-> Deployment should be a small, repeatable set of scripted steps — build, migrate, deploy, verify — proportionate to a single-host, single-environment target.
-
-The deployment model deliberately mirrors the local `docker compose` topology so that what is verified locally is representative of what would run on a real host, without introducing orchestration complexity the project's scope does not need.
+Rollback is never triggered automatically; an operator runs it.

@@ -2,11 +2,10 @@
 
 ## 1. Purpose
 
-Define standardized workloads and test cases for benchmarking geospatial map libraries used by the **Resource Readiness for Disaster Response** application.
-
-All candidate libraries must run equivalent scenarios using the same dataset and environment.
-
----
+Define the standardized workloads and test cases used to benchmark map
+libraries for the **Resource Readiness for Disaster Response*- application.
+All candidates run equivalent scenarios with the same dataset and
+environment.
 
 ## 2. Scenario Overview
 
@@ -20,32 +19,28 @@ All candidate libraries must run equivalent scenarios using the same dataset and
 | S06 | Large Dataset    | Evaluate scalability                |
 | S07 | Map Interaction  | Evaluate interaction responsiveness |
 
----
-
-## 3. S01 — Basic Map
+## 3. S01: Basic Map
 
 ### Workload
 
 Render a map with:
 
-* Basemap
-* Initial center
-* Initial zoom
-* No application features
+- Basemap
+- Initial center
+- Initial zoom
+- No application features
 
 ### Measure
 
-* Map initialization time
-* Time to first render
-* Bundle size
+- Map initialization time
+- Time to first render
+- Bundle size
 
 ### Purpose
 
 Establish the baseline overhead of each map library.
 
----
-
-## 4. S02 — Point Features
+## 4. S02: Point Features
 
 ### Workload
 
@@ -53,68 +48,64 @@ Render geographic points representing disaster-response resources.
 
 Example:
 
-* Hospitals
-* Shelters
-* Warehouses
-* Emergency posts
+- Hospitals
+- Shelters
+- Warehouses
+- Emergency posts
 
 Test with multiple feature counts.
 
 ### Measure
 
-* Rendering time
-* FPS during pan/zoom
-* Memory usage
-* Interaction responsiveness
+- Rendering time
+- FPS during pan/zoom
+- Memory usage
+- Interaction responsiveness
 
 ### Purpose
 
 Evaluate the primary visualization workload of the target application.
 
----
-
-## 5. S03 — GeoJSON
+## 5. S03: GeoJSON
 
 ### Workload
 
-Load and render equivalent GeoJSON data containing project-relevant geographic features.
+Load and render equivalent GeoJSON data containing project-relevant
+geographic features.
 
 ### Measure
 
-* GeoJSON loading time
-* Rendering time
-* Memory usage
-* Interaction performance
+- GeoJSON loading time
+- Rendering time
+- Memory usage
+- Interaction performance
 
 ### Purpose
 
-Evaluate how efficiently each library handles geospatial data commonly consumed from an API.
+Evaluate how efficiently each library handles geospatial data commonly
+consumed from an API.
 
----
-
-## 6. S04 — Polygon Features
+## 6. S04: Polygon Features
 
 ### Workload
 
 Render polygons representing:
 
-* Disaster-affected areas
-* Administrative areas
-* Operational zones
+- Disaster-affected areas
+- Administrative areas
+- Operational zones
 
 ### Measure
 
-* Rendering time
-* FPS during pan/zoom
-* Memory usage
+- Rendering time
+- FPS during pan/zoom
+- Memory usage
 
 ### Purpose
 
 Evaluate polygon rendering performance and interaction.
 
----
-
-## 7. S05 — Multiple Layers
+## 7. S05: Multiple Layers
 
 ### Workload
 
@@ -132,24 +123,22 @@ Disaster Areas
 
 Test:
 
-* Layer creation
-* Layer visibility toggle
-* Layer updates
+- Layer creation
+- Layer visibility toggle
+- Layer updates
 
 ### Measure
 
-* Layer operation time
-* Rendering performance
-* FPS
-* Memory usage
+- Layer operation time
+- Rendering performance
+- FPS
+- Memory usage
 
 ### Purpose
 
 Evaluate suitability for a map containing multiple operational datasets.
 
----
-
-## 8. S06 — Large Dataset
+## 8. S06: Large Dataset
 
 ### Workload
 
@@ -163,58 +152,50 @@ Minimum test levels:
 | Medium  |    1,000 |
 | Large   |   10,000 |
 
-The same geographic distribution and feature structure should be used across all candidates.
+The same geographic distribution and feature structure should be used
+across all candidates.
 
 ### Measure
 
-* Rendering time
-* FPS
-* Memory usage
-* Interaction responsiveness
+- Rendering time
+- FPS
+- Memory usage
+- Interaction responsiveness
 
 ### Purpose
 
 Identify how performance changes as the number of map features increases.
 
----
-
-## 9. S07 — Map Interaction
+## 9. S07: Map Interaction
 
 ### Workload
 
 Perform standardized interactions:
 
-* Pan
-* Zoom in
-* Zoom out
-* Feature selection
-* Layer toggle
-* Filtering
+- Pan
+- Zoom in
+- Zoom out
+- Feature selection
+- Layer toggle
+- Filtering
 
 ### Measure
 
-* Interaction FPS
-* Response time
-* Visual lag or stuttering
-* Memory changes
+- Interaction FPS
+- Response time
+- Visual lag or stuttering
+- Memory changes
 
 ### Purpose
 
 Evaluate whether the map remains responsive during typical user operations.
 
----
-
 ## 10. Test Consistency
 
-For every scenario:
+Every scenario runs under the conditions in `BENCHMARK_METHODOLOGY.md`
+section 3: the same dataset, equivalent feature styles, the same browser,
+hardware, viewport, and number of repetitions, with library versions and
+benchmark configuration recorded.
 
-* Use the same dataset.
-* Use equivalent feature styles.
-* Use the same browser.
-* Use the same hardware.
-* Use the same viewport size.
-* Use the same number of test repetitions.
-* Record library versions.
-* Record benchmark configuration.
-
-Any scenario that cannot be implemented equivalently across candidates must be documented before comparing its results.
+Any scenario that cannot be implemented equivalently across candidates must
+be documented before comparing its results.

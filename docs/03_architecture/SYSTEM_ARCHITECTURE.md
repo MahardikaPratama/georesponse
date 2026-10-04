@@ -2,23 +2,22 @@
 
 ## 1. Purpose
 
-This document defines the high-level architecture of the application.
+This document describes the high-level architecture of GeoResponse: the
+overall style, the responsibilities of each frontend and backend layer, and
+how the map library and API fit in. The allowed dependency direction
+between layers is defined in `DEPENDENCY_RULES.md`, and the reasons behind
+each architectural decision are in `ARCHITECTURE_DECISION_RECORDS.md`.
 
-The architecture is intentionally kept simple because this project is a take-home test. The main goal is to keep the system:
-
-- Easy to understand
-- Easy to develop
-- Easy to test
-- Easy to maintain
-- Ready to evolve if the requirements grow
+The architecture is kept simple so the system stays easy to understand,
+develop, test, and maintain, while still being able to evolve if the
+requirements grow.
 
 ---
 
 ## 2. Architecture Style
 
-The application uses a **Modular Monolith** architecture.
-
-The system is divided into two main applications:
+The application is a **Modular Monolith** (ADR-001, ADR-006) made of two
+applications and a database:
 
 ```text
 Frontend
@@ -35,9 +34,11 @@ Go
         ▼
 
 Database
+PostgreSQL + PostGIS
 ```
 
-Microservices and microfrontends are not used because they would add unnecessary complexity for the current project scope.
+It should remain a modular monolith unless the requirements give a clear
+reason to introduce distributed services.
 
 ---
 
@@ -50,7 +51,7 @@ Main responsibilities:
 - Render the user interface
 - Manage UI state
 - Fetch and display backend data
-- Display geographic data using the selected map library
+- Display geographic data through the Map Adapter
 - Handle user interactions
 
 Conceptually:
@@ -72,13 +73,15 @@ App
  └── Map Adapter
 ```
 
-The UI should not directly depend on backend implementation details or map-library-specific logic whenever it can be avoided.
+UI code should not depend on backend implementation details or on
+map-library-specific logic. The concrete folder structure is in
+`FRONTEND_ARCHITECTURE.md`.
 
 ---
 
 ## 4. Backend Architecture
 
-The backend uses Go and follows a simple layered structure.
+The backend uses Go with a simple layered structure:
 
 ```text
 HTTP Handler
@@ -92,44 +95,50 @@ Repository
 Database
 ```
 
+The concrete package layout is in `BACKEND_ARCHITECTURE.md`.
+
 ### Handler
 
 Responsible for:
 
-- Receiving HTTP requests
-- Validating request input
+- Receiving HTTP requests and reading path and query parameters
+- Decoding the request body strictly (well-formed JSON, no unknown fields,
+  correct JSON types); field and business-rule validation is not done here
+  (see `BACKEND_VALIDATION.md` section 2)
 - Calling the appropriate use case
-- Returning HTTP responses
+- Translating the result or error into the HTTP response
+
+Handlers are mounted on a Chi router (`internal/http/router.go`) whose
+middleware chain handles request IDs, request logging, panic recovery,
+CORS, and authentication.
 
 ### Application / Use Case
 
 Responsible for:
 
-- Application business flow
+- Application business flow, including authorization checks and calling
+  domain validation before any write
 - Coordinating domain operations
 - Calling repositories
 
 ### Domain
 
-Contains the core entities and business rules.
-
-The domain should not depend on HTTP, database drivers, or frontend concerns.
+Contains the core types (such as `Resource` and `Location`) and business
+rules. The domain does not depend on HTTP, database drivers, or frontend
+concerns.
 
 ### Repository
 
-Provides an interface for data access.
-
-The application layer should depend on the repository interface rather than directly depending on a specific database implementation.
+Provides an interface for data access. The application layer depends on
+the repository interface, not on a specific database implementation.
 
 ---
 
 ## 5. Map Integration
 
-The map library is treated as an infrastructure concern.
-
-The application should not spread MapLibre-specific code throughout React components.
-
-Instead:
+The map library is treated as an infrastructure concern. MapLibre-specific
+code stays behind the Map Adapter instead of spreading through React
+components:
 
 ```text
 React Components
@@ -139,36 +148,14 @@ Map Adapter
 MapLibre GL JS
 ```
 
-This keeps the map integration isolated and makes it easier to modify or test.
-
-The map technology was selected through a separate benchmark process documented in the benchmark documentation.
+This keeps the map integration isolated and easier to change or test. The
+exact import rule is `DEPENDENCY_RULES.md` section 3; the decision and its
+benchmark basis are ADR-005 and `TECHNOLOGY_SELECTION.md` section 7.
 
 ---
 
 ## 6. API Communication
 
-The browser-facing API uses:
-
-**REST + JSON**
-
-```text
-React
-  │
-  │ HTTP / JSON
-  ▼
-Go API
-```
-
-REST is selected because it is simple and directly supported by browsers, React, and Go. The full endpoint surface is defined in `API_CONTRACT.md`; the rationale for REST over gRPC is documented in `TECHNOLOGY_SELECTION.md` section 9.
-
-If future requirements introduce real-time data delivery, WebSocket or SSE can be introduced separately.
-
----
-
-## 7. Architecture Principle
-
-The architecture follows one main principle:
-
-> Keep responsibilities separated, but do not introduce complexity before it is needed.
-
-The project should remain a modular monolith unless the requirements provide a clear reason to introduce distributed services.
+The browser-facing API is REST + JSON under `/api/v1` (ADR-004). Real-time
+delivery is not part of the architecture (ADR-007). The endpoint contract
+is `API_CONTRACT.md`.

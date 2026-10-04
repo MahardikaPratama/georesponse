@@ -2,36 +2,23 @@
 
 ## 1. Purpose
 
-This document defines the functional requirements that GeoResponse must
-fulfill.
+This document defines the functional requirements GeoResponse must fulfill:
+the behavior the system provides for managing, discovering, visualizing, and
+monitoring resources. It is the reference for implementation, API design,
+functional testing, and acceptance.
 
-Functional requirements describe the behavior and capabilities that the
-system must provide to support users in managing, discovering, visualizing,
-and monitoring resource information.
+Requirements are derived from `SCOPE.md`, `DOMAIN_MODEL.md`, `USE_CASES.md`,
+and `BUSINESS_RULES.md`, and in turn drive the API contract, the frontend
+and backend implementation, and the automated tests. A requirement must not
+introduce a capability with no basis in those documents. Changes follow
+`SCOPE.md` section 10.
 
-This document serves as a reference for:
-
-- system design and implementation;
-- frontend and backend development;
-- API design;
-- functional testing;
-- acceptance criteria; and
-- validating implementation against product requirements.
-
-The requirements in this document are derived from:
-
-- `SCOPE.md`;
-- `DOMAIN_MODEL.md`;
-- `USE_CASES.md`; and
-- `BUSINESS_RULES.md`.
-
-The implementation status of these requirements at submission time —
-including any requirement that is only partially implemented — is recorded
-in `SCOPE.md` section 11.
+The implementation status of these requirements at submission, including
+the partially implemented ones, is recorded in `SCOPE.md` section 11.
 
 ---
 
-# 2. Conventions
+## 2. Conventions
 
 Each requirement uses a unique identifier in the following format:
 
@@ -52,9 +39,9 @@ explicitly stated otherwise.
 
 ---
 
-# 3. Resource Requirements
+## 3. Resource Requirements
 
-## FR-001 — Create Resource
+## FR-001: Create Resource
 
 **Priority:** Must
 
@@ -63,19 +50,19 @@ The system shall allow an authorized user to create a new resource.
 The system shall collect the minimum information required for a resource,
 including:
 
-- identifier;
-- name;
-- type;
-- status;
-- location; and
-- other relevant attributes.
+- identifier
+- name
+- type
+- status
+- location
+- other relevant attributes
 
 The system shall validate the submitted information before persisting the
 resource.
 
 ---
 
-## FR-002 — View Resource List
+## FR-002: View Resource List
 
 **Priority:** Must
 
@@ -83,14 +70,14 @@ The system shall provide a list of available resources.
 
 The displayed information shall allow users to understand, at minimum:
 
-- resource identity;
-- resource type;
-- resource status; and
-- resource location.
+- resource identity
+- resource type
+- resource status
+- resource location
 
 ---
 
-## FR-003 — View Resource Details
+## FR-003: View Resource Details
 
 **Priority:** Must
 
@@ -98,16 +85,16 @@ The system shall provide a detailed view of a selected resource.
 
 Resource details shall include:
 
-- identifier;
-- name;
-- type;
-- status;
-- location; and
-- relevant resource attributes.
+- identifier
+- name
+- type
+- status
+- location
+- relevant resource attributes
 
 ---
 
-## FR-004 — Update Resource
+## FR-004: Update Resource
 
 **Priority:** Must
 
@@ -115,15 +102,15 @@ The system shall allow an authorized user to update resource information.
 
 The system shall:
 
-1. accept the requested changes;
-2. validate the changes;
-3. persist valid changes;
-4. update the resource representation; and
-5. record relevant changes in resource history and the audit trail.
+1. accept the requested changes
+2. validate the changes
+3. persist valid changes
+4. update the resource representation
+5. record relevant changes in resource history and the audit trail
 
 ---
 
-## FR-005 — Delete Resource
+## FR-005: Delete Resource
 
 **Priority:** Must
 
@@ -133,15 +120,15 @@ The system shall provide a confirmation mechanism before deletion.
 
 After successful deletion:
 
-- the resource shall no longer be available in resource lists;
-- the resource shall no longer be displayed on the map; and
-- the deletion operation shall be recorded in the audit trail.
+- the resource shall no longer be available in resource lists
+- the resource shall no longer be displayed on the map
+- the deletion operation shall be recorded in the audit trail
 
 ---
 
-# 4. Resource Type Requirements
+## 4. Resource Type Requirements
 
-## FR-006 — Support Resource Types
+## FR-006: Support Resource Types
 
 **Priority:** Must
 
@@ -150,17 +137,17 @@ real-world objects.
 
 The MVP shall support:
 
-- Vehicle;
-- Facility;
-- Equipment; and
-- IoT Device.
+- Vehicle
+- Facility
+- Equipment
+- IoT Device
 
 The resource type model should allow additional types to be introduced
 without changing the fundamental resource management concept.
 
 ---
 
-## FR-007 — Validate Resource Type
+## FR-007: Validate Resource Type
 
 **Priority:** Must
 
@@ -169,9 +156,9 @@ type.
 
 ---
 
-# 5. Resource Attribute Requirements
+## 5. Resource Attribute Requirements
 
-## FR-008 — Store Resource Attributes
+## FR-008: Store Resource Attributes
 
 **Priority:** Must
 
@@ -181,7 +168,7 @@ Attributes may differ according to the resource type.
 
 ---
 
-## FR-009 — Validate Resource Attributes
+## FR-009: Validate Resource Attributes
 
 **Priority:** Must
 
@@ -192,9 +179,9 @@ resource type.
 
 ---
 
-# 6. Resource Status Requirements
+## 6. Resource Status Requirements
 
-## FR-010 — Display Resource Status
+## FR-010: Display Resource Status
 
 **Priority:** Must
 
@@ -202,14 +189,14 @@ The system shall display the operational status of each resource.
 
 The supported statuses are:
 
-- `AVAILABLE`;
-- `IN_USE`;
-- `MAINTENANCE`; and
-- `UNAVAILABLE`.
+- `AVAILABLE`
+- `IN_USE`
+- `MAINTENANCE`
+- `UNAVAILABLE`
 
 ---
 
-## FR-011 — Change Resource Status
+## FR-011: Change Resource Status
 
 **Priority:** Must
 
@@ -218,15 +205,15 @@ resource.
 
 The system shall:
 
-1. accept the new status;
-2. validate the status;
-3. persist the change;
-4. update the resource status; and
-5. record the change in status history and the audit trail.
+1. accept the new status
+2. validate the status
+3. persist the change
+4. update the resource status
+5. record the change in status history and the audit trail
 
 ---
 
-## FR-012 — Validate Resource Status
+## FR-012: Validate Resource Status
 
 **Priority:** Must
 
@@ -234,9 +221,9 @@ The system shall reject a status that is not a valid resource status.
 
 ---
 
-# 7. Geographic Location Requirements
+## 7. Geographic Location Requirements
 
-## FR-013 — Store Geographic Location
+## FR-013: Store Geographic Location
 
 **Priority:** Must
 
@@ -247,7 +234,7 @@ A geographic location is mandatory for every resource.
 
 ---
 
-## FR-014 — Validate Geographic Location
+## FR-014: Validate Geographic Location
 
 **Priority:** Must
 
@@ -258,7 +245,7 @@ Invalid coordinates shall be rejected.
 
 ---
 
-## FR-015 — Display Geographic Location
+## FR-015: Display Geographic Location
 
 **Priority:** Must
 
@@ -267,9 +254,9 @@ information and map-based representation.
 
 ---
 
-# 8. Resource Discovery Requirements
+## 8. Resource Discovery Requirements
 
-## FR-016 — Search Resources
+## FR-016: Search Resources
 
 **Priority:** Must
 
@@ -280,7 +267,7 @@ The system shall display resources matching the search criteria.
 
 ---
 
-## FR-017 — Filter by Resource Type
+## FR-017: Filter by Resource Type
 
 **Priority:** Must
 
@@ -288,7 +275,7 @@ The system shall allow users to filter resources by resource type.
 
 ---
 
-## FR-018 — Filter by Resource Status
+## FR-018: Filter by Resource Status
 
 **Priority:** Must
 
@@ -296,7 +283,7 @@ The system shall allow users to filter resources by resource status.
 
 ---
 
-## FR-019 — Combine Filters
+## FR-019: Combine Filters
 
 **Priority:** Must
 
@@ -306,14 +293,14 @@ The resulting resource set shall satisfy all selected filter criteria.
 
 ---
 
-# 9. Geospatial Visualization Requirements
+## 9. Geospatial Visualization Requirements
 
 The map is the primary geographic view of resource data: creating,
 updating, relocating, or deleting a resource (FR-001, FR-004, FR-005,
 FR-023) shall be reflected on the map view, and users shall be able to
 view resource detail directly from the map.
 
-## FR-020 — Display Resources on a Map
+## FR-020: Display Resources on a Map
 
 **Priority:** Must
 
@@ -322,7 +309,7 @@ geographic locations.
 
 ---
 
-## FR-021 — Select Resource from Map
+## FR-021: Select Resource from Map
 
 **Priority:** Must
 
@@ -332,19 +319,19 @@ relevant information, including navigating to its full resource detail
 
 ---
 
-## FR-022 — Reflect Resource Changes on Map
+## FR-022: Reflect Resource Changes on Map
 
 **Priority:** Must
 
 After a resource has been created, updated, relocated, or deleted, the
-system shall reflect the resulting state — including addition, removal,
-or updated position — on the map view.
+system shall reflect the resulting state (addition, removal, or updated
+position) on the map view.
 
 ---
 
-# 10. Resource Relocation Requirements
+## 10. Resource Relocation Requirements
 
-## FR-023 — Relocate Resource
+## FR-023: Relocate Resource
 
 **Priority:** Must
 
@@ -353,7 +340,7 @@ geographic location.
 
 ---
 
-## FR-024 — Validate Destination Location
+## FR-024: Validate Destination Location
 
 **Priority:** Must
 
@@ -362,28 +349,28 @@ performing a relocation.
 
 ---
 
-## FR-025 — Update Resource Location
+## FR-025: Update Resource Location
 
 **Priority:** Must
 
 After a successful relocation, the system shall:
 
-- update the geographic coordinates;
-- update the resource location information;
-- preserve the resource identity;
-- preserve the resource type; and
-- not automatically change the resource status.
+- update the geographic coordinates
+- update the resource location information
+- preserve the resource identity
+- preserve the resource type
+- not automatically change the resource status
 
 ---
 
-## FR-026 — Record Resource Relocation
+## FR-026: Record Resource Relocation
 
 **Priority:** Must
 
 The system shall record every successful relocation in:
 
-- location history; and
-- the audit trail.
+- location history
+- the audit trail
 
 The recorded information shall be sufficient to determine the previous
 location, new location, time of change, and user responsible for the change
@@ -391,9 +378,9 @@ when user identity is available.
 
 ---
 
-# 11. Authentication Requirements
+## 11. Authentication Requirements
 
-## FR-027 — Authenticate User
+## FR-027: Authenticate User
 
 **Priority:** Must
 
@@ -404,7 +391,7 @@ authenticated session or equivalent authenticated context.
 
 ---
 
-## FR-028 — Reject Invalid Authentication
+## FR-028: Reject Invalid Authentication
 
 **Priority:** Must
 
@@ -415,7 +402,7 @@ A failed authentication attempt shall not establish authenticated access.
 
 ---
 
-## FR-029 — Establish User Identity
+## FR-029: Establish User Identity
 
 **Priority:** Must
 
@@ -427,9 +414,9 @@ auditability.
 
 ---
 
-# 12. Authorization Requirements
+## 12. Authorization Requirements
 
-## FR-030 — Implement Role-Based Access Control
+## FR-030: Implement Role-Based Access Control
 
 **Priority:** Must
 
@@ -438,7 +425,7 @@ access to protected functionality.
 
 ---
 
-## FR-031 — Enforce Permissions
+## FR-031: Enforce Permissions
 
 **Priority:** Must
 
@@ -450,7 +437,7 @@ solely on frontend controls.
 
 ---
 
-## FR-032 — Reject Unauthorized Operations
+## FR-032: Reject Unauthorized Operations
 
 **Priority:** Must
 
@@ -462,24 +449,24 @@ initiated through the user interface or another API client.
 
 ---
 
-## FR-033 — Manage Roles and Permissions
+## FR-033: Manage Roles and Permissions
 
 **Priority:** Must
 
 The system shall allow an authorized administrator to:
 
-- view roles;
-- view permissions;
-- manage roles; and
-- manage permission assignments according to the authorization model.
+- view roles
+- view permissions
+- manage roles
+- manage permission assignments according to the authorization model
 
 Authorization changes shall be recorded in the audit trail.
 
 ---
 
-# 13. Resource History Requirements
+## 13. Resource History Requirements
 
-## FR-034 — View Resource History
+## FR-034: View Resource History
 
 **Priority:** Must
 
@@ -487,64 +474,47 @@ The system shall allow an authorized user to view the history of a resource.
 
 Resource history shall include:
 
-- status history;
-- location history; and
-- resource change history.
+- status history
+- location history
+- resource change history
 
 ---
 
-## FR-035 — Record Status History
+## FR-035: Record Status History
 
 **Priority:** Must
 
 The system shall create a history record when a resource status is
-successfully changed.
-
-The record shall provide sufficient information to determine:
-
-- previous status;
-- new status;
-- time of change; and
-- user responsible for the change when user identity is available.
+successfully changed, with the information required by BR-008. The record
+shape is defined in `docs/04_contracts/DATA_CONTRACT.md` section 8.1.
 
 ---
 
-## FR-036 — Record Location History
+## FR-036: Record Location History
 
 **Priority:** Must
 
 The system shall create a history record when a resource location is
-successfully changed.
-
-The record shall provide sufficient information to determine:
-
-- previous location;
-- new location;
-- time of change; and
-- user responsible for the change when user identity is available.
+successfully changed, with the information required by BR-014. The record
+shape is defined in `docs/04_contracts/DATA_CONTRACT.md` section 8.2.
 
 ---
 
-## FR-037 — Record Resource Change History
+## FR-037: Record Resource Change History
 
 **Priority:** Must
 
-The system shall record relevant changes to resource information.
-
-The history record shall provide sufficient information to determine:
-
-- the affected resource;
-- the changed information;
-- the value before the change when available;
-- the value after the change when available;
-- time of change; and
-- user responsible for the change when user identity is available.
+The system shall record relevant changes to resource information, with
+enough information to determine the affected resource, what changed, the
+before and after values when available, the time of change, and the
+responsible user when known (BR-017, BR-033). The record shape is defined
+in `docs/04_contracts/DATA_CONTRACT.md` section 8.3.
 
 ---
 
-# 14. Audit Trail Requirements
+## 14. Audit Trail Requirements
 
-## FR-038 — Record Audit Trail
+## FR-038: Record Audit Trail
 
 **Priority:** Must
 
@@ -553,32 +523,32 @@ system state.
 
 At minimum, auditable operations shall include:
 
-- resource creation;
-- resource update;
-- resource status change;
-- resource relocation;
-- resource deletion;
-- role changes; and
-- permission changes.
+- resource creation
+- resource update
+- resource status change
+- resource relocation
+- resource deletion
+- role changes
+- permission changes
 
 ---
 
-## FR-039 — Provide Audit Information
+## FR-039: Provide Audit Information
 
 **Priority:** Must
 
 An audit record shall provide information that enables an operation to be
 traced, including where available:
 
-- operation type;
-- operation time;
-- user who performed the operation;
-- affected resource or entity; and
-- relevant change information.
+- operation type
+- operation time
+- user who performed the operation
+- affected resource or entity
+- relevant change information
 
 ---
 
-## FR-040 — View Audit Trail
+## FR-040: View Audit Trail
 
 **Priority:** Must
 
@@ -589,9 +559,9 @@ audit trail.
 
 ---
 
-# 15. Data Validation Requirements
+## 15. Data Validation Requirements
 
-## FR-041 — Validate Data Before Persistence
+## FR-041: Validate Data Before Persistence
 
 **Priority:** Must
 
@@ -600,16 +570,16 @@ application state.
 
 Validation shall cover, at minimum:
 
-- identity;
-- name;
-- resource type;
-- resource status;
-- geographic location; and
-- relevant attributes.
+- identity
+- name
+- resource type
+- resource status
+- geographic location
+- relevant attributes
 
 ---
 
-## FR-042 — Reject Invalid Data
+## FR-042: Reject Invalid Data
 
 **Priority:** Must
 
@@ -620,7 +590,7 @@ The system shall not persist data known to be invalid.
 
 ---
 
-## FR-043 — Provide Validation Error Information
+## FR-043: Provide Validation Error Information
 
 **Priority:** Must
 
@@ -629,9 +599,9 @@ user or client to identify the invalid data.
 
 ---
 
-# 16. API Requirements
+## 16. API Requirements
 
-## FR-044 — Provide Resource Management APIs
+## FR-044: Provide Resource Management APIs
 
 **Priority:** Must
 
@@ -640,17 +610,17 @@ the resource management system.
 
 The APIs shall support the functional requirements for:
 
-- resource management;
-- resource discovery;
-- resource status;
-- resource relocation;
-- authentication;
-- authorization; and
-- resource history.
+- resource management
+- resource discovery
+- resource status
+- resource relocation
+- authentication
+- authorization
+- resource history
 
 ---
 
-## FR-045 — Validate API Input
+## FR-045: Validate API Input
 
 **Priority:** Must
 
@@ -659,7 +629,7 @@ state.
 
 ---
 
-## FR-046 — Enforce Business Rules Through the API
+## FR-046: Enforce Business Rules Through the API
 
 **Priority:** Must
 
@@ -670,24 +640,24 @@ Business rules shall not be enforced only by the frontend.
 
 ---
 
-## FR-047 — Provide API Error Responses
+## FR-047: Provide API Error Responses
 
 **Priority:** Must
 
 The API shall return an appropriate error response when:
 
-- a request is invalid;
-- a resource is not found;
-- authentication fails;
-- authorization fails;
-- a business rule is violated; or
-- a persistence operation fails.
+- a request is invalid
+- a resource is not found
+- authentication fails
+- authorization fails
+- a business rule is violated
+- a persistence operation fails
 
 ---
 
-# 17. Data Persistence Requirements
+## 17. Data Persistence Requirements
 
-## FR-048 — Persist Resource Information
+## FR-048: Persist Resource Information
 
 **Priority:** Must
 
@@ -696,7 +666,7 @@ available after the application is restarted.
 
 ---
 
-## FR-049 — Persist Resource History
+## FR-049: Persist Resource History
 
 **Priority:** Must
 
@@ -707,7 +677,7 @@ restarted.
 
 ---
 
-## FR-050 — Persist Audit Trail
+## FR-050: Persist Audit Trail
 
 **Priority:** Must
 
@@ -716,9 +686,9 @@ remain traceable.
 
 ---
 
-# 18. Error Handling Requirements
+## 18. Error Handling Requirements
 
-## FR-051 — Handle Resource Not Found
+## FR-051: Handle Resource Not Found
 
 **Priority:** Must
 
@@ -727,7 +697,7 @@ resource does not exist.
 
 ---
 
-## FR-052 — Handle Unauthorized Access
+## FR-052: Handle Unauthorized Access
 
 **Priority:** Must
 
@@ -736,62 +706,9 @@ permission to perform an operation.
 
 ---
 
-## FR-053 — Handle Persistence Failure
+## FR-053: Handle Persistence Failure
 
 **Priority:** Must
 
 The system shall handle persistence failures without reporting the operation
 as successful.
-
----
-
-# 19. Traceability
-
-Each functional requirement shall be traceable to the relevant source of
-the requirement.
-
-The primary relationship is:
-
-```text
-PRODUCT SCOPE
-      │
-      ▼
-DOMAIN MODEL
-      │
-      ▼
-USE CASES
-      │
-      ▼
-BUSINESS RULES
-      │
-      ▼
-FUNCTIONAL REQUIREMENTS
-      │
-      ├── Frontend Implementation
-      ├── Backend Implementation
-      ├── API Contract
-      └── Automated Tests
-```
-
-Functional requirements shall not introduce a new business capability that
-has no basis in the approved product scope, domain model, use cases, or
-business rules.
-
----
-
-# 20. Requirement Change Policy
-
-Changes to functional requirements shall be managed explicitly.
-
-When a new requirement is identified:
-
-1. identify the source of the requirement;
-2. determine whether it is already covered by the product scope;
-3. evaluate its impact on the domain model and business rules;
-4. update the relevant use case when user behavior changes;
-5. update affected functional requirements;
-6. update acceptance criteria and automated tests; and
-7. implement the change only after the requirement has been approved.
-
-AI Agents must not create new functional requirements based solely on
-implementation assumptions or technical preferences.

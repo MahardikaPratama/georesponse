@@ -2,175 +2,157 @@
 
 ## 1. Purpose
 
-This document defines how GeoResponse's frontend and backend applications are packaged into container images.
-
-The application is a modular monolith with exactly two runnable applications (frontend, backend) plus a database. Containerization strategy follows that shape directly: one image per application, built from a dedicated Dockerfile in each application's own directory.
-
----
-
-## 2. Scope Boundary
-
-In scope:
-
-- One Dockerfile for `georesponse-fe` and one for `georesponse-be`.
-- Multi-stage builds that separate build-time tooling from the runtime image.
-- Image naming and tagging convention.
-- What must NOT be baked into an image (secrets, environment-specific config).
-
-Out of scope:
-
-- A container registry / image publishing pipeline (not required for a take-home submission; images are built locally or in CI for verification only, per `CI_CD.md`).
-- Kubernetes manifests, Helm charts, or any orchestrator beyond docker-compose (excluded explicitly in `docs/05_engineering/TECHNOLOGY_SELECTION.md` section 17).
-- Base-image hardening/scanning processes beyond using official, minimal upstream images.
+This document describes how the GeoResponse frontend and backend are
+packaged as container images: one image per application, each built from a
+Dockerfile in the application's own directory. It covers the build stages,
+image tagging, and what must stay out of an image. It does not cover a
+registry or publishing pipeline (images are built locally or in CI for
+verification only, see `CI_CD.md`), orchestrators beyond Docker Compose
+(see `docs/05_engineering/TECHNOLOGY_SELECTION.md` section 17), or image
+scanning beyond using official upstream base images.
 
 ---
 
-## 3. Current State
+## 2. Files
 
-Both Dockerfiles are implemented and are what `docker-compose.yml`, `scripts/docker/build.sh`/`.ps1`, and the CI `docker-build` job build:
+These files are what `docker-compose.yml`, `scripts/docker/build.sh` /
+`.ps1`, and the CI `docker-build` job build:
 
-- `georesponse-fe/Dockerfile` — two-stage build of the React + TypeScript frontend (Node build → nginx runtime), with `georesponse-fe/nginx.conf` as the runtime server block and `georesponse-fe/.dockerignore` excluding `node_modules`, `dist`, `.env*`, and test artifacts.
-- `georesponse-be/Dockerfile` — two-stage build of the Go backend (Go build → Alpine runtime), with `georesponse-be/.dockerignore` excluding `.env*`, local binaries, and test artifacts.
+- `georesponse-fe/Dockerfile`, with `georesponse-fe/nginx.conf` as the
+  runtime server block and `georesponse-fe/.dockerignore`.
+- `georesponse-be/Dockerfile`, with `georesponse-be/.dockerignore`.
 
-The sections below describe the design those files implement; where the real file deviates from the illustrative sketch, the deviation is called out.
+The Dockerfiles and their header comments are the source of truth; the
+sections below summarize them.
 
 ---
 
-## 4. Frontend Containerization
+## 3. Multi-Stage Build Strategy
 
-### 4.1 Strategy
+Both images use a two-stage build. The build stage holds the full
+toolchain and produces the output; the runtime stage copies only that
+output forward. Source code, dev dependencies, build caches, and test files
+never reach the runtime image.
 
-The frontend is a static site once built (Rspack output is a set of HTML/CSS/JS assets with no server-side runtime requirement). The image therefore uses a two-stage build:
+---
 
-1. **Build stage** — a Node image with the full `georesponse-fe` toolchain, running `npm ci` and `npm run build` to produce static assets.
-2. **Runtime stage** — a minimal static file server (for example `nginx:alpine` or a lightweight Node static server) that only contains the built assets, not the source code, `node_modules` dev dependencies, or the build toolchain.
+## 4. Frontend Image
 
-```text
-┌─────────────────────────┐      ┌─────────────────────────┐
-│  Stage 1: build          │      │  Stage 2: runtime        │
-│  node:20-alpine           │      │  nginx:alpine (or similar)│
-│                           │      │                           │
-│  COPY package*.json       │      │  COPY --from=build         │
-│  RUN npm ci                │ ──▶ │    /app/dist → /usr/share/ │
-│  COPY . .                  │      │    nginx/html              │
-│  RUN npm run build          │      │  EXPOSE 80                 │
-└─────────────────────────┘      └─────────────────────────┘
-```
+### 4.1 Stages
 
-### 4.2 Illustrative Dockerfile
+| Stage | Base image | What it does |
+| --- | --- | --- |
+| `build` | `node:20-alpine` | `npm ci`, then `npm run build` with `NODE_ENV=production` (Rspack) |
+| `runtime` | `nginx:1.27-alpine` | Serves `/app/dist` from `/usr/share/nginx/html` with `nginx.conf`; exposes port 80 |
+
+`nginx.conf` serves the app as a single-page application (unknown paths
+fall back to `index.html`), caches content-hashed assets for a year, keeps
+`index.html` uncached, and enables gzip. It does not proxy the API: the
+browser calls the backend directly at `API_BASE_URL`.
+
+The image defines a `HEALTHCHECK` that runs `wget` against
+`http://127.0.0.1:80/`. It uses `127.0.0.1` rather than `localhost`
+because busybox `wget` resolves `localhost` to `::1` first and nginx only
+listens on IPv4.
+
+### 4.2 Build-Time Configuration
+
+The frontend is a static SPA. Rspack's `DefinePlugin` inlines
+`API_BASE_URL`, `MAP_TILE_URL`, and `LOG_LEVEL` into the bundle at build
+time, so the Dockerfile takes them as build-stage `ARG`s:
 
 ```dockerfile
-# georesponse-fe/Dockerfile (illustrative target design)
-
-# ---- Build stage ----
-FROM node:20-alpine AS build
-WORKDIR /app
-COPY package.json package-lock.json ./
-RUN npm ci
-COPY . .
 ARG API_BASE_URL=http://localhost:8080/api/v1
 ARG MAP_TILE_URL=
 ARG LOG_LEVEL=info
-RUN NODE_ENV=production API_BASE_URL="${API_BASE_URL}" MAP_TILE_URL="${MAP_TILE_URL}" LOG_LEVEL="${LOG_LEVEL}" npm run build
-
-# ---- Runtime stage ----
-FROM nginx:1.27-alpine AS runtime
-COPY --from=build /app/dist /usr/share/nginx/html
-COPY nginx.conf /etc/nginx/conf.d/default.conf
-EXPOSE 80
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 CMD wget -qO- http://127.0.0.1:80/ >/dev/null || exit 1
-CMD ["nginx", "-g", "daemon off;"]
 ```
 
-The frontend is a static SPA whose configuration (`API_BASE_URL`, `MAP_TILE_URL`, `LOG_LEVEL`) is inlined by Rspack's `DefinePlugin` at build time (see `ENVIRONMENT_MANAGEMENT.md` section 5.1). The real Dockerfile therefore takes those three values as `ARG`s in the build stage — `docker-compose.yml` passes them from the root `.env` through `build.args`, and `scripts/docker/build.sh`/`.ps1` pass them as `--build-arg` — so a frontend image is fixed to the backend address it was built for. Reusing one frontend image across environments with different backend addresses would require a runtime-injected config file served next to the assets, which this scope does not need.
+`docker-compose.yml` passes them from the root `.env` through `build.args`,
+and `scripts/docker/build.sh` / `.ps1` pass them as `--build-arg`. A
+frontend image is therefore tied to the backend address it was built for.
+Reusing one frontend image across backend addresses would need a config
+file injected at runtime next to the assets, which the current scope does
+not need. Variable details are in `ENVIRONMENT_MANAGEMENT.md` section 5.1.
 
 ---
 
-## 5. Backend Containerization
+## 5. Backend Image
 
-### 5.1 Strategy
+### 5.1 Stages
 
-Go compiles to a single static binary, which makes a minimal runtime image straightforward:
+| Stage | Base image | What it does |
+| --- | --- | --- |
+| `build` | `golang:1.26-alpine` | `go mod download` (cached layer), then `CGO_ENABLED=0 GOOS=linux go build -trimpath -ldflags="-s -w"` of `./cmd/api` |
+| `runtime` | `alpine:3.21` | Installs `ca-certificates`, adds a non-root `georesponse` user, copies the binary to `/usr/local/bin/georesponse-be`; exposes port 8080 |
 
-1. **Build stage** — a Go image with the full toolchain, running `go build` to produce a statically linked binary.
-2. **Runtime stage** — a minimal base image (`gcr.io/distroless/static` or `alpine`) containing only the compiled binary and any required runtime files (e.g. CA certificates for outbound HTTPS, migration files if bundled).
+All configuration is read from environment variables at start-up; nothing
+environment-specific is baked into the image.
 
-```text
-┌─────────────────────────┐      ┌─────────────────────────┐
-│  Stage 1: build          │      │  Stage 2: runtime        │
-│  golang:1.26-alpine       │      │  gcr.io/distroless/static │
-│                           │      │  (or alpine)               │
-│  COPY go.mod go.sum        │      │                           │
-│  RUN go mod download        │ ──▶ │  COPY --from=build         │
-│  COPY . .                  │      │    /app/georesponse-be     │
-│  RUN CGO_ENABLED=0 go build │      │  EXPOSE 8080                │
-└─────────────────────────┘      └─────────────────────────┘
-```
+### 5.2 Runtime Base Image
 
-### 5.2 Illustrative Dockerfile
+The runtime stage uses Alpine rather than distroless because the compose
+healthcheck runs `wget` inside the container against `/health`, and
+distroless has no shell or `wget`. Alpine's busybox provides `wget`, and
+`ca-certificates` allows outbound HTTPS to BMKG.
 
-```dockerfile
-# georesponse-be/Dockerfile (illustrative target design)
-
-# ---- Build stage ----
-FROM golang:1.26-alpine AS build
-WORKDIR /app
-COPY go.mod go.sum ./
-RUN go mod download
-COPY . .
-RUN CGO_ENABLED=0 GOOS=linux go build -o /out/georesponse-be ./cmd/api
-
-# ---- Runtime stage ----
-FROM gcr.io/distroless/static-debian12 AS runtime
-COPY --from=build /out/georesponse-be /georesponse-be
-EXPOSE 8080
-USER nonroot:nonroot
-ENTRYPOINT ["/georesponse-be"]
-```
-
-The real `georesponse-be/Dockerfile` uses the `alpine` option for the runtime stage rather than distroless, for one concrete reason: `docker-compose.yml`'s backend healthcheck runs `wget` *inside* the container against `/health`, and distroless has no shell or `wget` to run it with. Alpine's busybox provides `wget`, the image also installs `ca-certificates` (outbound HTTPS to BMKG), and the binary runs as a dedicated non-root user. Migration files are not bundled into the image; the compose file bind-mounts `database/migrations` read-only at `/migrations` and sets `MIGRATIONS_DIR` (see `DOCKER_COMPOSE.md` section 6.5).
+Migration files are not bundled into the image. The compose file
+bind-mounts `database/migrations` read-only at `/migrations` and sets
+`MIGRATIONS_DIR` (see `DATABASE_MIGRATIONS.md` section 4.2).
 
 ---
 
-## 6. Image Naming and Tagging Convention
+## 6. Image Naming and Tagging
 
-| Component | Image Name (illustrative) | Tag Convention |
-|---|---|---|
-| Frontend | `georesponse-fe` | `latest` for local dev (`docker compose up --build`); `<git-short-sha>` from `scripts/docker/build.sh` / `deploy.sh`; `ci` for the CI `docker-build` verification job |
-| Backend | `georesponse-be` | `latest` for local dev (`docker compose up --build`); `<git-short-sha>` from `scripts/docker/build.sh` / `deploy.sh`; `ci` for the CI `docker-build` verification job |
+| Image | Tags |
+| --- | --- |
+| `georesponse-fe` | `latest` for local dev (`docker compose up --build`); git short SHA from `scripts/docker/build.sh` / `deploy.sh`; `ci` in the CI `docker-build` job |
+| `georesponse-be` | Same as above |
 
-Since this take-home does not push images to a registry, no registry namespace prefix (e.g. `ghcr.io/<org>/`) is defined yet. If a registry were introduced, images would be namespaced as `ghcr.io/<org>/georesponse-fe:<tag>` and `ghcr.io/<org>/georesponse-be:<tag>` following standard convention, but this is not implemented.
+Images are not pushed to a registry, so no registry prefix is defined.
 
-Tags should be immutable per build (prefer a commit SHA or semantic version over reusing `latest` for anything beyond local development), so that `DEPLOYMENT.md`'s rollback-by-redeploying-a-previous-tag approach is possible.
-
----
-
-## 7. What Must NOT Be Baked Into Images
-
-Per NFR-SEC-004 (credential protection) and NFR-DEP-003 (configuration separation):
-
-- **Secrets** — database passwords, API keys, JWT signing secrets. These are supplied at container start via environment variables, never `COPY`'d into the image or hardcoded in the Dockerfile.
-- **Environment-specific configuration** — API base URLs, database hostnames, log levels. These differ between local dev and any future environment and must be read from environment variables at runtime, not compiled or copied into the image at build time.
-- **`.env` files** — local `.env` files are excluded from the build context via `.dockerignore` so they can never accidentally end up inside an image layer.
-- **Development-only files** — test files, `node_modules` dev dependencies, Go build cache, and local tooling configuration are left out of the final runtime stage by virtue of the multi-stage build only copying the compiled output forward.
-
-A `.dockerignore` file exists in each application directory (`georesponse-fe/.dockerignore`, `georesponse-be/.dockerignore`), excluding `node_modules`, `.env`/`.env.*`, `dist`/`build`, `coverage`, `*.log`, `.git`, local binaries, and test artifacts.
+Tags other than `latest` should be immutable per build (a commit SHA or a
+version), so that `DEPLOYMENT.md`'s rollback by redeploying a previous tag
+works.
 
 ---
 
-## 8. Local Build Entry Points
+## 7. What Must Not Be Baked Into Images
 
-Two script pairs standardize image builds so nobody has to remember raw `docker build` invocations:
+Per NFR-SEC-004 (credential protection) and NFR-DEP-003 (configuration
+separation):
 
-- `scripts/docker/build.sh` / `scripts/docker/build.ps1` — build both images (or one, with `--fe-only`/`--be-only`, `-FeOnly`/`-BeOnly`) tagged `<name>:<tag>` **and** `<name>:latest`, where `<tag>` defaults to the current git short SHA (immutable per build, per section 6) and can be overridden with `--tag`/`-Tag` or `IMAGE_TAG`. Frontend build arguments are read from the environment or the root `.env`.
-- `scripts/docker/clean.sh` / `scripts/docker/clean.ps1` — stop the compose stack's containers, remove every `georesponse-fe:*` / `georesponse-be:*` image, and prune dangling build layers — nothing else on the machine is touched. The database volume is kept unless `--volumes`/`-Volumes` is passed.
+- **Secrets** such as the database password and `TOKEN_SECRET` (the HMAC
+  key for authentication tokens). These are supplied as environment
+  variables at container start, never copied into the image or hardcoded in
+  a Dockerfile.
+- **Backend environment-specific configuration** such as the database
+  host, CORS origins, and log level. The backend reads these at runtime.
+  The frontend's three values are the exception: they are public, non-secret
+  build arguments (section 4.2).
+- **`.env` files.** Both `.dockerignore` files exclude `.env` and
+  `.env.*`, so they never end up in an image layer.
+- **Development-only files.** Between them, the `.dockerignore` files also
+  exclude `node_modules`, `dist`/`build`, `coverage`, `*.log`, `.git`,
+  local binaries, and test output (`*.test`, `*.out`), and the multi-stage
+  build only copies compiled output forward.
 
-`docker compose up --build` (and therefore `./run.sh`) builds the same Dockerfiles directly; the scripts exist for building/tagging outside compose, e.g. ahead of `scripts/deployment/deploy.sh`.
+How secrets and `.env` files are handled overall is in
+`ENVIRONMENT_MANAGEMENT.md` section 6.
 
 ---
 
-## 9. Principle
+## 8. Build Scripts
 
-> An image should be able to run identically in any environment; only the environment variables around it should change.
+- `scripts/docker/build.sh` / `build.ps1`: build both images, or one with
+  `--fe-only` / `--be-only` (`-FeOnly` / `-BeOnly`). Each image is tagged
+  `<name>:<tag>` and `<name>:latest`, where `<tag>` defaults to the git
+  short SHA and can be overridden with `--tag` / `-Tag` or `IMAGE_TAG`.
+  Frontend build arguments come from the environment or the root `.env`.
+- `scripts/docker/clean.sh` / `clean.ps1`: stop the compose stack's
+  containers, remove every `georesponse-fe:*` and `georesponse-be:*` image,
+  and prune dangling build layers. The database volume is kept unless
+  `--volumes` / `-Volumes` is passed.
 
-Keeping build-time artifacts and runtime configuration strictly separated is what allows a single built image to be promoted or redeployed without being rebuilt — the basis for the rollback strategy described in `DEPLOYMENT.md`.
+`docker compose up --build` (and `./run.sh`) build the same Dockerfiles
+directly. The scripts are for building and tagging outside compose, for
+example before `scripts/deployment/deploy.sh`.

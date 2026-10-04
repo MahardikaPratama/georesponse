@@ -2,9 +2,10 @@
 
 ## 1. Purpose
 
-This document defines the practical coding rules to follow when adding or modifying source code.
-
-These rules are intentionally focused on code quality and consistency. Architecture, API contracts, data models, scope, and technology decisions are defined in their respective documents.
+This document defines the code-level rules for adding or changing source
+code in GeoResponse: file headers, naming, documentation, error handling,
+and per-language conventions. Architecture, API contracts, data models,
+scope, and technology decisions live in their own documents.
 
 ---
 
@@ -13,22 +14,29 @@ These rules are intentionally focused on code quality and consistency. Architect
 - Keep each file focused on one primary responsibility.
 - Prefer simple, readable code over clever or overly abstract code.
 - Follow existing project conventions before introducing a new pattern.
-- Do not introduce dependencies, patterns, or abstractions without a clear need.
+- Do not introduce dependencies, patterns, or abstractions without a clear
+  need.
 - Keep business rules explicit and testable.
 - Avoid hidden side effects.
 - Do not leave commented-out code in the codebase.
 - Do not add unexplained magic numbers or strings.
-- Do not leave unfinished `TODO` items without sufficient context or a tracked issue/reference.
+- Do not leave a `TODO` without enough context or a tracked
+  issue/reference.
 
 ---
 
 ## 3. File Header
 
-Every source file must contain a file-level header with five fields: `Author`, `Version`, `Created Date`, `Description`, and `Changelog`.
+Every source file must contain a file-level header with five fields:
+`Author`, `Version`, `Created Date`, `Description`, and `Changelog`.
 
-**A multi-line comment must use the language's block-comment form (`/** */`-style), never a repeated single-line comment marker (`//`) stacked line after line.** This applies to every language that has a real block-comment syntax. The exact delimiters differ per language, but the shape is the same everywhere: one opening delimiter, the content, one closing delimiter — not the same marker repeated on every line.
+**A multi-line comment must use the language's block-comment form
+(`/** */`-style), never a single-line marker (`//`) repeated line after
+line.** This applies to every language that has real block-comment syntax.
+The delimiters differ per language, but the shape is the same: one opening
+delimiter, the content, one closing delimiter.
 
-### TypeScript / TSX / JavaScript
+### 3.1 TypeScript / TSX / JavaScript
 
 ```ts
 /*
@@ -43,9 +51,10 @@ Every source file must contain a file-level header with five fields: `Author`, `
  */
 ```
 
-### Go
+### 3.2 Go
 
-Go supports `/* */` block comments in addition to `//` line comments; use the block form for this header (exported-identifier GoDoc comments elsewhere in the file still use the normal `//` GoDoc convention — this rule is about the file header specifically):
+Use the `/* */` block form for the file header. GoDoc comments on exported
+identifiers elsewhere in the file still use the normal `//` convention.
 
 ```go
 /*
@@ -61,9 +70,9 @@ Changelog:
 package resource
 ```
 
-For non-package Go source files, use the same five-field block-comment header.
+Non-package Go source files use the same five-field block-comment header.
 
-### SQL
+### 3.3 SQL
 
 ```sql
 /*
@@ -77,7 +86,7 @@ For non-package Go source files, use the same five-field block-comment header.
  */
 ```
 
-### PowerShell (`.ps1`)
+### 3.4 PowerShell (`.ps1`)
 
 PowerShell's block-comment form is `<# ... #>`, not `#` repeated per line:
 
@@ -93,72 +102,101 @@ Changelog:
 #>
 ```
 
-### Pure configuration files, shell scripts, and env files — no header
+### 3.5 Files without a header
 
-**`.gitignore`, `.prettierignore`, `.prettierrc.json`, `.golangci.yml`, `sonar-project.properties`, `tsconfig.json`, `package.json`, GitHub Actions workflow YAML, and similar declarative configuration files do not get a file header at all.** They hold data/settings, not logic, and a header adds noise without adding information a `git log`/`git blame` on the file doesn't already give more precisely. This is different from executable configuration-as-code files that contain real logic (`rspack.config.js`, `tailwind.config.js`, `postcss.config.js`, `vitest.config.ts`, `eslint.config.js`) — those are source files and do get the standard header in their language's block-comment form.
+**Pure configuration files get no header:** `.gitignore`,
+`.prettierignore`, `.prettierrc.json`, `.golangci.yml`,
+`sonar-project.properties`, `tsconfig.json`, `package.json`, GitHub Actions
+workflow YAML, and similar declarative files. They hold settings, not
+logic, and `git log`/`git blame` already records their history more
+precisely. Configuration-as-code files that contain real logic
+(`rspack.config.js`, `tailwind.config.js`, `postcss.config.js`,
+`vitest.config.ts`, `eslint.config.js`) are source files and do get the
+standard header.
 
-**Bash scripts (`.sh`) and environment files (`.env`, `.env.example`) also do not get a file header.** Unlike other executable source files, `.sh` scripts are operational tooling (run/build/deploy helpers), not domain source code, and Bash's lack of a real block-comment syntax made the five-field header awkward to keep readable — a brief top-of-file comment describing the script's purpose is enough where one is useful. `.env`/`.env.example` files hold key-value configuration, not logic, same as the pure configuration files above.
+**Bash scripts (`.sh`) and environment files (`.env`, `.env.example`) also
+get no header.** Shell scripts are operational tooling (run, build, and
+deploy helpers), and Bash has no real block-comment syntax, so a brief
+top-of-file comment describing the script's purpose is enough where useful.
+`.env` files hold key-value configuration, like the files above.
 
-The `Description` should state **what the file is responsible for**, not repeat its implementation. Every subsequent change to the file adds one line to `Changelog` (new version, date, one-line summary) rather than rewriting history.
+The `Description` states **what the file is responsible for**, not how it
+is implemented. Every later change adds one line to `Changelog` (new
+version, date, one-line summary) instead of rewriting history.
 
-### Author, Version, and Date
+### 3.6 Author, Version, and Date
 
-- `Author` is the person who authored the file in this repository — for this project, **Mahardika Pratama**. Do not attribute a file to an AI tool; per `docs/13_ai/AI_WORKFLOW.md`, AI assistance is disclosed at the project level, not per file.
-- `Created Date` is the date the file was first added to **this** repository, in `YYYY-MM-DD` format — not the date of an earlier project it may have been adapted from.
-- When a file is adapted from prior personal work (e.g. a reusable utility), reset `Author` to Mahardika Pratama, `Version` to `1.0.0`, and `Created Date` to today, and start a fresh `Changelog` noting the adaptation (e.g. `"Adapted from a prior personal project for GeoResponse."`) — do not carry over the original project's version history line by line.
-- **Never include a company name, copyright notice, or "proprietary"/"confidential" marking in the header.** This is an individual take-home submission, not company-owned code — a header carrying another organization's copyright must never appear in this repository, including in code adapted from prior personal projects.
+- `Author` is the person who authored the file in this repository:
+  **Mahardika Pratama**. Do not attribute a file to an AI tool; AI
+  assistance is disclosed at the project level, per
+  `docs/13_ai/AI_WORKFLOW.md`.
+- `Created Date` is the date the file was first added to **this**
+  repository, in `YYYY-MM-DD` format, not the date of an earlier project it
+  was adapted from.
+- When a file is adapted from prior personal work (e.g. a reusable
+  utility), reset `Author` to Mahardika Pratama, `Version` to `1.0.0`, and
+  `Created Date` to today, and start a fresh `Changelog` noting the
+  adaptation (e.g. `"Adapted from a prior personal project for
+  GeoResponse."`). Do not carry over the original version history.
+- **Never include a company name, copyright notice, or
+  "proprietary"/"confidential" marking in the header.** This is an
+  individual take-home submission, not company-owned code, and that
+  includes code adapted from prior personal projects.
 
 ---
 
 ## 4. Naming
 
-Use names that communicate intent and follow the project's established naming convention.
+Use names that communicate intent.
 
-### General
+### 4.1 General
 
-- Use nouns for data/types.
-- Use verbs for actions/functions.
+- Use nouns for data and types.
+- Use verbs for actions and functions.
 - Avoid abbreviations unless they are well established.
-- Avoid generic names such as `data`, `item`, `value`, or `result` when a more meaningful name is available.
+- Avoid generic names such as `data`, `item`, `value`, or `result` when a
+  more meaningful name is available.
 
-### TypeScript / React
+### 4.2 TypeScript / React
 
 - Components: `PascalCase`
 - Types/interfaces: `PascalCase`
 - Functions/variables: `camelCase`
 - Constants: `SCREAMING_SNAKE_CASE`
 - Hooks: `useCamelCase`
-- Component utility files: `PascalCase.utils.ts`
-- Component type files: `PascalCase.types.ts`
-- Component constant files: `PascalCase.constants.ts`
-- Component hook files: `useCamelCase.ts`
-- Global type files: `camelCase.types.ts`
-- Global constant files: `camelCase.constants.ts`
-- Store files: `domain.store.ts` / `useDomainStore.ts` when a store is required
-
-### File and directory names
-
 - Directories: `kebab-case`
-- Default source files: `camelCase.ts`
-- React component files: `PascalCase.tsx`
-- Tests: colocated with the source file as `*.test.ts` or `*.test.tsx`
+- React component files: `PascalCase.tsx`; other source files:
+  `camelCase.ts`
+- Tests: colocated with the source file as `*.test.ts` or `*.test.tsx`; no
+  `__tests__` directories
 
-Do not introduce a separate `__tests__` directory when colocated tests are practical.
+File suffixes by kind (`.types.ts`, `.constants.ts`, `.utils.ts`, API
+modules, stores) are defined in `docs/06_frontend/FRONTEND_NAMING.md`
+section 3.
+
+### 4.3 Go
+
+Follow idiomatic Go naming (`gofmt`-clean code, `MixedCaps` identifiers,
+short lowercase package names). Package, file, and test naming for
+`georesponse-be` is defined in `docs/07_backend/BACKEND_NAMING.md`.
 
 ---
 
 ## 5. Documentation and Docstrings
 
-Documentation is required where it helps another developer understand the contract, purpose, or non-obvious behavior of code.
+Document code where it helps another developer understand its contract,
+purpose, or non-obvious behavior.
 
-### Required
+### 5.1 Required
 
-- Every source file has a file-level header.
-- Exported TypeScript functions, classes, components, and important public types should have JSDoc when their purpose or contract is not immediately obvious.
-- Exported Go identifiers must follow GoDoc conventions.
-- Complex internal functions must have a comment explaining their purpose, constraints, or non-obvious behavior.
+- Every source file has a file-level header (section 3).
+- Exported TypeScript functions, classes, components, and important public
+  types have JSDoc when their purpose or contract is not obvious.
+- Exported Go identifiers follow GoDoc conventions.
+- Complex internal functions have a comment explaining their purpose,
+  constraints, or non-obvious behavior.
 
-### TypeScript example
+### 5.2 TypeScript example
 
 ```ts
 /**
@@ -174,7 +212,7 @@ async function getResources(
 }
 ```
 
-### Go example
+### 5.3 Go example
 
 ```go
 // CreateResource creates a resource after validating the input
@@ -195,53 +233,59 @@ Do not write comments that merely restate the code.
 
 - Keep imports organized and consistent.
 - Remove unused imports.
-- Prefer direct imports over unnecessary re-export chains.
-- Do not use imports solely to hide an architectural dependency.
+- Prefer direct imports over re-export chains.
+- Do not use imports to hide an architectural dependency.
 - Keep import boundaries aligned with the module's responsibility.
 
 ---
 
 ## 7. Functions and Methods
 
-- A function should have one clear responsibility.
+- A function has one clear responsibility.
 - Keep functions short enough to understand without excessive scrolling.
 - Extract logic when a function starts handling multiple responsibilities.
 - Use descriptive parameters.
-- Prefer an options/input object when a function requires many related parameters.
-- Keep side effects explicit.
-- Avoid functions that both perform unrelated business logic and handle presentation concerns.
-- Handle asynchronous and I/O errors explicitly.
-- Export functions only when they are part of a module's intended public API.
+- Prefer an options/input object when a function needs many related
+  parameters.
+- Keep side effects visible.
+- Do not mix business logic and presentation concerns in one function.
+- Handle asynchronous and I/O errors.
+- Export functions only when they are part of a module's intended public
+  API.
 
-Do not add a function abstraction only to reduce line count. Extract code when the extracted unit has a meaningful responsibility or improves testability.
+Do not extract a function only to reduce line count. Extract code when the
+new unit has a meaningful responsibility or improves testability.
 
 ---
 
 ## 8. Types and Interfaces
 
-### TypeScript
+### 8.1 TypeScript
 
 - Prefer precise types over `any`.
-- Use `unknown` for data whose type is not yet known, then narrow it safely.
+- Use `unknown` for data whose type is not yet known, then narrow it.
 - Avoid unnecessary type assertions (`as`).
-- Avoid non-null assertions (`!`) unless the invariant is guaranteed and clear.
+- Avoid non-null assertions (`!`) unless the invariant is guaranteed and
+  clear.
 - Define domain types explicitly.
-- Keep API/transport types separate from domain types when their responsibilities differ.
-- Avoid duplicating the same type definition across modules.
+- Keep API/transport types separate from domain types when their
+  responsibilities differ.
+- Do not duplicate the same type definition across modules.
 
-### Go
+### 8.2 Go
 
 - Use domain-specific types when they improve correctness or readability.
-- Keep transport/request/response structures separate from domain structures when appropriate.
-- Do not leak database-specific structures into the domain layer unnecessarily.
+- Keep transport (request/response) structures separate from domain
+  structures where appropriate.
+- Do not leak database-specific structures into the domain layer.
 
 ---
 
 ## 9. Constants
 
 - Replace repeated or meaningful literals with named constants.
-- Constants must communicate the meaning of the value.
-- Keep constants close to the responsibility where they are used.
+- A constant's name communicates the meaning of the value.
+- Keep constants close to where they are used.
 - Do not create a global constant merely to avoid writing a literal once.
 
 Example:
@@ -254,26 +298,27 @@ const MAX_RESOURCE_NAME_LENGTH = 100;
 
 ## 10. Error Handling
 
-- Errors must be handled at the appropriate boundary.
+- Handle errors at the appropriate boundary.
 - Do not silently ignore errors.
 - Preserve useful error context.
 - Do not expose internal implementation details through API errors.
-- Use stable application/API error codes where required by the API contract.
-- Do not use exceptions/errors as normal control flow when a simpler result is appropriate.
+- Use the stable error codes defined by the API contract.
+- Do not use errors as normal control flow when a simpler result fits.
 
-### TypeScript
+### 10.1 TypeScript
 
-- Handle rejected promises explicitly.
+- Handle rejected promises.
 - Validate external data before using it.
 - Avoid broad `catch` blocks that hide the original problem.
 
-### Go
+### 10.2 Go
 
 - Return errors instead of using `panic` for expected runtime failures.
 - Wrap errors with context when crossing meaningful boundaries.
-- Preserve the original error when appropriate using `%w`.
-- Do not ignore returned errors with `_` unless there is a documented reason.
-- Pass `context.Context` first for functions performing I/O or operations that may need cancellation.
+- Preserve the original error with `%w` where appropriate.
+- Do not discard returned errors with `_` without a documented reason.
+- Pass `context.Context` first to functions that perform I/O or may need
+  cancellation.
 
 Example:
 
@@ -281,11 +326,14 @@ Example:
 return fmt.Errorf("create resource: %w", err)
 ```
 
+The full backend error flow is in
+`docs/07_backend/BACKEND_ERROR_HANDLING.md`.
+
 ---
 
 ## 11. Comments
 
-Comments should explain **why**, constraints, or non-obvious behavior.
+Comments explain **why**, constraints, or non-obvious behavior.
 
 Good:
 
@@ -303,7 +351,11 @@ setSelectedResource(resource);
 
 Do not use comments as a substitute for clear naming or structure.
 
-**Do not cite a `docs/*.md` file, its filename, or a section number inside a source-code comment** (e.g. `// per docs/07_backend/BACKEND_ARCHITECTURE.md section 4` or `-- DATA_CONTRACT.md section 3`). Explain the reasoning itself, in the comment's own words, as a self-contained statement a reader can act on without leaving the file. This keeps the code readable independent of the documentation tree, and reads as a normal engineering comment rather than scaffolding generated against a spec. The reverse direction is fine and expected: `docs/*.md` files may reference source files and other docs freely, and `README.md` files may link to `docs/*.md` for further reading — this rule is about comments inside source code specifically.
+**Do not cite a `docs/*.md` file, its filename, or a section number in a
+source-code comment** (e.g. `// per docs/07_backend/BACKEND_ARCHITECTURE.md
+section 4`). Explain the reasoning in the comment itself, so a reader can
+act on it without leaving the file. The reverse is fine: `docs/*.md` files
+may reference source files, and `README.md` files may link to `docs/*.md`.
 
 ---
 
@@ -313,9 +365,8 @@ Do not use comments as a substitute for clear naming or structure.
 - Avoid `any`.
 - Prefer explicit return types for exported functions.
 - Narrow external input before using it.
-- Avoid unnecessary type assertions.
-- Avoid non-null assertions unless justified.
-- Keep API calls in the appropriate data-access/application layer.
+- Avoid unnecessary type assertions and unjustified non-null assertions.
+- Keep API calls in the data-access layer (`api/`, called through hooks).
 - Keep business rules out of reusable presentation components.
 - Use existing project utilities before creating duplicates.
 
@@ -323,36 +374,40 @@ Do not use comments as a substitute for clear naming or structure.
 
 ## 13. React Rules
 
-### Components
+### 13.1 Components
 
 - Components use `PascalCase`.
 - Keep components focused on presentation and interaction.
-- Extract reusable logic into hooks or application-level functions.
+- Extract reusable logic into hooks.
 - Avoid large components with multiple unrelated responsibilities.
-- Do not place API/data-access logic directly in presentational components.
+- Do not place API/data-access logic directly in presentational
+  components.
 
-### State
+### 13.2 State
 
-- Use **TanStack Query** for server state.
-- Use React `useState` / `useReducer` for local UI state.
-- Do not duplicate server state into local state without a clear reason.
-- Avoid using `useEffect` as a substitute for server-state management.
+Server state uses **TanStack Query**; local UI state uses React `useState`
+/ `useReducer`. Do not copy server state into local state, and do not use
+`useEffect` plus `useState` as a substitute for a query. Details are in
+`docs/06_frontend/FRONTEND_STATE.md`.
 
-### Hooks
+### 13.3 Hooks
 
 - Custom hooks use the `useCamelCase` convention.
-- A hook should represent a coherent piece of reusable behavior.
-- Keep side effects inside the appropriate hook/application boundary.
+- A hook represents one coherent piece of reusable behavior.
+- Keep side effects inside the hook that owns them.
 
-### Lists
+### 13.4 Lists
 
 - Use stable, meaningful keys.
-- Do not use array indexes as keys for dynamic lists unless the list is genuinely static and order cannot change.
+- Do not use array indexes as keys for dynamic lists unless the list is
+  static and its order cannot change.
 
-### Map
+### 13.5 Map
 
-- MapLibre-specific implementation must remain behind the map adapter boundary.
-- Feature components should not directly depend on MapLibre APIs unless they are part of that adapter.
+Only code inside `components/resource-map/map-adapter/` may import
+`maplibre-gl` or call MapLibre APIs. Feature components such as
+`ResourceMap.tsx` use the adapter's interface. See
+`docs/06_frontend/FRONTEND_ARCHITECTURE.md` section 8.
 
 ---
 
@@ -360,12 +415,12 @@ Do not use comments as a substitute for clear naming or structure.
 
 - Follow idiomatic Go.
 - Run `gofmt` on Go source files.
-- Follow Go naming conventions.
 - Keep packages cohesive and small.
 - Export only identifiers that need to be part of the package API.
 - Add GoDoc comments to exported identifiers.
-- Keep handlers thin; business rules belong in the application/domain layer.
-- Keep database access inside the repository/data-access boundary.
+- Keep handlers thin; business rules belong in the application/domain
+  layer.
+- Keep database access inside the repository boundary.
 - Avoid global mutable state.
 - Pass context explicitly for request-scoped operations and I/O.
 - Return meaningful errors instead of panicking for expected failures.
@@ -374,60 +429,57 @@ Do not use comments as a substitute for clear naming or structure.
 
 ## 15. Tests
 
-### General
+### 15.1 General
 
-- Test observable behavior and business rules rather than implementation details.
-- Test success and relevant failure paths.
+- Test observable behavior and business rules, not implementation
+  details.
+- Test success paths and the relevant failure paths.
 - Tests must be deterministic.
 - Avoid arbitrary sleeps and timing-dependent assertions.
-- Mock or isolate external boundaries when appropriate.
+- Mock or isolate external boundaries where appropriate.
 
-### Frontend
+### 15.2 Frontend
 
-- Tests are colocated with the source:
-  - `ResourceList.test.tsx`
-  - `httpClient.test.ts`
-- Use Vitest and React Testing Library.
-- Prefer user-facing behavior and interaction assertions.
+Vitest and React Testing Library, colocated `*.test.ts(x)` files, and
+user-facing assertions. See `docs/06_frontend/FRONTEND_TESTING.md`.
 
-### Backend
+### 15.3 Backend
 
-- Use Go's standard `testing` package.
-- Test application/domain behavior independently from infrastructure where practical.
-- Test repository behavior separately when persistence behavior matters.
+Go's standard `testing` package, with application/domain behavior tested
+independently of infrastructure where practical. See
+`docs/07_backend/BACKEND_TESTING.md`.
+
+The overall test strategy is in `TESTING_STRATEGY.md`.
 
 ---
 
 ## 16. Formatting and Static Checks
 
-Before considering a change complete:
+The formatter, linter, type-check, build, and test commands a change must
+pass are defined in `docs/09_quality/QUALITY_GATES.md` section 3.
 
-- Run the project's formatter.
-- Run the project's linter/static checks.
-- Run relevant frontend tests.
-- Run relevant backend tests.
-- Ensure the project builds successfully.
-- Do not suppress lint/type errors without a documented reason.
-
-Formatting and static-analysis configuration should be shared through project configuration rather than individual developer preferences.
+- Do not suppress lint or type errors without a documented reason.
+- Formatting and static-analysis settings come from the shared project
+  configuration, not individual editor preferences.
 
 ---
 
 ## 17. Code Review Checklist
 
-Before committing or opening a pull request, verify:
+Code-level checks for every changed file:
 
-- [ ] Every changed source file has an appropriate header.
-- [ ] Names clearly describe their purpose.
+- [ ] Every changed source file has the header from section 3.
+- [ ] Names describe their purpose.
 - [ ] Exported/public APIs are documented where required.
-- [ ] Complex logic has explanatory documentation.
+- [ ] Complex logic has explanatory comments.
 - [ ] Functions have one clear responsibility.
 - [ ] No unnecessary abstraction was introduced.
 - [ ] No commented-out code remains.
 - [ ] No unexplained magic values were introduced.
-- [ ] Errors are handled explicitly.
-- [ ] Types are precise; unnecessary `any` and assertions are avoided.
-- [ ] React server state uses TanStack Query where appropriate.
-- [ ] MapLibre usage remains behind the map adapter.
-- [ ] Tests cover the changed behavior.
-- [ ] Formatting, linting, tests, and build checks pass.
+- [ ] Errors are handled, not ignored.
+- [ ] Types are precise; `any` and unnecessary assertions are avoided.
+- [ ] Server state uses TanStack Query.
+- [ ] `maplibre-gl` is imported only inside the map adapter.
+
+Tests, quality gates, documentation, and pull-request requirements are in
+`docs/12_workflow/DEFINITION_OF_DONE.md`.

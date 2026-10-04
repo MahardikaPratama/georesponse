@@ -2,10 +2,13 @@
 
 ## 1. Purpose
 
-This document expands `CODING_STANDARDS.md` section 10 (Go rules) into a
-full error-handling strategy for `georesponse-be`: how errors are created and
-wrapped as they cross layers, how they are translated into the
-`API_CONTRACT.md` error contract, and what must never reach the client.
+This document describes error handling in `georesponse-be`: how errors are
+created and wrapped as they cross layers, how they are translated into the
+API error contract, and what must never reach the client. It applies the
+Go rules in `CODING_STANDARDS.md` section 10. The full list of error codes
+is owned by `API_CONTRACT.md` section 13, and field-level validation rules
+by `BACKEND_VALIDATION.md`. Retry and circuit-breaker behavior is not
+required at the current scope.
 
 ---
 
@@ -23,19 +26,18 @@ HTTP Handler
 {"error": {"code", "message", "details"}}
 ```
 
-Each layer only translates the error, it does not swallow it. The original
-error is preserved with `%w` so it remains inspectable with `errors.Is` /
-`errors.As`, per `CODING_STANDARDS.md` section 10.
+Each layer translates the error and never swallows it. The original error
+is preserved with `%w` so it stays inspectable with `errors.Is` /
+`errors.As`.
 
 ---
 
 ## 3. Repository Layer
 
 The repository implementation is the only place that sees raw driver/SQL
-errors (`pgx` errors, constraint violations, connection failures). It must
-translate them into domain-meaningful sentinel or typed errors before
-returning to the application layer — it must not return a raw `pgx` error
-up through the use case.
+errors (`pgx` errors, constraint violations, connection failures). It
+translates the conditions the application must react to into domain
+sentinel errors, so the use case never has to inspect a `pgx` error.
 
 ```go
 // internal/repository/postgres/resource_repository.go
@@ -119,57 +121,43 @@ func (s *Service) RelocateResource(ctx context.Context, actingUserID string, act
 
 Business-rule violations (e.g. BR-010 invalid coordinates) are returned as
 the corresponding domain sentinel/typed error, not as a raw string error and
-not as an HTTP status code — the domain layer has no notion of HTTP.
+not as an HTTP status code. The domain layer has no notion of HTTP.
 
 ---
 
 ## 5. Handler Layer: Centralized Translation
 
-Handlers do not each hand-roll their own error-to-response logic. A single
-translation function in `internal/http/httpresponse` maps known domain
-errors to the `API_CONTRACT.md` error contract:
+Handlers do not write their own error responses. A single function,
+`WriteError` in `internal/http/httpresponse/error.go`, maps known errors to
+the error contract with one `switch` over `errors.Is` / `errors.As`
+(section 6 lists every case). Its shape:
 
 ```go
-// internal/http/httpresponse/error.go (abridged)
-
+// internal/http/httpresponse/error.go (excerpt)
 func WriteError(w http.ResponseWriter, r *http.Request, err error) {
     var validationErr *ValidationError
 
     switch {
-    case errors.Is(err, resource.ErrNotFound), errors.Is(err, auth.ErrNotFound), errors.Is(err, authorization.ErrNotFound):
+    case errors.Is(err, resource.ErrNotFound),
+        errors.Is(err, auth.ErrNotFound),
+        errors.Is(err, authorization.ErrNotFound):
         writeError(w, http.StatusNotFound, "RESOURCE_NOT_FOUND", "The requested resource does not exist", nil)
-    case errors.Is(err, resource.ErrIDConflict):
-        writeError(w, http.StatusConflict, "RESOURCE_ID_CONFLICT", "A resource with this id already exists", nil)
-    case errors.Is(err, resource.ErrInvalidType):
-        writeError(w, http.StatusBadRequest, "INVALID_RESOURCE_TYPE", "Resource type is missing or not recognized", nil)
-    case errors.Is(err, resource.ErrInvalidStatus):
-        writeError(w, http.StatusBadRequest, "INVALID_RESOURCE_STATUS", "Resource status is missing or not recognized", nil)
-    case errors.Is(err, resource.ErrInvalidLocation):
-        writeError(w, http.StatusBadRequest, "INVALID_LOCATION", "Geographic coordinates are missing or out of range", nil)
+
     case errors.As(err, &validationErr):
         writeError(w, http.StatusBadRequest, "VALIDATION_ERROR", "Request data does not satisfy validation rules", validationErr.Details())
-    case errors.Is(err, resource.ErrMissingID), errors.Is(err, resource.ErrMissingName),
-        errors.Is(err, resource.ErrMissingAttribute), errors.Is(err, resource.ErrInvalidAttribute),
-        errors.Is(err, authorization.ErrNameConflict):
-        writeError(w, http.StatusBadRequest, "VALIDATION_ERROR", "Request data does not satisfy validation rules", nil)
-    case errors.Is(err, auth.ErrInvalidCredentials), errors.Is(err, auth.ErrInvalidToken):
-        writeError(w, http.StatusUnauthorized, "AUTHENTICATION_FAILED", "Authentication failed", nil)
-    case errors.Is(err, authorization.ErrPermissionDenied):
-        writeError(w, http.StatusForbidden, "AUTHORIZATION_DENIED", "You do not have permission to perform this operation", nil)
-    case errors.Is(err, hotspot.ErrUpstreamUnavailable):
-        writeError(w, http.StatusBadGateway, "HOTSPOT_UPSTREAM_UNAVAILABLE", "BMKG hotspot data is temporarily unavailable", nil)
+
+    // ... one case per row of the table in section 6
+
     default:
-        // Unrecognized error: log with full detail, return a generic
-        // persistence/server error without leaking internals.
         logging.FromContext(r.Context()).Error("unhandled error", "error", err)
         writeError(w, http.StatusInternalServerError, "PERSISTENCE_ERROR", "The operation could not be completed", nil)
     }
 }
 ```
 
-`WriteError` takes the request so it can reach the request-scoped logger
-(request ID included) for the `default` branch. Handlers call it at their
-single error-return point, and decode bodies through
+`WriteError` takes the request so the `default` branch can log through the
+logger the Logging middleware attached to the request context. Handlers
+call it at each error return, and decode bodies through
 `httpresponse.DecodeJSON`, which already returns a `*ValidationError`:
 
 ```go
@@ -194,8 +182,7 @@ func (h *ResourceHandler) Relocate(w http.ResponseWriter, r *http.Request) {
 }
 ```
 
-This keeps the mapping table (error → code → HTTP status) in one place
-instead of duplicated across every handler.
+The mapping from error to code to HTTP status therefore lives in one place.
 
 ---
 
@@ -215,9 +202,8 @@ instead of duplicated across every handler.
 | Unrecognized/persistence failure, recovered panic | anything else | `PERSISTENCE_ERROR` | 500 |
 | BMKG unreachable and nothing cached | `hotspot.ErrUpstreamUnavailable` | `HOTSPOT_UPSTREAM_UNAVAILABLE` | 502 |
 
-The full code list is owned by `API_CONTRACT.md` section 13; this table only
-records the mapping to Go error values and HTTP statuses used in the handler
-translation layer.
+The code definitions are owned by `API_CONTRACT.md` section 13; this table
+records only the mapping to Go error values and HTTP statuses.
 
 ---
 
@@ -228,39 +214,39 @@ translation layer.
   response.
 - `details` carries structured, field-level validation information (see
   `BACKEND_VALIDATION.md`), not free-form internal diagnostics.
-- The `default` branch in the translation layer is intentionally generic:
-  an unrecognized error becomes `PERSISTENCE_ERROR` with a fixed message,
-  regardless of what the underlying error actually says.
+- The `default` branch is generic: an unrecognized error becomes
+  `PERSISTENCE_ERROR` with a fixed message, whatever the underlying error
+  says.
 
 ---
 
 ## 8. Server-Side Logging vs. Client-Facing Contract
 
-These are two distinct outputs from the same error and must not be
-conflated:
+The same error produces two separate outputs:
 
 ```text
 error
-  ├── Server log (structured, full detail: stack context, wrapped chain,
-  │    request ID, user ID when available) — for operators/debugging
-  └── HTTP response (API_CONTRACT.md envelope: code, human message,
-       field-level details) — for the client
+  ├── Server log: structured JSON with the full wrapped error chain,
+  │    for operators and debugging
+  └── HTTP response: API_CONTRACT.md envelope (code, safe message,
+       field-level details), for the client
 ```
 
-Every error that reaches the `default` branch of the translation layer (i.e.
-every error not specifically recognized) is logged server-side with its full
-wrapped chain before a generic response is returned. Recognized domain
-errors (`RESOURCE_NOT_FOUND`, validation errors, etc.) represent expected
-outcomes and do not need error-level logging; they may be logged at a lower
-level (e.g. debug/info) if request tracing is useful.
+Every error that reaches the `default` branch of `WriteError` is logged at
+error level with its full wrapped chain before the generic response is
+returned. That log line does not carry the request ID itself; the access
+log line the Logging middleware writes for the same request does
+(`request_id`, method, path, status, duration). Recognized domain errors
+(`RESOURCE_NOT_FOUND`, validation errors, and so on) are expected outcomes
+and are not logged at error level.
 
 ---
 
 ## 9. Panic Recovery
 
-A recovery middleware sits early in the middleware chain
-(`BACKEND_ARCHITECTURE.md` section 6) and converts an unrecovered panic into
-a `500 PERSISTENCE_ERROR`-style response instead of crashing the process:
+The recovery middleware sits early in the middleware chain
+(`BACKEND_ARCHITECTURE.md` section 6) and turns an unrecovered panic into a
+`500 PERSISTENCE_ERROR` response instead of crashing the process:
 
 ```go
 // internal/http/middleware/recovery.go
@@ -278,31 +264,7 @@ func Recovery(next http.Handler) http.Handler {
 }
 ```
 
-Panic recovery exists for genuinely unexpected failures (e.g. a nil
-dereference caused by a bug). It must not become a substitute for returning
-errors: expected failure paths (not found, validation, invalid state) are
-always returned as `error` values per `CODING_STANDARDS.md` section 10 ("Return
-errors instead of using `panic` for expected runtime failures"), never
-triggered via panic.
-
----
-
-## 10. Scope Boundary
-
-This document does not define:
-
-- the full list of error codes (see `API_CONTRACT.md` section 13);
-- field-level validation rules (see `BACKEND_VALIDATION.md`);
-- logging infrastructure/format configuration beyond the split described in
-  section 8;
-- retry or circuit-breaker behavior (not required by current scope).
-
----
-
-## 11. Error Handling Principle
-
-An error is translated exactly once, at a single boundary, into the stable
-client contract — and never loses its original cause on the way there.
-
-> The client sees a stable code and a safe message. The server log sees
-> everything.
+Panic recovery is for genuinely unexpected failures, such as a nil
+dereference caused by a bug. Expected failure paths (not found, validation,
+invalid state) are always returned as `error` values, never raised with
+`panic` (`CODING_STANDARDS.md` section 10).

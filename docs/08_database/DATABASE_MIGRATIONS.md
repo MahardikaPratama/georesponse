@@ -2,43 +2,39 @@
 
 ## 1. Purpose
 
-This document defines how the GeoResponse database schema is changed over
-time: the migration strategy, file layout, execution tooling, and the rules
-that keep the migration history trustworthy.
+This document defines how the GeoResponse schema changes over time: the
+migration strategy, file layout, the three mechanisms that apply
+migrations, the rules that keep the history trustworthy, and seed data.
 
-It does not define the target schema itself (see `DATABASE_SCHEMA.md`) or
-operational concerns such as backup and restore (see
-`DATABASE_OPERATIONS.md`).
+The target schema is in [`DATABASE_SCHEMA.md`](DATABASE_SCHEMA.md); backup,
+restore, and other operations are in
+[`DATABASE_OPERATIONS.md`](DATABASE_OPERATIONS.md). The scripts in
+`scripts/database/` implement the behavior described in section 4.
 
 ---
 
 ## 2. Strategy
 
-GeoResponse uses **versioned, incremental, plain-SQL migrations** — no
-ORM-driven auto-migration and no "diff the schema at runtime" tooling.
+GeoResponse uses versioned, incremental, plain-SQL migrations. There is no
+ORM-driven auto-migration and no runtime schema diffing.
 
-Reasoning, consistent with `TECHNOLOGY_SELECTION.md` section 3.6 (avoid
-premature infrastructure) and section 3.3 (maintainability):
+- Plain SQL is reviewable by any contributor without learning an ORM's
+  migration DSL.
+- PostGIS DDL (`geography(Point, 4326)`, `GIST` indexes) is easiest to
+  write directly in SQL.
+- A numbered up/down SQL file pair per change is enough for the project's
+  scope (`TECHNOLOGY_SELECTION.md` section 3.6, avoid premature
+  infrastructure).
 
-- Plain SQL is reviewable by any contributor without needing to understand an
-  ORM's migration DSL.
-- PostGIS-specific DDL (`geography(Point, 4326)`, `GIST` indexes) is easiest
-  to express directly in SQL.
-- The take-home scope does not justify a heavier migration framework; a
-  numbered up/down SQL file pair per change is sufficient and unambiguous.
-
-Each migration is a **forward step (`up`)** with a corresponding **reverse
-step (`down`)**, stored as a pair of files.
+Each migration is a forward step (`up`) with a matching reverse step
+(`down`), stored as a pair of files.
 
 ---
 
 ## 3. File Layout
 
-Migrations live in `database/migrations/` (seven pairs at the time of
-writing, `0001`–`0007`). Seed data is deliberately kept **separate** from
-schema migrations, in `database/seeds/` (see section 7).
-
-Naming convention:
+Migrations live in `database/migrations/` (seven pairs, `0001` to `0007`).
+Seed data is kept separate, in `database/seeds/` (section 7).
 
 ```text
 database/migrations/
@@ -58,20 +54,18 @@ database/migrations/
   0007_add_user_password_hash.down.sql
 ```
 
-Rules for the filename:
+Filename rules:
 
-- `NNNN` is a strictly increasing, zero-padded, four-digit sequence number,
-  assigned in commit order. Sequence numbers are never reused or reordered.
-- The descriptive suffix is short and states the change (`create_resources`,
-  `add_indexes`), not the ticket number or author.
-- Every file starts with the standard SQL comment header (author, version,
-  created date, description, changelog) required by `CODING_STANDARDS.md`.
-- `.up.sql` applies the change; `.down.sql` reverses exactly that change and
-  nothing else.
+- `NNNN` is a strictly increasing, zero-padded, four-digit sequence number
+  assigned in commit order. Numbers are never reused or reordered.
+- The suffix is short and describes the change (`create_resources`,
+  `add_indexes`), not a ticket number or author.
+- Every file starts with the standard SQL comment header from
+  `CODING_STANDARDS.md` section 3.
+- `.up.sql` applies the change; `.down.sql` reverses exactly that change.
 
-Example pair for migration `0001` (file headers omitted; the full column,
-`CHECK`, and index definitions are in `DATABASE_SCHEMA.md` section 5 and
-are not repeated here):
+Example pair for `0001` (headers omitted; the full columns, `CHECK`
+constraints, and indexes are in `DATABASE_SCHEMA.md` section 5):
 
 ```sql
 -- 0001_create_resources.up.sql
@@ -96,76 +90,108 @@ DROP TABLE IF EXISTS resources;
 
 ---
 
-## 4. Execution Tooling
+## 4. Applying Migrations
 
-Migrations are run through the scripts in `scripts/database/`, which are the
-single entry point for both local development and CI — nobody runs
-`psql -f` against a migration file by hand.
+Three mechanisms apply the same files and share one bookkeeping table
+(section 4.4), so they can be mixed freely against one database. Nobody
+runs `psql -f` against a migration file by hand.
+
+| Mechanism | When it runs | Applies seeds |
+|---|---|---|
+| CLI scripts (`scripts/database/`) | On demand; the path for non-development environments | Separate `seed` script |
+| Backend start-up runner | Every backend start with `APP_ENV=development` | No |
+| Docker first-run init hook | Once, when the `georesponse-db` volume is brand new | Yes |
+
+### 4.1 CLI Scripts
 
 | Script | Platform | Purpose |
 |---|---|---|
 | `scripts/database/migrate.sh` | bash (Linux/macOS/CI) | Apply all pending `up` migrations in order |
 | `scripts/database/migrate.ps1` | PowerShell (Windows) | Apply all pending `up` migrations in order |
-| `scripts/database/rollback.sh [N]` | bash | Revert the most recently applied migration(s) using their `down` files (`N` defaults to 1) |
-| `scripts/database/rollback.ps1 [N]` | PowerShell | Revert the most recently applied migration(s) using their `down` files (`N` defaults to 1) |
+| `scripts/database/rollback.sh [N]` | bash | Revert the `N` most recent migrations using their `down` files (`N` defaults to 1) |
+| `scripts/database/rollback.ps1 [N]` | PowerShell | Revert the `N` most recent migrations using their `down` files (`N` defaults to 1) |
 | `scripts/database/seed.sh` | bash | Load seed data after migrations have been applied |
 | `scripts/database/seed.ps1` | PowerShell | Load seed data after migrations have been applied |
 
-Both a bash and a PowerShell variant are provided for every operation so
-the same workflow works whether a contributor develops on Windows or a
-Unix-like shell, without relying on WSL or Git Bash being present. Every
-script reads the target database from the `DATABASE_URL` environment
-variable (`postgres://user:password@host:5432/dbname?sslmode=disable`)
-and exits non-zero with an install hint if `migrate` (or `psql`, for
-seeding) is not on `PATH`.
+Every operation has a bash and a PowerShell variant, so the workflow does
+not depend on WSL or Git Bash on Windows. Each script reads the target
+database from `DATABASE_URL`
+(`postgres://user:password@host:5432/dbname?sslmode=disable`) and exits
+non-zero with a hint if `DATABASE_URL` is unset or if `migrate` (or `psql`,
+for seeding) is not on `PATH`.
 
-The scripts delegate to the golang-migrate CLI (`migrate`, installed with
-`go install github.com/golang-migrate/migrate/v4/cmd/migrate@latest`), so
-the bookkeeping table is golang-migrate's: a single row
-`schema_migrations(version bigint primary key, dirty boolean)` holding the
-**current** version and whether the last run failed part-way. Two other
-mechanisms write the same table and are therefore interchangeable with the
-scripts against one database:
+`migrate` and `rollback` delegate to the golang-migrate CLI
+(`migrate -path database/migrations -database "$DATABASE_URL" up` /
+`down N`), installed with
+`go install github.com/golang-migrate/migrate/v4/cmd/migrate@latest`.
 
-- the backend's start-up runner (`georesponse-be/internal/platform/postgres`
-  `Migrate`), which applies pending `up` files from `MIGRATIONS_DIR`
-  (default `../database/migrations`, relative to `georesponse-be/`; the
-  compose file mounts the directory at `/migrations`) automatically when
-  `APP_ENV=development` (`docs/11_devops/DOCKER_COMPOSE.md` section 6.5),
-  applying each file and its version bump in one transaction, and
-  refusing to start on a `dirty` row;
-- the first-run initialization hook
-  `docker/postgres/init/01-init-schema-and-seeds.sh`, which the
-  `postgis/postgis` image runs once on a brand-new Docker volume: it
-  applies every `up` file with `psql`, writes the highest version to
-  `schema_migrations`, then loads every `database/seeds/*.sql`.
+- **migrate** applies pending `up` files in ascending order, updates the
+  bookkeeping row after each one, and stops with a non-zero exit on the
+  first failure. A failed file leaves the row marked `dirty`.
+- **rollback** runs the `down` file of the current version, newest first,
+  `N` times, and moves the bookkeeping row to the previous version (or
+  removes it after rolling back `0001`).
 
-Expected behavior of `migrate.sh` / `migrate.ps1`:
+`CREATE INDEX CONCURRENTLY` cannot run inside a transaction. No migration
+uses it, and the project's data volume does not call for it.
 
-1. Read the database connection string from environment configuration (not
-   hard-coded).
-2. Track applied migrations in the bookkeeping table above, so the script
-   can determine which `NNNN_*.up.sql` files have not yet run.
-3. Apply pending `up` migrations in ascending numeric order, each inside its
-   own transaction where the statement supports it (note: `CREATE INDEX
-   CONCURRENTLY` cannot run inside a transaction — such migrations are
-   written and applied accordingly, and are not expected in this take-home's
-   scope given its data volume).
-4. After each successfully applied migration, set the single
-   `schema_migrations` row to that migration's version.
-5. Stop and exit non-zero on the first failure, leaving the database at the
-   last successfully applied migration.
+### 4.2 Backend Start-Up Runner
 
-Expected behavior of `rollback.sh` / `rollback.ps1`:
+When `APP_ENV=development`, `cmd/api/main.go` calls
+`internal/platform/postgres.Migrate` after connecting to the database and
+before binding the HTTP port. The runner:
 
-1. Determine the current version from `schema_migrations`.
-2. Run that migration's `.down.sql` file (repeated `N` times for `N` steps,
-   newest first).
-3. Set the `schema_migrations` row to the previous version (or delete it
-   when rolling back `0001`).
+1. reads every `NNNN_*.up.sql` file from `MIGRATIONS_DIR` (default
+   `../database/migrations`, relative to `georesponse-be/` when run with
+   `go run`; the compose file sets `/migrations` and bind-mounts
+   `database/migrations` there read-only), sorted by version, and fails on
+   two files with the same version;
+2. creates `schema_migrations` if it does not exist;
+3. refuses to start (`ErrDirtyDatabase`) if the bookkeeping row is
+   `dirty`, so a failed earlier run is repaired by hand instead of guessed
+   at;
+4. applies each file newer than the recorded version in its own
+   transaction, together with the version update, so a failure leaves
+   neither a half-applied file nor a stale version;
+5. logs each applied file, and exits the process if any step fails.
 
-The scripts implement this contract; this document remains the
-specification they must satisfy.
+With `APP_ENV=development`, configuration loading also fails at start-up if
+`MIGRATIONS_DIR` is not a readable directory. This runner is what lets
+`./run.sh` or `docker compose up` bring up a migrated stack without a
+separate migration step. It is limited to development: for other
+environments, `DEPLOYMENT.md` keeps migration as an explicit step before
+the new backend starts, since applying migrations on every process start is
+not a safe default for a database with real data.
+
+### 4.3 Docker First-Run Init Hook
+
+`docker/postgres/init/01-init-schema-and-seeds.sh` is mounted into the
+`postgis/postgis` image's `/docker-entrypoint-initdb.d`, which the image
+runs only when the data volume is brand new. The compose file also mounts
+`database/migrations` and `database/seeds` read-only at
+`/georesponse/migrations` and `/georesponse/seeds`. The script:
+
+1. applies every `*.up.sql` in ascending order with
+   `psql -v ON_ERROR_STOP=1`;
+2. writes the highest version to `schema_migrations` (`dirty = false`);
+3. loads every `database/seeds/*.sql` in name order.
+
+On later starts (an existing volume) the hook does not run, and the
+backend start-up runner applies any newer migrations. The migration
+directories are not mounted into `docker-entrypoint-initdb.d` directly,
+because the entrypoint only runs top-level files there and would also try
+to run the `.down.sql` files.
+
+### 4.4 Bookkeeping Table
+
+All three mechanisms use golang-migrate's table:
+
+```sql
+schema_migrations(version bigint NOT NULL PRIMARY KEY, dirty boolean NOT NULL)
+```
+
+It holds a single row: the current version and whether the last run failed
+part-way. It is not application data.
 
 ---
 
@@ -173,52 +199,45 @@ specification they must satisfy.
 
 ### 5.1 One Logical Change Per Migration
 
-A migration does one coherent thing — create one table and its immediate
-indexes, add one column, introduce one constraint. Unrelated changes (e.g.
-"create `audit_records`" and "add an index to `resources`") belong in
-separate migration files, even if they land in the same pull request. This
-keeps each migration reviewable and independently revertible.
+A migration does one coherent thing: create one table and its indexes, add
+one column, or introduce one constraint. Unrelated changes (for example
+"create `audit_records`" and "add an index to `resources`") go in separate
+files, even in the same pull request, so each migration is reviewable and
+revertible on its own.
 
-### 5.2 Migrations Are Forward-Only in Version-Control History
+### 5.2 Merged Migrations Are Never Edited
 
-Once a migration has been merged to `main`, it is never edited, renamed, or
-deleted, even though a `.down.sql` file exists for runtime rollback. If a
-merged migration turns out to be wrong, the fix is a **new** migration
-(`000N+1_fix_...`) that corrects the schema going forward. This is the same
-principle as never `git commit --amend`-ing a pushed commit: history that
-other environments may have already applied must stay append-only.
+Once a migration is merged to `main`, it is never edited, renamed, or
+deleted. If it turns out to be wrong, a new migration (`000N+1_fix_...`)
+corrects the schema going forward, because other environments may already
+have applied the original. Migration `0006` is an example: it relaxes
+foreign keys created by `0003` instead of editing `0003`.
 
-The `down` migration exists to let a developer or CI job roll back an
-**unmerged / locally-applied** change during development, not to rewrite
-already-shared history.
+The `down` files exist so a developer or CI job can roll back an unmerged,
+locally applied change, not to rewrite shared history.
 
 ### 5.3 Migrations Are Reviewed Like Code
 
-A migration is reviewed in the same pull request as the application code
-that depends on it, with the same scrutiny as any other code change:
-correctness of the DDL, index coverage, naming consistency with
+A migration is reviewed in the same pull request as the code that depends
+on it: correct DDL, index coverage, naming consistent with
 `DATABASE_SCHEMA.md`, and a working `down.sql`.
 
 ### 5.4 No Application Logic in Migrations
 
-Migrations contain schema DDL (and, where unavoidable, minimal one-time data
-backfills required by a schema change, e.g. populating a new `NOT NULL`
-column before the constraint is added). They do not contain demo or test
-data — that belongs to seeding (section 7).
+Migrations contain schema DDL and, where a schema change requires it, a
+minimal one-time backfill (for example, populating a new `NOT NULL` column
+before adding the constraint). Demo and test data belong in seeds
+(section 7).
 
-### 5.5 Idempotent Extension/Object Creation
+### 5.5 Idempotent Object Creation
 
-Statements that may legitimately run against an environment where the object
-already exists use `IF NOT EXISTS` / `IF EXISTS` guards (as shown in section
-3) so re-running the migration runner against a partially-provisioned
-database fails safely rather than erroring on the first line.
+Statements that may run against a database where the object already exists
+use `IF NOT EXISTS` / `IF EXISTS` guards (section 3), so re-running against
+a partially provisioned database does not fail on the first line.
 
 ---
 
 ## 6. Migration Order
-
-The migrations applied so far, reflecting the entities defined in
-`DATA_CONTRACT.md` and `DOMAIN_MODEL.md`:
 
 ```text
 0001  enable postgis, create resources (+ type/status/GIST indexes)
@@ -227,56 +246,36 @@ The migrations applied so far, reflecting the entities defined in
 0003  create resource_status_history, resource_location_history,
       resource_change_history (+ resource_id indexes)
 0004  create audit_records (+ resource_id/user_id/occurred_at indexes)
-0005  intentional no-op: every index was already created inline with its
-      table in 0001-0004; the number is reserved rather than duplicated
+0005  no-op: every index was already created inline with its table in
+      0001-0004; the number is reserved rather than duplicated
 0006  relax the three history tables' resource_id from NOT NULL /
       ON DELETE CASCADE to nullable / ON DELETE SET NULL
 0007  add users.password_hash (text NOT NULL DEFAULT '')
 ```
 
-Later migrations append to this sequence; they never renumber it.
+New migrations append to this sequence and never renumber it.
 
 ---
 
 ## 7. Seed Data
 
-Seed data (sample resources, a default admin user/role, reference
-permissions) is loaded via `scripts/database/seed.sh` / `seed.ps1`, which
-read SQL files from `database/seeds/` in name order
-(`0001_sample_resources.sql`, `0002_sample_auth.sql`,
-`0003_sample_auth_coordinator.sql`). On a brand-new Docker volume the
-compose stack loads them automatically after the migrations
-(`docs/11_devops/DOCKER_COMPOSE.md` section 6.1).
+Seed data (sample resources, demo users, roles, and permissions) lives in
+`database/seeds/` and is loaded in name order:
 
-Seeding is deliberately kept out of the migration files because:
+- `0001_sample_resources.sql`
+- `0002_sample_auth.sql`
+- `0003_sample_auth_coordinator.sql`
 
-- seed data is environment-specific (local development wants demo resources;
-  a shared environment might not), while schema migrations must be identical
-  across every environment;
-- seeds may need to be re-run or reset independently of the schema version.
+`scripts/database/seed.sh` / `seed.ps1` load them with `psql` against
+`DATABASE_URL`. On a brand-new Docker volume the init hook loads them
+automatically after the migrations (section 4.3). The demo accounts are
+listed in the root `README.md`.
 
-Only `0001_sample_resources.sql` is idempotent (`ON CONFLICT (id) DO
-NOTHING`); `0002` and `0003` use plain `INSERT`s, so re-running the seed
-scripts against an already-seeded database fails on a duplicate primary
-key. Reset the data (or the Docker volume) before seeding again.
+Seeds are kept out of the migration files because seed data is
+environment-specific (local development wants demo data; another
+environment might not), while migrations must be identical everywhere, and
+seeds may need to be re-run or reset independently of the schema version.
 
----
-
-## 8. Scope Boundary
-
-This document does not cover:
-
-- the target schema's column definitions (see `DATABASE_SCHEMA.md`);
-- how to back up or restore a database, or how to size a connection pool
-  (see `DATABASE_OPERATIONS.md`);
-- the internal implementation of `migrate.sh` / `migrate.ps1` /
-  `rollback.sh` / `rollback.ps1` / `seed.sh` / `seed.ps1` beyond the
-  contract described in section 4 — these scripts are implementation, this
-  document is the specification they must satisfy.
-
----
-
-## 9. Migration Principle
-
-> The migration history is the schema's audit trail. It is append-only,
-> reviewed like code, and never rewritten once shared.
+Every seed `INSERT` uses `ON CONFLICT ... DO NOTHING`, so running the seed
+scripts again against an already-seeded database is safe and leaves
+existing rows unchanged.

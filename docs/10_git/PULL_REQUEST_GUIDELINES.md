@@ -2,41 +2,42 @@
 
 ## 1. Purpose
 
-This document defines how pull requests (PRs) are titled, described, sized, reviewed, and merged for GeoResponse. It builds directly on the branching and commit conventions in `GIT_MANAGEMENT.md` and the pass/fail criteria in `QUALITY_GATES.md`.
+This document defines how pull requests (PRs) for GeoResponse are titled,
+described, sized, reviewed, and merged. Branch and commit conventions are in
+`GIT_MANAGEMENT.md`, the pass/fail checks are in `QUALITY_GATES.md`, and the
+final pre-merge checklist is in `docs/12_workflow/DEFINITION_OF_DONE.md`.
 
-Even on a small, short-timeline project, every non-trivial change goes through a PR rather than being pushed straight to `main` — this keeps a reviewable record of what changed and why, which matters both for the take-home evaluation and for any future continuation of the project.
+Non-trivial changes go through a PR rather than straight to `main`, so there
+is a reviewable record of what changed and why.
 
 ---
 
 ## 2. PR Title Convention
 
-PR titles mirror the Conventional Commits format used for commit messages (see `GIT_MANAGEMENT.md` §5):
+PR titles use the Conventional Commits format from `GIT_MANAGEMENT.md`
+section 5, because the squash-merged commit takes the PR title as its
+message (section 7).
 
-```text
-<type>[optional scope]: <description>
-```
-
-Examples:
-
-```text
-feat(resource): add relocation endpoint
-fix(map): correct marker cleanup on unmount
-docs: fill git management and PR guideline docs
-refactor(resource): extract status-transition rules into domain service
-```
-
-If a PR's branch already contains multiple commits with different types, the PR title should reflect the overall intent of the change (usually the primary `type`), not an arbitrary list of everything included.
+If the branch contains commits of different types, the title reflects the
+overall intent of the change (usually the primary `type`), not a list of
+everything included.
 
 ---
 
 ## 3. Required PR Description Content
 
-Every PR description must include:
+Every PR description includes:
 
-1. **What changed** — a short summary of the functional or structural change (new endpoint, new component, bug fix, refactor, doc fill-in, etc.).
-2. **Why** — the reason for the change: which requirement, bug, or gap it addresses. Reference the relevant requirement ID or document where applicable (e.g. "Implements NFR-GEO-004 relocation consistency").
-3. **How it was tested** — which tests were added/run (`vitest run`, `go test ./...`), and any manual verification performed (e.g. exercised the relocation flow through the UI against a local backend).
-4. **Linked documentation/requirement** — if the change affects behavior described in `docs/` (requirements, architecture, API contract), link or name the relevant document so reviewers can cross-check.
+1. **What changed**: a short summary of the functional or structural change
+   (new endpoint, new component, bug fix, refactor, doc update).
+2. **Why**: the requirement, bug, or gap it addresses. Reference the
+   requirement ID or document where applicable (for example "Implements
+   NFR-GEO-004 relocation consistency").
+3. **How it was tested**: tests added or run (`vitest run`,
+   `go test ./...`) and any manual verification (for example, exercising the
+   relocation flow through the UI against a local backend).
+4. **Related documentation or requirements**: the `docs/` files whose
+   described behavior the change affects, so reviewers can cross-check.
 
 ### 3.1 Template
 
@@ -54,68 +55,75 @@ Every PR description must include:
 <Links or names of affected documents, e.g. NON_FUNCTIONAL_REQUIREMENTS.md NFR-GEO-004.>
 ```
 
-A PR description that only restates the title ("adds relocation endpoint") is not sufficient — it must explain the reasoning and verification, not just repeat what the diff already shows.
+A description that only restates the title is not enough. It must explain
+the reasoning and the verification.
 
 ---
 
 ## 4. PR Size Guidance
 
-- Keep PRs small and focused on a single logical change, mirroring the commit granularity guidance in `GIT_MANAGEMENT.md` §6.
-- A PR should be reviewable in one sitting. If a change grows to cover multiple unrelated concerns (e.g. a new endpoint *and* an unrelated refactor of the map adapter), split it into separate PRs.
-- Large, unavoidable changes (e.g. introducing a new domain concept end-to-end: migration, repository, service, handler, frontend integration) are acceptable as a single PR only when the pieces are not independently meaningful — but the description must make the scope explicit so review effort can be planned accordingly.
-- Pure documentation PRs (filling in `docs/`) are expected to be larger by nature but should still stay scoped to a coherent set of related documents rather than mixing unrelated sections of the project.
+- Keep each PR to a single logical change, reviewable in one sitting (see
+  the commit granularity rules in `GIT_MANAGEMENT.md` section 6). Split
+  unrelated concerns, such as a new endpoint and an unrelated map adapter
+  refactor, into separate PRs.
+- A large change is acceptable as one PR only when its pieces are not
+  independently meaningful (for example a new domain concept end to end:
+  migration, repository, service, handler, frontend). The description must
+  then state the scope so review effort can be planned.
+- Documentation PRs are naturally larger but should stay scoped to a
+  coherent set of related documents.
 
 ---
 
 ## 5. Review Expectations
 
-Given the project's solo/short-timeline context, review is primarily **rigorous self-review against this project's own standards**, treating the PR diff as if an external reviewer will read it — because, for this take-home, one will.
+On this solo project, review is mainly self-review against the project's own
+standards, reading the diff as an external reviewer would. Check for:
 
-When reviewing a PR (self or otherwise), check for:
-
-- Alignment with `CODING_STANDARDS.md` (naming, structure, error handling, documentation).
-- Alignment with `CODE_QUALITY.md` (readability, no dead code, proportionate abstraction, business-rule coverage).
+- Alignment with `CODING_STANDARDS.md` (naming, structure, error handling,
+  documentation).
+- Alignment with `CODE_QUALITY.md` (readability, no dead code, no
+  unnecessary abstraction, business-rule coverage).
 - All `QUALITY_GATES.md` gates passing.
-- The PR description accurately reflecting the actual diff (no scope creep left unexplained).
-- No unrelated changes bundled in (formatting-only churn on untouched files, accidental file moves, etc.).
+- A description that matches the actual diff, with no unexplained scope
+  creep.
+- No unrelated changes bundled in (formatting churn on untouched files,
+  accidental file moves).
 
 ---
 
 ## 6. Checklist Before Requesting Review
 
-Before opening a PR (or, for solo work, before merging), confirm:
-
-- [ ] All merge gates in `QUALITY_GATES.md` §5 pass (`scripts/quality/check.sh`/`check.ps1`, builds, lint, type-check, formatting, tests, business-logic coverage) — see that document for the full mechanical checklist, not restated here.
-- [ ] Documentation is updated if the change alters behavior, API contracts, or architecture described in `docs/`.
-- [ ] Branch name follows the convention in `GIT_MANAGEMENT.md` §4.
-- [ ] Commit messages follow Conventional Commits (`GIT_MANAGEMENT.md` §5).
-- [ ] PR description is filled in using the template in §3.1 of this document.
-- [ ] No excluded files (`node_modules`, build artifacts, `.env`, secrets — see `GIT_MANAGEMENT.md` §7) are included in the diff.
+Before opening a PR (or, for solo work, before merging), run the checklist
+in `docs/12_workflow/DEFINITION_OF_DONE.md`. Its pull request section covers
+branch naming, commit format, and the description template from section 3.1
+above.
 
 ---
 
 ## 7. Merge Strategy
 
-**Chosen strategy: Squash merge into `main`.**
+**Strategy: squash merge into `main`.**
 
-Rationale:
+- A feature branch may collect work-in-progress commits, but `main` gets one
+  clean commit per completed unit of work.
+- The squash commit uses the PR title (Conventional Commits) as its message,
+  and GitHub appends the PR number, so every commit on `main` that came from
+  a PR traces back to it.
+- Intermediate "fix typo", "wip", or "address review comment" commits stay
+  on the branch and do not reach `main`.
 
-- Consistent with the Feature Branching strategy in `GIT_MANAGEMENT.md` §3: each feature branch may accumulate work-in-progress commits during development, but `main` should read as one clean, meaningful commit per completed unit of work.
-- Keeps `main`'s history directly traceable to PRs: one squash-merged commit per PR, using the PR title (Conventional Commits format) as the resulting commit message.
-- Avoids polluting `main` with intermediate "fix typo", "wip", or "address review comment" commits that only have meaning within the lifetime of the branch.
-- The feature branch itself may still contain a more granular commit history during development for the author's own traceability; that detail is intentionally collapsed on merge.
-
-After a squash merge, the source branch is deleted to keep the branch list limited to active work.
+After a squash merge, the source branch is deleted so the branch list only
+shows active work.
 
 ---
 
 ## 8. Related Documents
 
-- `GIT_MANAGEMENT.md` — branch naming, commit conventions, and branching strategy this PR process builds on.
-- `QUALITY_GATES.md` — the pass/fail criteria referenced in the pre-review checklist.
-- `CODE_QUALITY.md` — the quality philosophy behind what reviewers look for.
-- `CODING_STANDARDS.md` — line-level rules checked during review.
-
----
-
-A PR should let a reviewer understand what changed, why, and how it was verified — without needing to ask the author first.
+- `GIT_MANAGEMENT.md`: branching strategy, branch naming, and commit
+  conventions.
+- `QUALITY_GATES.md`: the pass/fail criteria every PR must meet.
+- `docs/12_workflow/DEFINITION_OF_DONE.md`: the final checklist before
+  merging.
+- `CODE_QUALITY.md`: the quality philosophy behind what reviewers look for.
+- `CODING_STANDARDS.md`: line-level rules checked during review.

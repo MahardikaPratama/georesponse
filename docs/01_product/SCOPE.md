@@ -2,21 +2,12 @@
 
 ## 1. Purpose
 
-This document defines the scope of GeoResponse to establish the
-capabilities, features, and responsibilities of the product within the
-current development cycle.
-
-This document is used to:
-
-- define features that are included in the product;
-- define features that are outside the product scope;
-- establish the MVP boundaries;
-- identify potential future capabilities; and
-- help AI Agents distinguish between in-scope requirements and requests
-  that require an explicit scope change.
-
-Changes to the product scope must be made explicitly and must not be
-assumed by an AI Agent or developer.
+This document defines what GeoResponse includes and excludes in the
+current development cycle: the in-scope capabilities, the out-of-scope
+list, the MVP boundary, and possible future capabilities. It also owns the
+scope change policy (section 10) and the implementation status at
+submission (section 11). Any request outside this scope needs an explicit
+scope change.
 
 ---
 
@@ -24,11 +15,11 @@ assumed by an AI Agent or developer.
 
 GeoResponse focuses on managing and monitoring resources that contain:
 
-- identity;
-- type;
-- attributes;
-- status; and
-- geographic location.
+- identity
+- type
+- attributes
+- status
+- geographic location
 
 The system provides capabilities to manage this information and present
 it through resource lists, detailed views, and geographic
@@ -42,11 +33,11 @@ representations.
 
 The system supports resource management operations, including:
 
-- creating resources;
-- viewing resources;
-- updating resources;
-- deleting resources; and
-- viewing resource details.
+- creating resources
+- viewing resources
+- updating resources
+- deleting resources
+- viewing resource details
 
 ### 3.2 Resource Types
 
@@ -55,10 +46,10 @@ different types of real-world objects.
 
 Resource types supported by the MVP may include:
 
-- Vehicle;
-- Facility;
-- Equipment; and
-- IoT Device.
+- Vehicle
+- Facility
+- Equipment
+- IoT Device
 
 The resource type model should be extensible without changing the
 fundamental resource management concept.
@@ -69,12 +60,12 @@ Each resource contains information relevant to its type.
 
 Common information includes:
 
-- identifier;
-- name;
-- type;
-- status;
-- location; and
-- other relevant attributes.
+- identifier
+- name
+- type
+- status
+- location
+- other relevant attributes
 
 Specific attributes may differ between resource types.
 
@@ -93,10 +84,10 @@ coordinates.
 
 Location information is used to:
 
-- store the resource position;
-- display resources on a map;
-- support location-based resource discovery; and
-- support geographic interactions.
+- store the resource position
+- display resources on a map
+- support location-based resource discovery
+- support geographic interactions
 
 ### 3.6 Resource Discovery
 
@@ -104,10 +95,10 @@ Users can find resources based on available resource information.
 
 Discovery capabilities include:
 
-- searching by relevant resource information;
-- filtering by resource type;
-- filtering by resource status; and
-- combining relevant filters.
+- searching by relevant resource information
+- filtering by resource type
+- filtering by resource status
+- combining relevant filters
 
 ### 3.7 Geospatial Visualization
 
@@ -120,9 +111,9 @@ Users can select a resource on the map to view its relevant information.
 
 Users can view resource information through:
 
-- resource lists;
-- resource details; and
-- geographic map representations.
+- resource lists
+- resource details
+- geographic map representations
 
 ### 3.9 Resource Relocation
 
@@ -130,7 +121,7 @@ The system allows users to relocate a resource by updating its
 geographic location. The updated location is reflected in resource
 details and on the map, and the change is recorded in location history.
 
-The detailed interaction flow is defined in `USE_CASES.md` (UC-09 —
+The detailed interaction flow is defined in `USE_CASES.md` (UC-09:
 Relocate Resource).
 
 Resource relocation is initiated by a user. The system does not determine
@@ -145,16 +136,16 @@ fundamental resource attributes and geographic information.
 
 ### 3.11 Authentication and Authorization
 
-- user authentication;
-- role-based access control; and
-- permission management.
+- user authentication
+- role-based access control
+- permission management
 
 ### 3.12 Resource History
 
-- status history;
-- location history;
-- resource change history; and
-- audit trails.
+- status history
+- location history
+- resource change history
+- audit trails
 
 ### 3.13 API
 
@@ -163,11 +154,11 @@ the resource management system.
 
 The API is responsible for:
 
-- resource operations;
-- input validation;
-- business rules;
-- error handling; and
-- data persistence.
+- resource operations
+- input validation
+- business rules
+- error handling
+- data persistence
 
 ### 3.14 Data Persistence
 
@@ -181,13 +172,13 @@ appropriate to the implementation.
 
 Quality verification may include:
 
-- formatting;
-- linting;
-- unit testing;
-- integration testing;
-- test coverage;
-- static analysis; and
-- SonarQube analysis.
+- formatting
+- linting
+- unit testing
+- integration testing
+- test coverage
+- static analysis
+- SonarQube analysis
 
 ### 3.16 Containerization
 
@@ -207,10 +198,10 @@ The following capabilities are outside the current product scope.
 
 GeoResponse does not provide:
 
-- disaster prediction;
-- disaster location prediction;
-- disaster severity prediction; or
-- machine learning for disaster prediction.
+- disaster prediction
+- disaster location prediction
+- disaster severity prediction
+- machine learning for disaster prediction
 
 ### 4.2 Early Warning System
 
@@ -221,10 +212,10 @@ distribute disaster warnings.
 
 The system does not provide:
 
-- turn-by-turn navigation;
-- route planning;
-- shortest-path calculation; or
-- real-time navigation.
+- turn-by-turn navigation
+- route planning
+- shortest-path calculation
+- real-time navigation
 
 ### 4.4 Automated Dispatch
 
@@ -235,10 +226,10 @@ conditions.
 
 The system does not automatically optimize:
 
-- resource placement;
-- resource allocation;
-- resource distribution; or
-- resource scheduling.
+- resource placement
+- resource allocation
+- resource distribution
+- resource scheduling
 
 ### 4.6 Real-Time Tracking
 
@@ -252,23 +243,23 @@ of a resource rather than a continuous location stream.
 
 The system does not provide:
 
-- emergency messaging;
-- radio communication;
-- voice communication;
-- SMS gateways; or
-- emergency notification platforms.
+- emergency messaging
+- radio communication
+- voice communication
+- SMS gateways
+- emergency notification platforms
 
 ### 4.8 Comprehensive Disaster Management
 
 GeoResponse is not a comprehensive disaster management platform covering
 the entire disaster management lifecycle, including:
 
-- disaster planning;
-- evacuation management;
-- victim management;
-- shelter management;
-- emergency communication; or
-- post-disaster recovery management.
+- disaster planning
+- evacuation management
+- victim management
+- shelter management
+- emergency communication
+- post-disaster recovery management
 
 ### 4.9 External Sensor Management
 
@@ -278,11 +269,11 @@ operations.
 
 This includes:
 
-- device provisioning;
-- firmware management;
-- MQTT infrastructure;
-- sensor data ingestion; and
-- device command execution.
+- device provisioning
+- firmware management
+- MQTT infrastructure
+- sensor data ingestion
+- device command execution
 
 ---
 
@@ -315,23 +306,23 @@ are not part of the MVP.
 
 ### 6.1 Advanced Geospatial Features
 
-- radius-based search;
-- spatial filtering;
-- geographic clustering; and
-- geofencing.
+- radius-based search
+- spatial filtering
+- geographic clustering
+- geofencing
 
 ### 6.2 Real-Time Resource Updates
 
-- real-time location updates;
-- real-time status updates; and
-- event streaming.
+- real-time location updates
+- real-time status updates
+- event streaming
 
 ### 6.3 Advanced Resource Management
 
-- resource assignment;
-- resource allocation;
-- dispatch workflows; and
-- resource scheduling.
+- resource assignment
+- resource allocation
+- dispatch workflows
+- resource scheduling
 
 These capabilities may only become part of the product after the scope
 has been explicitly updated.
@@ -347,12 +338,15 @@ GeoResponse manages resource information related to disaster response.
 GeoResponse does not manage the complete information lifecycle of a
 disaster event.
 
-### 7.2 Location vs. Navigation
+### 7.2 Location and Relocation vs. Navigation
 
-GeoResponse manages and visualizes the geographic location of resources.
+GeoResponse manages and visualizes the geographic location of resources,
+and supports relocation by updating a resource's location through a
+user-initiated action.
 
-GeoResponse does not determine how a user or resource should travel to
-a destination.
+GeoResponse does not determine how a user or resource should travel to a
+destination: it provides no route planning, navigation, or travel
+guidance.
 
 ### 7.3 Status vs. Prediction
 
@@ -367,14 +361,6 @@ GeoResponse helps users manage resource information.
 
 Operational decisions such as dispatch, allocation, and optimization are
 not performed automatically by the system in the MVP.
-
-### 7.5 Relocation vs. Navigation
-
-GeoResponse supports resource relocation by updating the geographic
-location of a resource based on a user-initiated action.
-
-GeoResponse does not provide route planning, navigation, or travel
-guidance for reaching the destination.
 
 ---
 
@@ -397,20 +383,17 @@ The MVP is developed under the following assumptions:
 
 ## 9. Constraints
 
-GeoResponse is developed as a take-home project with a focus on
-demonstrating software engineering capabilities.
+GeoResponse is developed as a take-home project that demonstrates software
+engineering capability. The implementation must:
 
-Therefore, the implementation must:
-
-- satisfy the core requirements defined by the take-home test;
-- maintain a controlled product scope;
-- avoid complexity that does not provide meaningful product or
-  engineering value;
-- use an architecture that can be extended in the future;
-- provide appropriate automated testing;
-- apply code quality verification;
-- support reproducible execution using containers; and
-- provide sufficient technical documentation.
+- satisfy the core requirements of the take-home brief
+- keep the product scope controlled
+- avoid complexity that adds no product or engineering value
+- use an architecture that can be extended later
+- provide appropriate automated testing
+- apply code quality verification
+- support reproducible execution using containers
+- provide sufficient technical documentation
 
 ---
 
@@ -421,29 +404,31 @@ not be implemented as part of the MVP by default.
 
 Before implementation, a proposed scope change must be evaluated against:
 
-1. product goals;
-2. user needs;
-3. functional requirements;
-4. architecture;
-5. data model;
-6. development effort; and
-7. its impact on the existing scope.
+1. product goals
+2. user needs
+3. functional requirements
+4. architecture
+5. data model
+6. development effort
+7. its impact on the existing scope
 
-An AI Agent must not expand the product scope based solely on assumptions,
-implementation preferences, or an attempt to add additional features.
-
-Any approved scope change must be reflected in the relevant product
-documentation before it becomes part of the implementation.
+Neither a developer nor an AI agent may expand the scope based on
+assumptions or implementation preferences. An approved change is first
+reflected in the relevant documents (this file, `USE_CASES.md`,
+`BUSINESS_RULES.md`, `FUNCTIONAL_REQUIREMENTS.md`, or
+`NON_FUNCTIONAL_REQUIREMENTS.md`, as affected), with affected tests
+updated, and only then implemented. The other product and requirements
+documents follow this policy.
 
 ---
 
 ## 11. Implementation Status at Submission
 
 This section records, as of 2026-09-20, which parts of the scope above are
-implemented, which are partial, and which are intentionally left out, so
-that no gap is silent. It is a factual snapshot for the take-home
-submission, not a change to the scope itself; the checkbox-level record of
-what was verified in which environment is `IMPLEMENTATION_CHECKLIST.md`.
+implemented, which are partial, and which are left out, so that no gap is
+silent. It is a factual snapshot for the submission, not a change to the
+scope. The checkbox-level record of what was verified in which environment
+is `IMPLEMENTATION_CHECKLIST.md` at the repository root.
 
 ### 11.1 Implemented
 
@@ -455,7 +440,7 @@ scope capabilities in section 4 remain unimplemented by design.
 
 ### 11.2 Partial
 
-- **FR-033 / UC-12 — Manage Roles and Permissions.** The API supports the
+- **FR-033 / UC-12: Manage Roles and Permissions.** The API supports the
   full model (`POST`/`PUT`/`DELETE /api/v1/roles`, `PUT
   /api/v1/roles/{id}/permissions`, `PUT /api/v1/users/{id}/roles`, all
   audited). The management UI exposes viewing roles and permissions,
@@ -463,21 +448,21 @@ scope capabilities in section 4 remain unimplemented by design.
   renaming, or deleting a role is available only through the API. Reason:
   the seeded roles cover the MVP actors, so role lifecycle in the UI was
   deferred in favour of permission and user-role assignment.
-- **FR-002 / FR-020 — List and map page size.** The API paginates
+- **FR-002 / FR-020: List and map page size.** The API paginates
   (`page`, `pageSize`, default 20, maximum 100). The frontend requests the
   first page with the default size and has no pagination control, so the
   list and map show at most the first 20 matching resources. Search and
   filters apply server-side, so any resource can still be found. Reason:
   the seeded dataset is well below the page size; a pagination control was
   deferred.
-- **UC-05 — Map empty state.** When no resources match, the map renders no
-  markers and the adjacent resource list shows the empty-state message;
+- **UC-05: Map empty state.** When no resources match, the map renders no
+  markers and the adjacent resource list shows the empty-state message
   the map itself has no dedicated empty-state overlay.
 - **API contract deviations.** A small number of endpoint-level
   differences between `docs/04_contracts/API_CONTRACT.md` and the shipped
   backend (update-body fields, page-size capping, a missing `updatedAt`,
   history endpoint authorization) are tabulated in that document's
-  section 19.
+  section 19
 
 ### 11.3 Non-Functional Requirements Not Fully Demonstrated
 
@@ -485,21 +470,21 @@ The following `NON_FUNCTIONAL_REQUIREMENTS.md` items are implemented in
 code where applicable but their stated verification has not been carried
 out at this scope:
 
-- `NFR-PERF-001` to `NFR-PERF-005` — no API, database, or frontend latency
+- `NFR-PERF-001` to `NFR-PERF-005`: no API, database, or frontend latency
   measurements were taken; the only benchmark performed is the map-library
   selection in `geo-map-benchmark/`.
-- `NFR-SCAL-002`, `NFR-REL-004` — the "representative extension" and
+- `NFR-SCAL-002`, `NFR-REL-004`: the "representative extension" and
   failure-injection verifications were not exercised.
-- `NFR-TEST-005` — coverage is measured for the backend only (`go test
+- `NFR-TEST-005`: coverage is measured for the backend only (`go test
   -cover` in CI); frontend coverage reporting is not configured.
-- `NFR-FE-005` — the layout is a fixed-width list beside the map, sized for
+- `NFR-FE-005`: the layout is a fixed-width list beside the map, sized for
   desktop viewports; the narrow-viewport behaviour described in
   `docs/06_frontend/FRONTEND_UI_UX.md` section 9 is not implemented.
-- `NFR-SEC-005` — no TLS termination is provisioned; the system is not
+- `NFR-SEC-005`: no TLS termination is provisioned; the system is not
   exposed beyond a local environment (see `docs/11_devops/DEPLOYMENT.md`).
-- `NFR-QUAL-003` — static analysis is `go vet` and ESLint; the SonarQube
+- `NFR-QUAL-003`: static analysis is `go vet` and ESLint; the SonarQube
   scripts exist but no Sonar server is provisioned.
-- `NFR-API-004` — no dedicated contract-compatibility tests beyond the
+- `NFR-API-004`: no dedicated contract-compatibility tests beyond the
   `tests/integration/` suite.
 
 ### 11.4 Verification Gaps

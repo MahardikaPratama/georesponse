@@ -27,7 +27,7 @@ the OpenLayers and MapLibre GL JS version numbers transcribed swapped
 relative to what `package.json` actually pins. This was a transcription
 error, not an intentional version choice, and has been corrected in
 `BENCHMARK_ENVIRONMENT.md` directly (see its "Correction" note). The table
-above already reflects the corrected, verified values - no re-measurement
+above already reflects the corrected, verified values. No re-measurement
 was needed since the benchmark always ran against the versions actually
 installed (`ol@10.10.0`, `maplibre-gl@6.10.0`), never against the
 mis-transcribed numbers.
@@ -42,12 +42,12 @@ and DOM container per individual run within that combination. See
 
 During the first full run, Leaflet's `S01` used `L.Map.whenReady()` to time
 initialization, which resolves once the view is set but **before tiles
-finish loading** - unlike OpenLayers' `rendercomplete` and MapLibre's
+finish loading**, unlike OpenLayers' `rendercomplete` and MapLibre's
 `load`, both of which wait for the initial tile render to actually
 complete. This made the first S01 run an unfair comparison (it measured a
 cheaper operation for Leaflet than for the other two candidates). The
-Leaflet adapter was fixed to wait for the tile layer's own `load` event
-(see `DECISION_RECORD.md` section 5), and **only Leaflet/S01 was
+Leaflet adapter was fixed to wait for the tile layer's own `load` event,
+and **only Leaflet/S01 was
 re-measured** under the corrected implementation. The original, flawed run
 is preserved unmodified in
 `benchmarks/results/raw-1789801517316.json` for audit; the corrected run is
@@ -55,14 +55,14 @@ in `benchmarks/results/raw-1789801629216.json`; the values below use the
 corrected number. No other scenario times initialization, so no other
 result was affected.
 
-## 3. Duration, FPS, memory - all scenarios
+## 3. Duration, FPS, and memory for all scenarios
 
 All durations in ms, FPS in frames/s, memory in MB (median of 10 measured
 runs; mean and standard deviation shown separately to surface variance).
 Dataset size only applies to S06; other scenarios use 1,000 features (see
 `DECISION_RECORD.md` section 3).
 
-### S01 - Basic Map (initialization time, waits for tiles to finish rendering)
+### S01: Basic Map (initialization time, waits for tiles to finish rendering)
 
 | Library | Median | Mean | Min | Max | Std dev | FPS (median) | Memory (median) |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
@@ -70,7 +70,7 @@ Dataset size only applies to S06; other scenarios use 1,000 features (see
 | OpenLayers | 300.60 | 309.66 | 282.90 | 415.70 | 35.78 | 61.00 | 4.7 MB |
 | MapLibre GL JS | 280.65 | 327.78 | 182.80 | 693.90 | 152.73 | 61.00 | 12.0 MB |
 
-### S02 - Point Features (1,000 points)
+### S02: Point Features (1,000 points)
 
 | Library | Median | Mean | Min | Max | Std dev | FPS (median) | Memory (median) |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
@@ -78,7 +78,7 @@ Dataset size only applies to S06; other scenarios use 1,000 features (see
 | OpenLayers | 6.50 | 6.91 | 5.20 | 11.20 | 1.77 | 61.00 | 21.0 MB |
 | MapLibre GL JS | 0.90 | 0.92 | 0.40 | 1.90 | 0.43 | 60.99 | 11.1 MB |
 
-### S03 - GeoJSON (1,000-feature FeatureCollection)
+### S03: GeoJSON (1,000-feature FeatureCollection)
 
 | Library | Median | Mean | Min | Max | Std dev | FPS (median) | Memory (median) |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
@@ -86,7 +86,7 @@ Dataset size only applies to S06; other scenarios use 1,000 features (see
 | OpenLayers | 7.80 | 9.60 | 5.50 | 26.90 | 6.00 | 60.99 | 22.5 MB |
 | MapLibre GL JS | 0.75 | 0.82 | 0.50 | 1.20 | 0.21 | 60.99 | 12.5 MB |
 
-### S04 - Polygon Features (1,000 polygons)
+### S04: Polygon Features (1,000 polygons)
 
 | Library | Median | Mean | Min | Max | Std dev | FPS (median) | Memory (median) |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
@@ -94,7 +94,7 @@ Dataset size only applies to S06; other scenarios use 1,000 features (see
 | OpenLayers | 8.90 | 8.56 | 5.80 | 10.80 | 1.87 | 60.99 | 25.2 MB |
 | MapLibre GL JS | 0.75 | 0.82 | 0.50 | 1.70 | 0.32 | 60.99 | 13.8 MB |
 
-### S05 - Multiple Layers (5 layers, 200 points each, create + hide + show)
+### S05: Multiple Layers (5 layers, 200 points each, create + hide + show)
 
 | Library | Median | Mean | Min | Max | Std dev | FPS (median) | Memory (median) |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
@@ -102,7 +102,7 @@ Dataset size only applies to S06; other scenarios use 1,000 features (see
 | OpenLayers | 8.40 | 10.16 | 5.50 | 28.60 | 6.33 | 60.99 | 20.9 MB |
 | MapLibre GL JS | 8.05 | 8.16 | 7.10 | 9.00 | 0.55 | 60.99 | 10.7 MB |
 
-### S06 - Large Dataset (points, scalability)
+### S06: Large Dataset (points, scalability)
 
 | Library | Size | Features | Median | Mean | Max | Std dev | FPS (median) | Memory (median) |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
@@ -117,17 +117,17 @@ Dataset size only applies to S06; other scenarios use 1,000 features (see
 | MapLibre GL JS | large | 10,000 | 0.80 | 0.78 | 1.10 | 0.21 | 60.99 | 16.9 MB |
 
 OpenLayers at 10,000 features shows one or more severe outlier runs (max
-2,886 ms vs. a 163.70 ms median - a ~17x spread), which is why its mean and
+2,886 ms vs. a 163.70 ms median, a ~17x spread), which is why its mean and
 standard deviation are so much larger than its median. This was not
 filtered out or treated as invalid; it is reported as measured. It
 indicates OpenLayers' vector rendering at this feature count is prone to
 occasional large stalls on this hardware, not just slower on average.
 
-### S07 - Map Interaction (pan, zoom in, zoom out, feature selection, filtering; 1,000 points pre-loaded)
+### S07: Map Interaction (pan, zoom in, zoom out, feature selection, filtering; 1,000 points pre-loaded)
 
 Re-measured after extending the workload to also cover feature selection
 and a filtering-related map update (previously only pan/zoom were
-automated - see `DECISION_RECORD.md`).
+automated; see `DECISION_RECORD.md` section 3).
 
 | Library | Median | Mean | Min | Max | Std dev | FPS (median) | Memory (median) |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
@@ -137,7 +137,7 @@ automated - see `DECISION_RECORD.md`).
 
 **Workload:** pan, zoom in, zoom out (native `panBy`/`zoomTo` per adapter),
 then `highlightNearestFeature()` (selects and re-styles the point nearest
-the map center - see `DECISION_RECORD.md` for why nearest-distance
+the map center; see `DECISION_RECORD.md` section 3 for why nearest-distance
 selection is used instead of each library's native screen-space
 hit-testing API), then a filtering-related update (`clearFeatures()` +
 `renderPoints()` with only the `hospital` category kept, reusing existing
@@ -146,12 +146,12 @@ toggling (also listed as an S07-relevant interaction in
 `BENCHMARK_SCENARIOS.md`) is exercised separately in S05.
 
 **Reading note:** the ~1,000 ms "duration" here is still dominated by the
-engine's fixed 1-second post-interaction FPS sampling window, as before -
-it should not be read as "interaction latency," and adding feature
+engine's fixed 1-second post-interaction FPS sampling window, as before.
+It should not be read as "interaction latency," and adding feature
 selection + filtering to the workload did not meaningfully change it
 (off by tens of ms from the pan/zoom-only measurement). The informative
 number is **FPS**: all three still sustained ~59-61 fps through the full
-pan + zoom + select + filter sequence with 1,000 points loaded - i.e. no
+pan + zoom + select + filter sequence with 1,000 points loaded, i.e. no
 material frame-rate impact from adding feature selection and filtering, for
 any candidate, at this feature count on this hardware. Min/max/std dev are
 omitted above since they track the fixed sampling window rather than the
@@ -166,7 +166,7 @@ library into its own chunk(s), identified by matching each chunk's content
 against that library's name/version banner (see `DECISION_RECORD.md`
 section 4 for why a separate isolated-bundle build was tried and rejected).
 Every chunk in the production build is now individually attributed to one
-of the three adapters - each candidate produces a large chunk (the
+of the three adapters: each candidate produces a large chunk (the
 third-party library itself) plus one small chunk (the compiled adapter
 class Rspack split off from it), confirmed by content inspection
 (`LeafletBenchmark`/`OpenLayersBenchmark`/`MapLibreBenchmark` and
@@ -182,13 +182,13 @@ The ranking (Leaflet smallest, MapLibre GL JS largest) is unchanged from
 the earlier, partially-attributed figures; this update only adds the small
 adapter chunks that were previously reported separately as unattributed.
 
-## 5. OpenLayers S06 (large) outlier - reproducibility check
+## 5. OpenLayers S06 (large) outlier: reproducibility check
 
 The original S06/large run for OpenLayers showed a single extreme outlier
 (max 2,886 ms vs. a 163.7 ms median). Rather than leave that unconfirmed,
 the same combination (OpenLayers, S06, large, warmup=3, measured=10) was
 re-run three additional times. All three confirm the same qualitative
-pattern - occasional large stalls, not a one-off fluke - though none
+pattern (occasional large stalls, not a one-off fluke), though none
 reproduced an outlier as extreme as the first:
 
 | Repeat run | Median | Mean | Max | Std dev |
@@ -199,7 +199,7 @@ reproduced an outlier as extreme as the first:
 | Repeat 3 | 131.05 | 132.55 | 271.30 | 58.59 |
 
 In every one of the 4 runs (40 measured samples total), the **second**
-measured run was consistently among the slowest - a pattern consistent
+measured run was consistently among the slowest, a pattern consistent
 with a recurring GC pause or similar stall rather than pure noise. This
 strengthens, rather than weakens, the conclusion in `TECHNOLOGY_SELECTION.md`
 that OpenLayers' large-dataset behavior on this hardware is measurably less
@@ -217,7 +217,7 @@ among outliers. Raw data:
   DOM/SVG element creation) and OpenLayers (largely synchronous canvas
   vector rendering), but MapLibre GL JS's `addSource`/`addLayer` return
   almost immediately and defer the actual GPU upload/tessellation to
-  subsequent animation frames - which is why MapLibre's reported durations
+  subsequent animation frames, which is why MapLibre's reported durations
   are nearly zero. The post-render FPS sample (taken for a full second
   immediately after each render call) is the cross-check: if MapLibre were
   still doing significant GPU work during that window, FPS would have
@@ -229,8 +229,7 @@ among outliers. Raw data:
   10,000 points in under 1 ms."
 * **Feature selection** (S07) uses nearest-distance selection identically
   for all three candidates rather than each library's native
-  screen-space hit-testing API - a deliberate choice, not an oversight;
-  see `DECISION_RECORD.md` section 3.
+  screen-space hit-testing API; see `DECISION_RECORD.md` section 3.
 * One benign console `404` was observed during Leaflet/S01 runs
   (unrelated resource, likely a favicon request); it did not affect
   measured values and Leaflet/S01 completed successfully in all runs.

@@ -1,12 +1,9 @@
 # Decision Record
 
-This document records architectural and methodological decisions made while
-building the benchmark frontend and executing the benchmark, per
-`CLAUDE.md` section 15 and `AGENT.md` section 18. It is kept separate from
-measured results (`BENCHMARK_RESULTS.md`) and the technology selection
-(`TECHNOLOGY_SELECTION.md`).
-
----
+Architectural and methodological decisions made while building the
+benchmark frontend and executing the benchmark, per `AGENT.md` sections 18
+and 20. It is kept separate from measured results (`BENCHMARK_RESULTS.md`)
+and the technology selection (`TECHNOLOGY_SELECTION.md`).
 
 ## 1. Frontend foundation
 
@@ -28,12 +25,12 @@ measured results (`BENCHMARK_RESULTS.md`) and the technology selection
   `addLayer`, `setLayerVisible`, `clearFeatures`, `panBy`, `zoomTo`,
   `destroy`) implemented independently by `LeafletBenchmark`,
   `OpenLayersBenchmark`, and `MapLibreBenchmark`. This is the interface
-  `AGENT.md` section 9 asks for, sized to what S01-S07 actually require -
+  `AGENT.md` section 9 asks for, sized to what S01-S07 actually require;
   no scenario-specific methods were added speculatively.
 * `src/engine/benchmarkEngine.ts` owns all timing, FPS sampling, memory
   snapshotting, aggregation, and warmup/measured repetition. It never
   branches on `libraryId`; all library-specific behavior stays inside the
-  three adapters (`CLAUDE.md` section 7).
+  three adapters (`AGENT.md` sections 9 and 16).
 * Each of the 13 runs (3 warmup + 10 measured, per
   `BENCHMARK_METHODOLOGY.md` section 5) gets a **fresh map instance and a
   fresh, isolated off-screen DOM container**, then both are destroyed
@@ -81,13 +78,12 @@ measured results (`BENCHMARK_RESULTS.md`) and the technology selection
     hit test (`OpenLayers.getFeaturesAtPixel` /
     `MapLibre.queryRenderedFeatures`) was deliberately avoided as the
     *primary* measured operation because, with features scattered
-    randomly, a fixed screen pixel would miss most of the time - making
+    randomly, a fixed screen pixel would miss most of the time, making
     the result depend on hit-test radius/tolerance differences between
-    libraries rather than on selection speed itself. This is a documented,
-    deliberate implementation choice, not an oversight.
+    libraries rather than on selection speed itself.
   * **Filtering** re-renders the point layer with only one category kept,
     reusing the existing `clearFeatures()` + `renderPoints()` methods
-    rather than adding a dedicated filter API to `MapBenchmark` - no
+    rather than adding a dedicated filter API to `MapBenchmark`; no
     interface change was needed for this part.
 
 ## 4. Bundle size measurement
@@ -140,7 +136,7 @@ measured results (`BENCHMARK_RESULTS.md`) and the technology selection
   13-run-per-combination matrix.
 * This machine's actual specs, captured automatically at run time, match
   `BENCHMARK_ENVIRONMENT.md` (Chrome 153.0.8010.48, Intel Core i7-6500U,
-  ~8 GB RAM, Windows 10 Pro build 19045) - no environment deviation to
+  ~8 GB RAM, Windows 10 Pro build 19045), so there is no environment deviation to
   document.
 
 ## 6. Testing
@@ -154,13 +150,13 @@ Two test runners are used, each for what it is actually good at:
 * **`npm run test:components`** runs Vitest + jsdom + `@testing-library/react`
   against the three component `*.test.tsx` files
   (`BenchmarkPanel.test.tsx`, `MapContainer.test.tsx`,
-  `MetricPanel.test.tsx`). This dependency was deliberately *not* added
+  `MetricPanel.test.tsx`). This dependency was *not* added
   during the initial foundation pass (kept as a documented gap, per
   `AGENT.md` section 17's "keep the dependency footprint minimal"), and was
   added once explicitly requested. `MapContainer`'s test mocks
   `mapBenchmarkFactory` rather than initializing real Leaflet/OpenLayers/
   MapLibre GL JS instances, since none of the three can meaningfully
-  initialize in jsdom (no real Canvas/WebGL, no network tile loading) - the
+  initialize in jsdom (no real Canvas/WebGL, no network tile loading). The
   test verifies MapContainer's own contract (which library it requests,
   that it cleans up on unmount), not library rendering behavior, which is
   instead covered by the real-browser benchmark runs themselves.

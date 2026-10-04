@@ -2,35 +2,19 @@
 
 ## 1. Purpose
 
-This document defines the core domain concepts used by GeoResponse and the relationships between those concepts.
+This document defines the core domain concepts of GeoResponse and how they
+relate. It is the shared reference for the frontend, backend, database, API
+contract, and business rules, and describes what each concept means in the
+product, not how it is implemented.
 
-The domain model serves as a shared reference for:
-
-- frontend;
-- backend;
-- database;
-- API contract;
-- business rules; and
-- AI Agents.
-
-The domain model describes the meaning of a concept within the product, not its implementation details.
-
-This document does not define:
-
-- database table structures;
-- API endpoints;
-- source code structure;
-- frameworks;
-- libraries; or
-- frontend and backend implementation details.
+Table structures, API endpoints, source layout, and frameworks are out of
+scope here. The wire format is in `docs/04_contracts/DATA_CONTRACT.md` and
+the rules that enforce these concepts are in `BUSINESS_RULES.md`.
 
 ## 2. Core Domain Concept
 
-The primary domain concept in GeoResponse is `Resource`.
-
-A resource represents a real-world object managed by GeoResponse in the context of disaster response.
-
-A resource consists of:
+The primary domain concept in GeoResponse is `Resource`: a real-world object
+managed by GeoResponse in the context of disaster response.
 
 ```text
 Resource
@@ -45,53 +29,41 @@ Resource
 
 ### 3.1 Definition
 
-`Resource` is a real-world object whose information is managed by GeoResponse to support disaster response resource monitoring and management.
-
-A resource has an identity, type, attributes, operational status, and geographic location.
+`Resource` is a real-world object whose information GeoResponse manages to
+support disaster response monitoring and management. A resource has an
+identity, type, attributes, operational status, and geographic location.
 
 ### 3.2 Characteristics
 
 Each resource:
 
-- has a unique identity;
-- has a name or identifying information;
-- has one resource type;
-- has an operational status;
-- may have type-specific attributes;
-- has geographic location information; and
-- may undergo information changes while managed by the system.
+- has a unique identity
+- has a name or other identifying information
+- has exactly one resource type
+- has an operational status
+- may have type-specific attributes
+- has geographic location information
+- may have its information changed while the system manages it
 
 ### 3.3 Examples
 
-A resource may represent:
-
-- a vehicle;
-- a facility;
-- equipment; or
-- an IoT device.
-
-Additional resource types may be introduced in the future without changing the fundamental resource concept.
+A resource may represent a vehicle, a facility, equipment, or an IoT device.
+Additional resource types may be introduced later without changing the
+fundamental resource concept.
 
 ## 4. Resource Identity
 
-`Identity` contains the information used to distinguish one resource from another.
+`Identity` is the information that distinguishes one resource from another.
+It includes at least a unique identifier and an identifying name.
 
-Identity includes at least:
-
-- a unique identifier; and
-- an identifying name.
-
-The identifier is the primary identity of a resource within the system.
-
-The name helps users recognize and distinguish resources.
-
-A resource's identity does not change when its status or location changes.
+The identifier is the primary identity of a resource within the system. The
+name helps users recognize and distinguish resources. A resource's identity
+does not change when its status or location changes.
 
 ## 5. Resource Type
 
-`Resource Type` defines the category of real-world object represented by a resource.
-
-The MVP supports the following resource types:
+`Resource Type` defines the category of real-world object a resource
+represents. The MVP supports:
 
 ```text
 VEHICLE
@@ -100,49 +72,22 @@ EQUIPMENT
 IOT_DEVICE
 ```
 
-A resource has one type at a time.
-
-The resource type determines the context for additional attributes that are relevant to that resource.
-
-Examples include:
-
-```text
-Vehicle
-├── vehicle type
-└── capacity
-
-Facility
-├── facility type
-└── capacity
-
-Equipment
-├── equipment type
-└── quantity
-
-IoT Device
-└── device type
-```
-
-These type-specific attributes are conceptual examples. The actual attributes are defined by the requirements and data contract.
+A resource has one type at a time. The type determines which additional
+attributes are relevant to the resource (see section 6.2).
 
 ## 6. Resource Attributes
 
-`Attributes` are additional information describing the characteristics of a resource.
+`Attributes` are additional information describing the characteristics of a
+resource.
 
 ### 6.1 Common Attributes
 
-Attributes that may be shared across resources include:
-
-- name;
-- type;
-- status; and
-- location.
+Attributes shared across resources include name, type, status, and
+location.
 
 ### 6.2 Type-Specific Attributes
 
-Some attributes are relevant only to specific resource types.
-
-Examples include:
+Some attributes are relevant only to specific resource types:
 
 ```text
 Vehicle
@@ -161,13 +106,15 @@ IoT Device
 → device type
 ```
 
-Type-specific attributes must not change the fundamental identity or meaning of the resource.
+These are conceptual; the actual attribute keys and their validation are
+defined by the requirements and `docs/04_contracts/DATA_CONTRACT.md`
+section 3.4. Type-specific attributes must not change the fundamental
+identity or meaning of the resource.
 
 ## 7. Resource Status
 
-`Status` represents the operational condition of a resource known to the system.
-
-The MVP uses the following statuses:
+`Status` represents the operational condition of a resource as known to the
+system. The MVP uses:
 
 ```text
 AVAILABLE
@@ -192,31 +139,26 @@ The resource is undergoing maintenance and is not available for normal use.
 
 The resource is not available for use.
 
-A resource's status represents its condition at a given point in time and may change while the resource is managed by the system.
+A resource's status represents its condition at a given point in time and
+may change while the resource is managed by the system.
 
 ## 8. Resource Location
 
-`Location` represents the geographic location of a resource.
+`Location` represents the geographic location of a resource. It is a
+fundamental part of the resource model because GeoResponse is a geospatial
+application. In the MVP, location is a latitude and longitude pair.
 
-Location is a fundamental part of the resource model because GeoResponse is a geospatial resource management application.
+Location is used to:
 
-In the MVP, location is represented using:
-
-- latitude; and
-- longitude.
-
-Location information is used to:
-
-- display resources on a map;
-- identify resource locations;
-- support location-based resource discovery; and
-- update resource locations through resource relocation.
+- display resources on a map
+- identify where resources are
+- support location-based resource discovery
+- update resource locations through relocation
 
 ## 9. Resource Relocation
 
-`Resource Relocation` represents a change to the geographic location of an existing resource initiated by a user.
-
-The conceptual flow is:
+`Resource Relocation` is a user-initiated change to the geographic location
+of an existing resource.
 
 ```text
 Current Location
@@ -228,38 +170,29 @@ Destination Location
 Updated Resource Location
 ```
 
-Relocation does not change the identity of the resource.
-
-Relocation does not change the resource type unless a separate operation explicitly changes that type.
+Relocation does not change the identity of the resource. It does not change
+the resource type unless a separate operation changes that type.
 
 ### 9.1 Relocation Characteristics
 
 When a resource is relocated:
 
-- the relocated resource remains the same resource;
-- its identifier remains unchanged;
-- its type remains unchanged;
-- its status remains unchanged unless a separate status change occurs;
-- its location is updated to the destination location; and
-- the time of the location change may be recorded by the system.
+- it remains the same resource
+- its identifier is unchanged
+- its type is unchanged
+- its status is unchanged unless a separate status change occurs
+- its location is updated to the destination location
+- the time of the location change may be recorded by the system
 
 ### 9.2 Relocation Boundary
 
-Resource relocation only represents a location change managed by the system.
-
-It does not include:
-
-- route planning;
-- navigation;
-- travel tracking;
-- automated dispatch; or
-- continuous GPS tracking.
+Relocation only represents a location change managed by the system. It does
+not include route planning, navigation, travel tracking, automated dispatch,
+or continuous GPS tracking.
 
 ## 10. Resource Lifecycle
 
-A resource follows a lifecycle based on resource management operations.
-
-The primary lifecycle is:
+A resource follows a lifecycle driven by resource management operations:
 
 ```text
 Create
@@ -275,13 +208,11 @@ Update
 Delete
 ```
 
-A resource may undergo multiple information changes during its lifecycle.
-
-A status change or relocation modifies the existing resource rather than creating a new resource.
+A resource may undergo many information changes during its lifecycle. A
+status change or relocation modifies the existing resource; it never
+creates a new one.
 
 ## 11. Domain Relationships
-
-The primary relationships between domain concepts are:
 
 ```text
                     Resource
@@ -303,43 +234,26 @@ The primary relationships between domain concepts are:
 
 Conceptually:
 
-- one `Resource` has one `Identity`;
-- one `Resource` has one `Type`;
-- one `Resource` has one `Status`;
-- one `Resource` has one `Location`;
-- one `Resource` may have multiple `Attributes`;
-- one `Resource` may undergo multiple information changes during its lifecycle; and
-- `Relocation` changes the `Location` of an existing resource.
+- one `Resource` has one `Identity`, one `Type`, one `Status`, and one
+  `Location`
+- one `Resource` may have multiple `Attributes`
+- one `Resource` may undergo multiple information changes during its
+  lifecycle
+- `Relocation` changes the `Location` of an existing resource
 
 ## 12. Domain Invariants
 
-The domain has the following fundamental invariants.
+The domain invariants are enforced as business rules in
+`BUSINESS_RULES.md`:
 
-### 12.1 Resource Identity
-
-Every resource must have a unique identifier.
-
-### 12.2 Resource Type
-
-Every resource must have a valid resource type.
-
-### 12.3 Resource Status
-
-Every resource must have a valid status.
-
-### 12.4 Resource Location
-
-Resource location must use valid geographic coordinates.
-
-### 12.5 Resource Relocation
-
-Relocation must be applied to an existing resource.
-
-Relocation must not create a new resource.
-
-### 12.6 Resource Consistency
-
-Changing a resource's status or location must not unintentionally change its identity.
+| Invariant | Rules |
+|---|---|
+| Every resource has a unique identifier | BR-001 |
+| Every resource has a valid type | BR-003 |
+| Every resource has a valid status | BR-005, BR-006 |
+| Location uses valid geographic coordinates | BR-009, BR-010 |
+| Relocation applies to an existing resource and never creates a new one | BR-012 |
+| Status, location, or attribute changes preserve identity | BR-007, BR-012, BR-015 |
 
 ## 13. Domain Terminology
 
@@ -357,9 +271,9 @@ The following terms must be used consistently throughout GeoResponse:
 | Operator | A user who manages resource information |
 | Response Coordinator | A user who monitors resource conditions and distribution |
 
-`Resource` is the primary domain concept.
-
-The term `Entity` may be used when referring to the original take-home requirement or as a generic technical concept, but it is not the primary domain term in GeoResponse.
+`Resource` is the primary domain concept. `Entity` may be used when
+referring to the original take-home brief or as a generic technical term,
+but it is not the domain term in GeoResponse.
 
 ## 14. Domain Model and Implementation
 
@@ -374,14 +288,7 @@ Domain Model
      └── Database
 ```
 
-Each layer may use a different technical representation, but the representation must preserve the meaning of the domain concepts.
-
-Changes to the domain model must consider their impact on:
-
-- business rules;
-- functional requirements;
-- API contract;
-- data contract;
-- frontend;
-- backend; and
-- database.
+Each layer may use a different technical representation, but it must
+preserve the meaning of the domain concepts. A change to the domain model
+must be checked for its impact on the business rules, functional
+requirements, API and data contracts, frontend, backend, and database.

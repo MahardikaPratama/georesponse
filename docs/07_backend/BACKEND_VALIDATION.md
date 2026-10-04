@@ -2,19 +2,16 @@
 
 ## 1. Purpose
 
-This document is the backend-implementation companion to `API_CONTRACT.md`
-section 12 and `DATA_CONTRACT.md` section 11, which establish *that* all
-state-changing input must be validated on the backend and *what* categories
-of data must be validated.
+This document describes how `georesponse-be` implements validation: where
+in the layering each check runs, the order of checks, and how a failure is
+reported, including field-level `details`. The field-by-field rules are
+owned by `API_CONTRACT.md` section 12 and the validation categories by
+`DATA_CONTRACT.md` section 11; error codes and HTTP statuses are owned by
+`BACKEND_ERROR_HANDLING.md`. Frontend validation is supplementary and is
+covered in `TECHNOLOGY_SELECTION.md` section 13.
 
-This document does not repeat that checklist. It defines *where in the
-backend layering validation runs*, the concrete per-field rules used to
-implement it, and how a validation failure is reported to the client as
-`VALIDATION_ERROR` with field-level `details`.
-
-Per `TECHNOLOGY_SELECTION.md` section 13.2 and `BUSINESS_RULES.md` BR-016 /
-BR-042, backend validation is authoritative regardless of what the frontend
-already checked. Invalid data must never be persisted.
+Backend validation is authoritative regardless of what the frontend already
+checked (BR-016, BR-042). Invalid data is never persisted.
 
 ---
 
@@ -23,7 +20,7 @@ already checked. Invalid data must never be persisted.
 ```text
 HTTP Handler
    │  structural / type validation
-   │  (missing fields, wrong JSON types, malformed request)
+   │  (malformed JSON, unknown fields, wrong JSON types)
    ↓
 Application / Use Case
    │  cross-field and business-rule validation
@@ -31,8 +28,8 @@ Application / Use Case
    │   state-dependent rules)
    ↓
 Domain
-   │  invariants enforced by construction
-   │  (a constructed Resource/Location value is never in an invalid state)
+   │  invariants checked by explicit validators
+   │  (Resource.Validate, Location.Validate, attribute validators)
    ↓
 Repository
       persistence-level constraints (DB-level NOT NULL / CHECK constraints
@@ -41,11 +38,11 @@ Repository
 
 - **Handler-level** validation is purely structural and lives in one
   place, `httpresponse.DecodeJSON`: is the body well-formed JSON, does it
-  contain only fields the endpoint defines (`DisallowUnknownFields`), are
-  JSON types correct (string vs. number)? Any failure is a
-  `httpresponse.ValidationError` → `400 VALIDATION_ERROR`. Handlers do not
-  check required-field presence themselves; a missing field decodes to its
-  zero value and is caught by the domain.
+  contain only fields the endpoint defines (`DisallowUnknownFields`), and
+  are the JSON types correct (string vs. number)? Any failure is an
+  `httpresponse.ValidationError`, returned as `400 VALIDATION_ERROR`.
+  Handlers do not check required-field presence; a missing field decodes
+  to its zero value and the domain rejects it.
 - **Application/domain-level** validation enforces the rules that require
   knowledge of the domain: presence of `id`/`name`, valid `Type`/`Status`
   enum values, coordinate ranges, type-specific attribute rules, and rules
@@ -57,12 +54,12 @@ Repository
   `Location.Validate()`, `resource.ValidateLocation(lat, lng)`) rather than
   guarding constructors; `resource.Service` calls them before any
   repository write, so nothing invalid reaches persistence.
-- Database constraints (`NOT NULL`, `CHECK`, foreign keys) exist as a safety
-  net, not as the mechanism the application relies on to produce
-  user-facing validation errors — a constraint violation reaching the
-  repository layer is treated as a `PERSISTENCE_ERROR`, not a
-  `VALIDATION_ERROR` (see `BACKEND_ERROR_HANDLING.md`), because it indicates
-  the application-level validation should have already caught it.
+- Database constraints (`NOT NULL`, `CHECK`, foreign keys) are a safety
+  net. A constraint violation reaching the repository layer means
+  application validation missed something, so it surfaces as
+  `PERSISTENCE_ERROR`, not `VALIDATION_ERROR`. The exceptions are the
+  unique-key violations the repository classifies explicitly
+  (`BACKEND_ERROR_HANDLING.md` section 3).
 
 ---
 
@@ -88,9 +85,9 @@ frontend's `MAX_RESOURCE_NAME_LENGTH` (`CODING_STANDARDS.md` section 9) is
 a UI-only convenience until a backend rule is introduced.
 
 On update (`PUT`), the request body carries only `name`, `type`, and
-`attributes`. Identity (`id`) is never mutated by the request body — the
-path parameter is authoritative (BR-015) — and `status`/`location` are
-always carried over from the stored record; a body that includes them is
+`attributes`. Identity (`id`) is never mutated by the request body (the
+path parameter is authoritative, BR-015), and `status`/`location` are
+always carried over from the stored record. A body that includes them is
 rejected as an unknown field (`VALIDATION_ERROR`). Status and location
 change only through their dedicated `PATCH` endpoints (sections 5, 6).
 
@@ -124,12 +121,8 @@ invalid one wraps `resource.ErrInvalidAttribute`; both surface as
 only (see section 9).
 
 Attribute validation is implemented as one `AttributeValidator` per
-`ResourceType`, dispatched through an `AttributeValidatorRegistry` (Strategy
-pattern — see `BACKEND_ARCHITECTURE.md` section 8.2), not a single function
-branching on `Type`. Adding a resource type means adding one new validator
-file and registering it in `main.go`; no existing validator, the service, or
-the handler is touched (Open/Closed Principle, `BACKEND_ARCHITECTURE.md`
-section 8.1).
+`ResourceType`, dispatched through an `AttributeValidatorRegistry`
+(`BACKEND_ARCHITECTURE.md` section 8.2).
 
 ---
 
@@ -143,12 +136,11 @@ Applies to `PATCH /api/v1/resources/{id}/status` (`API_CONTRACT.md` section
 - The resource identified by `{id}` must exist (`RESOURCE_NOT_FOUND` if not).
 - The MVP does not define a restricted state-transition graph (e.g. it does
   not forbid `MAINTENANCE → AVAILABLE`); any defined status value is a valid
-  target. If a transition restriction is introduced later, it is enforced at
-  the application layer as an additional business rule, not at the handler.
-- A successful status change must, in the same operation, write a status
-  history record and an audit record (BR-007, BR-008) — this is not
-  optional validation but a required side effect, tested per
-  `BACKEND_TESTING.md` section 4.
+  target. A transition restriction added later belongs in the application
+  layer, not the handler.
+- A successful status change writes, in the same transaction, a status
+  history record and an audit record (BR-007, BR-008). This is a required
+  side effect, tested per `BACKEND_TESTING.md` section 4.
 
 ---
 
@@ -157,15 +149,14 @@ Applies to `PATCH /api/v1/resources/{id}/status` (`API_CONTRACT.md` section
 Applies to `PATCH /api/v1/resources/{id}/location` (`API_CONTRACT.md`
 section 8).
 
-- `latitude` and `longitude` are required and must satisfy the coordinate
-  bounds in section 3 (`INVALID_LOCATION` if not).
+- `latitude` and `longitude` are required and must be within the ranges in
+  `API_CONTRACT.md` section 12 (`INVALID_LOCATION` if not).
 - The resource identified by `{id}` must exist (`RESOURCE_NOT_FOUND` if
   not).
-- The operation must not accept or apply a `status` or `type` change — the
-  relocation endpoint's request body has no such fields, so a client cannot
-  submit them; the domain layer additionally must not derive a status change
-  as a side effect of relocation (BR-013, `DOMAIN_MODEL.md` section 9.1).
-- A successful relocation must, in the same operation, write a location
+- The request body has no `status` or `type` field, so a client cannot
+  submit them, and the domain does not derive a status change from a
+  relocation (BR-013, `DOMAIN_MODEL.md` section 9).
+- A successful relocation writes, in the same transaction, a location
   history record and an audit record (BR-014).
 
 ---
@@ -175,9 +166,8 @@ section 8).
 Applies to `POST /api/v1/auth/login` (`API_CONTRACT.md` section 5.1).
 
 - `identifier` is the user's `id`; `password` is compared against the
-  stored bcrypt hash. The backend does not enforce password complexity at
-  login time (that belongs to account provisioning, out of scope for this
-  MVP).
+  stored bcrypt hash. Password complexity is not checked at login; it
+  belongs to account provisioning, which is out of scope.
 - A malformed body, or one with unknown fields, returns `VALIDATION_ERROR`.
 - A missing or empty `identifier`/`password`, like an incorrect pair,
   returns `AUTHENTICATION_FAILED` (401): the service performs the lookup
@@ -188,9 +178,9 @@ Applies to `POST /api/v1/auth/login` (`API_CONTRACT.md` section 5.1).
 
 ## 8. Authorization Validation
 
-Every protected, state-changing endpoint validates that the authenticated
-user holds the required permission before the operation proceeds
-(BR-026, BR-027):
+Every protected endpoint checks that the authenticated user holds the
+required permission before the operation proceeds (BR-026, BR-027). The
+permission each endpoint requires:
 
 ```text
 resource.read     → GET /api/v1/resources, GET /api/v1/resources/{id}
@@ -209,8 +199,9 @@ audit.read        → GET /api/v1/audit-logs
                     POST /api/v1/auth/logout, GET /api/v1/auth/me
 ```
 
-The codes are constants in the owning package (`resource.PermissionResourceRead`,
-`authorization.PermissionRoleManage`, `audit.PermissionAuditRead`, ...).
+The codes are constants in the owning package
+(`resource.PermissionResourceRead`, `authorization.PermissionRoleManage`,
+`auth.PermissionUserRolesManage`, `audit.PermissionAuditRead`, ...).
 The permission-to-role mapping is seed data (`database/seeds`) and is not
 enumerated here. A missing permission returns `AUTHORIZATION_DENIED` (403);
 the check is the first statement of each protected use case, before the
@@ -221,9 +212,10 @@ cannot use validation error responses to probe resource state.
 
 ## 9. Reporting Field-Level `details`
 
-`VALIDATION_ERROR` responses carry `details` as a list of
-`{ "field", "message" }` entries when the failure was detected at the
-handler boundary (`httpresponse.ValidationError`, section 2):
+Only a failure detected by `httpresponse.DecodeJSON` (malformed JSON, an
+unknown field, or a wrong JSON type) produces `details`. It is a list with
+one `{ "field", "message" }` entry, and `field` is an empty string because
+`encoding/json` does not expose the field path reliably:
 
 ```json
 {
@@ -239,43 +231,17 @@ handler boundary (`httpresponse.ValidationError`, section 2):
 
 Implementation notes:
 
+- Domain-level failures (`ErrMissingID`, `ErrMissingName`,
+  `ErrMissingAttribute`, `ErrInvalidAttribute`, role name conflicts) are
+  reported as `VALIDATION_ERROR` with no `details` key in the response
+  (the field is `omitempty`). The specific cause is in the server log only.
 - Validation fails fast: the first violated rule is returned, in the order
   given in section 3. A client that submits several invalid fields learns
   about them one response at a time.
-- Domain-level failures (`ErrMissingID`, `ErrMissingName`,
-  `ErrMissingAttribute`, `ErrInvalidAttribute`, role name conflicts) are
-  reported as `VALIDATION_ERROR` **without** `details`; the specific cause
-  is in the server log only. The entries `DecodeJSON` produces today carry
-  an empty `field`, since `encoding/json` does not expose the path
-  reliably. Populating `field` with dot-notation paths
-  (`location.latitude`, `attributes.capacity`) is the intended direction
-  when field-level reporting is needed by the frontend.
-- A failure that maps to a more specific error code
-  (`INVALID_RESOURCE_TYPE`, `INVALID_RESOURCE_STATUS`, `INVALID_LOCATION`,
-  `RESOURCE_ID_CONFLICT`) is returned using that code instead of the
-  generic `VALIDATION_ERROR`, per `BACKEND_ERROR_HANDLING.md` section 6.
-
----
-
-## 10. Scope Boundary
-
-This document does not define:
-
-- the full validation checklist by category (see `API_CONTRACT.md` section
-  12 and `DATA_CONTRACT.md` section 11 — this document implements that
-  checklist, it does not replace it);
-- error code definitions or HTTP status mapping (see
-  `BACKEND_ERROR_HANDLING.md`);
-- frontend validation behavior (see `TECHNOLOGY_SELECTION.md` section 13.1);
-- password hashing or token validation implementation (explicitly out of
-  scope per `API_CONTRACT.md` section 16).
-
----
-
-## 11. Validation Principle
-
-Validation is authoritative on the backend regardless of what the frontend
-already checked, and it runs before a single byte reaches persistence.
-
-> If the backend did not check it, it is not valid — no matter what the
-> frontend displayed.
+- Populating `field` with dot-notation paths (`location.latitude`,
+  `attributes.capacity`) is the intended direction when the frontend needs
+  field-level reporting.
+- A failure that has a more specific error code (`INVALID_RESOURCE_TYPE`,
+  `INVALID_RESOURCE_STATUS`, `INVALID_LOCATION`, `RESOURCE_ID_CONFLICT`)
+  uses that code instead of `VALIDATION_ERROR` (`BACKEND_ERROR_HANDLING.md`
+  section 6).

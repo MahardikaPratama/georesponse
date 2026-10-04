@@ -2,17 +2,10 @@
 
 ## 1. Purpose
 
-Define the criteria used to evaluate map libraries for the **Resource Readiness for Disaster Response** application.
-
-The criteria are divided into:
-
-1. Performance
-2. Geospatial capabilities
-3. Frontend integration
-4. Resource usage
-5. Developer experience
-
----
+Define the criteria used to evaluate map libraries for the **Resource
+Readiness for Disaster Response** application, grouped into performance,
+geospatial capabilities, frontend integration, resource usage, and
+developer experience.
 
 ## 2. Evaluation Criteria
 
@@ -35,61 +28,33 @@ The criteria are divided into:
 | Developer Experience | API complexity      | Implementation complexity and ergonomics       | Medium    |
 | Developer Experience | Ecosystem           | Plugins, community, and available integrations | Medium    |
 
----
-
 ## 3. Primary Performance Metrics
 
-The primary quantitative metrics are:
+- **Initialization Time (ms)**
+- **Rendering Time (ms)**
+- **FPS**
+- **Memory Usage (MB)**
+- **Bundle Size (KB)**
 
-* **Initialization Time (ms)**
-* **Rendering Time (ms)**
-* **FPS**
-* **Memory Usage (MB)**
-* **Bundle Size (KB)**
-
-Performance measurements should be collected using the same environment and workload for every candidate.
-
----
+How they are collected: `BENCHMARK_METHODOLOGY.md` section 6.
 
 ## 4. Project Relevance
 
-Criteria directly related to the core map functionality receive higher relevance.
+Criteria tied directly to core map functionality receive higher relevance.
 
-### High
-
-Criteria that directly affect the application's primary functionality:
-
-* Point rendering
-* Polygon rendering
-* GeoJSON
-* Layer management
-* Feature interaction
-* Rendering performance
-* Scalability
-* React integration
-* TypeScript support
-
-### Medium
-
-Criteria that influence implementation or scalability but are not core functionality:
-
-* Tile support
-* Bundle size
-* Memory usage
-* Documentation
-* API complexity
-* Ecosystem
-
-### Low
-
-Capabilities that are not currently required by the target application, such as 3D visualization.
-
----
+- **High:** directly affects the application's primary functionality.
+  Point rendering, polygon rendering, GeoJSON, layer management, feature
+  interaction, rendering performance, scalability, React integration,
+  TypeScript support.
+- **Medium:** influences implementation or scalability but is not core
+  functionality. Tile support, bundle size, memory usage, documentation,
+  API complexity, ecosystem.
+- **Low:** not currently required by the target application, such as 3D
+  visualization.
 
 ## 5. Evaluation Principle
 
-Quantitative criteria should be evaluated using measured benchmark results.
-
-Qualitative criteria should be evaluated using documented technical evidence.
-
-Do not combine different criteria into a final score until the evaluation methodology and weighting have been explicitly defined.
+Quantitative criteria are evaluated with measured benchmark results;
+qualitative criteria with documented technical evidence. Do not combine
+criteria into a final score until the evaluation methodology and weighting
+have been explicitly defined.

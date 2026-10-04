@@ -2,23 +2,15 @@
 
 ## 1. Objective
 
-Measure and compare the performance and technical characteristics of candidate map libraries under standardized, project-relevant workloads.
-
-The benchmark must be reproducible and use equivalent conditions for all candidates.
-
----
+Measure and compare the performance and technical characteristics of
+candidate map libraries under standardized, project-relevant workloads. The
+benchmark must be reproducible and use equivalent conditions for all
+candidates.
 
 ## 2. Candidates
 
-The initial candidates are:
-
-* Leaflet
-* OpenLayers
-* MapLibre GL JS
-
-All candidates must implement the same benchmark scenarios defined in `BENCHMARK_SCENARIOS.md`.
-
----
+Leaflet, OpenLayers, and MapLibre GL JS (`TECHNOLOGY_CANDIDATES.md`). All
+candidates implement the same scenarios, defined in `BENCHMARK_SCENARIOS.md`.
 
 ## 3. Experimental Conditions
 
@@ -39,8 +31,6 @@ Keep the following conditions consistent across all candidates:
 
 Library versions must be recorded for every benchmark run.
 
----
-
 ## 4. Benchmark Execution
 
 Each scenario should follow this sequence:
@@ -55,24 +45,18 @@ Each scenario should follow this sequence:
 7. Aggregate results
 ```
 
-A warm-up phase should be performed before collecting measurements to reduce the effect of initial browser/runtime overhead.
-
----
+The warm-up phase reduces the effect of initial browser/runtime overhead
+on the collected measurements.
 
 ## 5. Repetitions
 
-Each benchmark scenario should be executed multiple times.
+Each scenario runs multiple times. Recommended configuration:
 
-Recommended configuration:
+- Warm-up runs: **3**
+- Measured runs: **10**
 
-* Warm-up runs: **3**
-* Measured runs: **10**
-
-The number of repetitions must remain identical across candidates.
-
-If a different number is required, the reason must be documented.
-
----
+The number of repetitions must be identical across candidates. If a
+different number is required, document the reason.
 
 ## 6. Metrics
 
@@ -87,25 +71,22 @@ Collect the following metrics where applicable:
 | Bundle size          | KB       | Quantitative |
 | Interaction response | ms       | Quantitative |
 
-Qualitative criteria such as documentation, API complexity, and React integration should be evaluated separately.
-
----
+Qualitative criteria such as documentation, API complexity, and React
+integration are evaluated separately.
 
 ## 7. Data Analysis
 
 For repeated measurements, report:
 
-* Mean
-* Median
-* Minimum
-* Maximum
-* Standard deviation
+- Mean
+- Median
+- Minimum
+- Maximum
+- Standard deviation
 
-For performance metrics, the median should be used as the primary representative value when measurements contain noticeable variability.
-
-Raw measurements must be retained so that aggregated results can be independently verified.
-
----
+For performance metrics, use the median as the primary representative
+value when measurements contain noticeable variability. Retain raw
+measurements so aggregated results can be independently verified.
 
 ## 8. Fair Comparison Rules
 
@@ -119,40 +100,36 @@ The benchmark must:
 6. Never fabricate or manually adjust benchmark results.
 7. Separate measured results from qualitative observations.
 
-Library-specific optimizations may be tested only as a separate experiment and must not replace the standardized benchmark.
-
----
+Library-specific optimizations may be tested only as a separate experiment
+and must not replace the standardized benchmark.
 
 ## 9. Reproducibility
 
 Every benchmark result must be traceable to:
 
-* Library name and version
-* Browser and version
-* Runtime version
-* Operating system
-* Hardware
-* Dataset version
-* Benchmark scenario
-* Benchmark configuration
-* Test date
+- Library name and version
+- Browser and version
+- Runtime version
+- Operating system
+- Hardware
+- Dataset version
+- Benchmark scenario
+- Benchmark configuration
+- Test date
 
 The benchmark environment is documented in `BENCHMARK_ENVIRONMENT.md`.
 
----
-
 ## 10. Result Interpretation
 
-Benchmark results should not be interpreted using a single metric.
+Do not interpret results through a single metric. The final technology
+selection considers:
 
-The final technology selection should consider:
-
-* Performance
-* Scalability
-* Geospatial capabilities
-* React + TypeScript integration
-* Resource usage
-* Implementation complexity
-* Project requirements
+- Performance
+- Scalability
+- Geospatial capabilities
+- React + TypeScript integration
+- Resource usage
+- Implementation complexity
+- Project requirements
 
 Measured results and qualitative evaluation must remain clearly separated.
