@@ -240,14 +240,14 @@ request path is dominated by database access, not routing.
 screens. Operations map directly onto the `Resource` concept: list with
 search, filters, and pagination; read; create; update; change status;
 relocate; delete; history. Authorization is a permission per operation
-(for example `resource.update`), and failures must surface as clear 401,
-403, 404, 409, and 422 responses. The session travels in an HttpOnly
+(for example `resource.update`), and failures must surface as clear 400, 401,
+403, 404, and 409 responses. The session travels in an HttpOnly
 cookie. The full contract is in `API_CONTRACT.md`.
 
 | Option | Fit for GeoResponse |
 |---|---|
 | **REST + JSON** (chosen) | Each operation is one endpoint, so each endpoint maps to one permission and returns a meaningful HTTP status. The browser calls it with `fetch` and the cookie, and it is easy to inspect in dev tools and to test with `curl` or `httptest`. |
-| GraphQL | Built for many clients that need different data shapes. GeoResponse has one client with fixed screens, so that flexibility would go unused. GraphQL adds a schema and resolver layer and usually returns 200 with errors in the body, which makes per-operation 403 and 422 handling and HTTP caching harder. |
+| GraphQL | Built for many clients that need different data shapes. GeoResponse has one client with fixed screens, so that flexibility would go unused. GraphQL adds a schema and resolver layer and usually returns 200 with errors in the body, which makes per-operation 400 and 403 handling and HTTP caching harder. |
 | gRPC (via gRPC-Web) | Browsers cannot call gRPC directly. It needs a gRPC-Web proxy or wrapper and a protobuf code generation step in the frontend. GeoResponse has no streaming, high-frequency RPC, or service-to-service traffic to justify that. |
 
 **Trade-off accepted.** Some endpoints return more fields than a given
