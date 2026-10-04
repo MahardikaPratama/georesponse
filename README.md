@@ -86,81 +86,86 @@ flowchart LR
 
 ```mermaid
 erDiagram
+    %% Rows are written as: column, type, key, description. The column name
+    %% deliberately occupies Mermaid's type slot so it renders leftmost.
     resources {
-        text id PK
-        text name
-        text type "VEHICLE | FACILITY | EQUIPMENT | IOT_DEVICE"
-        text status "AVAILABLE | IN_USE | MAINTENANCE | UNAVAILABLE"
-        jsonb attributes
-        geography location "Point, 4326"
-        timestamptz created_at
-        timestamptz updated_at
-    }
-    users {
-        text id PK
-        text name
-        text password_hash
-    }
-    roles {
-        text id PK
-        text name
-    }
-    permissions {
-        text id PK
-        text code
-        text name
-    }
-    role_permissions {
-        text role_id FK
-        text permission_id FK
-    }
-    user_roles {
-        text user_id FK
-        text role_id FK
+        id            text         PK  "Resource identifier"
+        name          text             "Display name"
+        type          text             "VEHICLE, FACILITY, EQUIPMENT, IOT_DEVICE"
+        status        text             "AVAILABLE, IN_USE, MAINTENANCE, UNAVAILABLE"
+        attributes    jsonb            "Type-specific attributes"
+        location      geography        "Point, SRID 4326"
+        created_at    timestamptz      "Creation time"
+        updated_at    timestamptz      "Last update time"
     }
     resource_status_history {
-        text id PK
-        text resource_id FK
-        text previous_status
-        text new_status
-        timestamptz changed_at
-        text changed_by FK
+        id               text         PK  "History entry identifier"
+        resource_id      text         FK  "Resource changed, null if deleted"
+        previous_status  text             "Status before the change"
+        new_status       text             "Status after the change"
+        changed_at       timestamptz      "Time of the change"
+        changed_by       text         FK  "User who made the change"
     }
     resource_location_history {
-        text id PK
-        text resource_id FK
-        geography previous_location
-        geography new_location
-        timestamptz changed_at
-        text changed_by FK
+        id                 text         PK  "History entry identifier"
+        resource_id        text         FK  "Resource moved, null if deleted"
+        previous_location  geography        "Location before the relocation"
+        new_location       geography        "Location after the relocation"
+        changed_at         timestamptz      "Time of the relocation"
+        changed_by         text         FK  "User who made the change"
     }
     resource_change_history {
-        text id PK
-        text resource_id FK
-        jsonb changes
-        timestamptz changed_at
-        text changed_by FK
+        id           text         PK  "History entry identifier"
+        resource_id  text         FK  "Resource edited, null if deleted"
+        changes      jsonb            "Field-level before/after values"
+        changed_at   timestamptz      "Time of the edit"
+        changed_by   text         FK  "User who made the change"
     }
     audit_records {
-        text id PK
-        text operation
-        text user_id FK
-        text resource_id FK
-        timestamptz occurred_at
-        jsonb details
+        id           text         PK  "Audit record identifier"
+        operation    text             "Audited operation code"
+        user_id      text         FK  "User who acted, null if deleted"
+        resource_id  text         FK  "Resource affected, null if deleted"
+        occurred_at  timestamptz      "Time of the operation"
+        details      jsonb            "Operation-specific details"
     }
-    resources ||--o{ resource_status_history : "status changes"
-    resources ||--o{ resource_location_history : "relocations"
-    resources ||--o{ resource_change_history : "edits"
-    resources ||--o{ audit_records : "audited"
-    users ||--o{ audit_records : "acts"
-    users ||--o{ resource_status_history : "changed_by"
-    users ||--o{ resource_location_history : "changed_by"
-    users ||--o{ resource_change_history : "changed_by"
-    users ||--o{ user_roles : ""
-    roles ||--o{ user_roles : ""
-    roles ||--o{ role_permissions : ""
-    permissions ||--o{ role_permissions : ""
+    users {
+        id             text         PK  "User identifier, used to sign in"
+        name           text             "Display name"
+        password_hash  text             "Hashed sign-in password"
+        created_at     timestamptz      "Creation time"
+        updated_at     timestamptz      "Last update time"
+    }
+    user_roles {
+        user_id  text  PK, FK  "User holding the role"
+        role_id  text  PK, FK  "Role held by the user"
+    }
+    roles {
+        id    text  PK  "Role identifier"
+        name  text      "Unique role name"
+    }
+    role_permissions {
+        role_id        text  PK, FK  "Role granted the permission"
+        permission_id  text  PK, FK  "Permission granted to the role"
+    }
+    permissions {
+        id    text  PK  "Permission identifier"
+        code  text      "Unique code, e.g. resource.update"
+        name  text      "Human-readable name"
+    }
+
+    resources |o--o{ resource_status_history : "status changes"
+    resources |o--o{ resource_location_history : "relocations"
+    resources |o--o{ resource_change_history : "edits"
+    resources |o--o{ audit_records : "audited in"
+    resource_status_history }o--o| users : "changed by"
+    resource_location_history }o--o| users : "changed by"
+    resource_change_history }o--o| users : "changed by"
+    audit_records }o--o| users : "performed by"
+    users ||--o{ user_roles : "holds"
+    roles ||--o{ user_roles : "assigned in"
+    roles ||--o{ role_permissions : "grants"
+    permissions ||--o{ role_permissions : "granted in"
 ```
 
 Migrations and seeds live in [`database/`](database/); the full schema is
